@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { X, Upload, Link2, ImageOff } from 'lucide-react'
+import imageCompression from 'browser-image-compression'
 import type { Book, BookKondisi } from '../lib/api'
 import { uploadBookCover } from '../lib/api'
 import {
@@ -35,6 +36,11 @@ interface Props {
 
 const ACCEPTED_COVER_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 const MAX_COVER_SIZE = 5 * 1024 * 1024
+const COMPRESSION_OPTIONS = {
+  maxSizeMB: 0.5,
+  maxWidthOrHeight: 1200,
+  useWebWorker: true,
+}
 
 const inputClass =
   'h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm focus:border-sky-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-700/20'
@@ -108,7 +114,8 @@ export default function BookFormModal({ initial, onClose, onSubmit }: Props) {
     }
     setCoverUploading(true)
     try {
-      const { url } = await uploadBookCover(file)
+      const compressed = await imageCompression(file, COMPRESSION_OPTIONS)
+      const { url } = await uploadBookCover(compressed)
       setCoverUrl(url)
     } catch (err) {
       setCoverError(err instanceof Error ? err.message : 'Gagal mengunggah gambar.')
@@ -411,7 +418,7 @@ export default function BookFormModal({ initial, onClose, onSubmit }: Props) {
                   }}
                 />
                 {coverUploading ? (
-                  <p className="text-sm font-semibold text-slate-600">Mengunggah...</p>
+                  <p className="text-sm font-semibold text-slate-600">Mengompres &amp; mengunggah...</p>
                 ) : coverUrl ? (
                   <div className="flex flex-col items-center gap-2">
                     {coverImgError ? (
