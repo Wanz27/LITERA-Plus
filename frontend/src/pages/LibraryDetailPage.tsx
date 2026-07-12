@@ -12,10 +12,12 @@ import {
   Download,
   SlidersHorizontal,
   Trash2,
+  ZoomIn,
 } from 'lucide-react'
 import DashboardLayout from '../layout/DashboardLayout'
 import LibraryFormModal from '../components/LibraryFormModal'
 import BookFormModal from '../components/BookFormModal'
+import CoverPreviewModal from '../components/CoverPreviewModal'
 import * as api from '../lib/api'
 import type { ActivityLog, Book, BookKondisi, Library, LibraryStatus, LibraryType } from '../lib/api'
 import { typeIcon, StatusBadge } from '../lib/libraryUi'
@@ -57,6 +59,7 @@ export default function LibraryDetailPage() {
   const [bookSearch, setBookSearch] = React.useState('')
   const [bookKondisiFilter, setBookKondisiFilter] = React.useState<'Semua' | BookKondisi>('Semua')
   const [bookKlasifikasiFilter, setBookKlasifikasiFilter] = React.useState('Semua')
+  const [previewBook, setPreviewBook] = React.useState<Book | null>(null)
 
   async function load() {
     setLoading(true)
@@ -534,11 +537,21 @@ export default function LibraryDetailPage() {
                     <tr key={book.id} className="border-b border-slate-100 last:border-b-0">
                       <td className="px-6 py-3">
                         {book.cover_url ? (
-                          <img
-                            src={book.cover_url}
-                            alt={book.judul}
-                            className="h-14 w-10 rounded object-cover shadow-sm"
-                          />
+                          <button
+                            type="button"
+                            onClick={() => setPreviewBook(book)}
+                            className="group relative block h-14 w-10 shrink-0 overflow-hidden rounded shadow-sm"
+                            aria-label={`Lihat cover ${book.judul}`}
+                          >
+                            <img
+                              src={book.cover_url}
+                              alt={book.judul}
+                              className="h-full w-full object-cover transition group-hover:brightness-75"
+                            />
+                            <span className="absolute inset-0 flex items-center justify-center opacity-0 transition group-hover:opacity-100">
+                              <ZoomIn size={16} className="text-white drop-shadow" />
+                            </span>
+                          </button>
                         ) : (
                           <div className="grid h-14 w-10 place-items-center rounded bg-slate-100 text-slate-300">
                             <BookOpen size={16} />
@@ -638,6 +651,15 @@ export default function LibraryDetailPage() {
             setEditingBook(null)
           }}
           onSubmit={handleSaveBook}
+        />
+      )}
+
+      {previewBook && (
+        <CoverPreviewModal
+          coverUrl={previewBook.cover_url}
+          title={previewBook.judul}
+          subtitle={previewBook.penulis}
+          onClose={() => setPreviewBook(null)}
         />
       )}
     </DashboardLayout>
