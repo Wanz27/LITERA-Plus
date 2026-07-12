@@ -12,6 +12,11 @@ const app = express()
 app.use(cors())
 app.use(express.json())
 
+// Halaman utama untuk ngecek apakah server Vercel merespons
+app.get('/', (req, res) => res.json({ success: true, message: 'LITERA+ API Server is running!' }))
+
+app.get('/api/health', (req, res) => res.json({ success: true, message: 'LITERA+ API aktif' }))
+
 app.use('/api/auth', authRoutes)
 app.use('/api/libraries', librariesRoutes)
 app.use('/api/books', booksRoutes)
