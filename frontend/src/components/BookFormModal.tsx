@@ -1,8 +1,10 @@
 import * as React from 'react'
-import { X, Upload, Link2, ImageOff, Camera } from 'lucide-react'
+import { X, Upload, Link2, ImageOff, Camera, Barcode } from 'lucide-react'
 import imageCompression from 'browser-image-compression'
 import type { Book, BookKondisi } from '../lib/api'
 import { uploadBookCover } from '../lib/api'
+import { lookupBookByIsbn } from '../lib/isbnLookup'
+import BarcodeScannerModal from './BarcodeScannerModal'
 import {
   kondisiOptions,
   klasifikasiOptions,
@@ -83,6 +85,10 @@ export default function BookFormModal({ initial, onClose, onSubmit }: Props) {
   const [saving, setSaving] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
 
+  const [showScanner, setShowScanner] = React.useState(false)
+  const [isbnLookupLoading, setIsbnLookupLoading] = React.useState(false)
+  const [isbnLookupError, setIsbnLookupError] = React.useState<string | null>(null)
+
   const [coverMode, setCoverMode] = React.useState<'upload' | 'url'>('upload')
   const [coverUrl, setCoverUrl] = React.useState(initial?.cover_url ?? '')
   const [coverUploading, setCoverUploading] = React.useState(false)
@@ -122,6 +128,31 @@ export default function BookFormModal({ initial, onClose, onSubmit }: Props) {
       setCoverError(err instanceof Error ? err.message : 'Gagal mengunggah gambar.')
     } finally {
       setCoverUploading(false)
+    }
+  }
+
+  async function handleIsbnDetected(code: string) {
+    setShowScanner(false)
+    setIsbn(code)
+    setIsbnLookupError(null)
+    setIsbnLookupLoading(true)
+    try {
+      const data = await lookupBookByIsbn(code)
+      if (data.judul && !judul.trim()) setJudul(data.judul)
+      if (data.penulis && !penulis.trim()) setPenulis(data.penulis)
+      if (data.penerbit && !penerbit.trim()) setPenerbit(data.penerbit)
+      if (data.tahun_terbit && !tahunTerbit.trim()) setTahunTerbit(data.tahun_terbit)
+      if (data.jumlah_halaman && !jumlahHalaman.trim()) setJumlahHalaman(data.jumlah_halaman)
+      if (data.bahasa && !bahasa.trim()) setBahasa(data.bahasa)
+      if (data.subjek && !subjek.trim()) setSubjek(data.subjek)
+      if (data.cover_url && !coverUrl.trim()) {
+        setCoverMode('url')
+        setCoverUrl(data.cover_url)
+      }
+    } catch (err) {
+      setIsbnLookupError(err instanceof Error ? err.message : 'Gagal mengambil data buku dari ISBN.')
+    } finally {
+      setIsbnLookupLoading(false)
     }
   }
 
@@ -243,12 +274,24 @@ export default function BookFormModal({ initial, onClose, onSubmit }: Props) {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label className={labelClass}>ISBN</label>
-              <input
-                value={isbn}
-                onChange={(e) => setIsbn(e.target.value)}
-                placeholder="978-979-1227-01-7"
-                className={inputClass}
-              />
+              <div className="flex gap-2">
+                <input
+                  value={isbn}
+                  onChange={(e) => setIsbn(e.target.value)}
+                  placeholder="978-979-1227-01-7"
+                  className={inputClass}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowScanner(true)}
+                  title="Pindai barcode ISBN"
+                  className="flex h-11 shrink-0 items-center justify-center rounded-lg border border-sky-200 bg-white px-3 text-sky-800 hover:bg-sky-50"
+                >
+                  <Barcode size={18} />
+                </button>
+              </div>
+              {isbnLookupLoading && <p className="mt-1 text-xs text-slate-500">Mengambil data buku...</p>}
+              {isbnLookupError && <p className="mt-1 text-xs text-rose-600">{isbnLookupError}</p>}
             </div>
             <div>
               <label className={labelClass}>Kode Klasifikasi</label>
@@ -527,6 +570,10 @@ export default function BookFormModal({ initial, onClose, onSubmit }: Props) {
           </div>
         </form>
       </div>
+
+      {showScanner && (
+        <BarcodeScannerModal onDetected={handleIsbnDetected} onClose={() => setShowScanner(false)} />
+      )}
     </div>
   )
 }
