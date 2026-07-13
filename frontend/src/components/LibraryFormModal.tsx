@@ -122,7 +122,7 @@ export default function LibraryFormModal({ initial, onClose, onSubmit }: Props) 
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm">
       <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-xl bg-white p-5 shadow-xl sm:p-6">
         <div className="mb-6 flex items-center justify-between">
           <h3 className="text-lg font-bold text-slate-900">

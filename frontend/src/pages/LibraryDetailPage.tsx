@@ -18,6 +18,8 @@ import DashboardLayout from '../layout/DashboardLayout'
 import LibraryFormModal from '../components/LibraryFormModal'
 import BookFormModal from '../components/BookFormModal'
 import CoverPreviewModal from '../components/CoverPreviewModal'
+import BookDetailModal from '../components/BookDetailModal'
+import ConfirmDialog from '../components/ConfirmDialog'
 import * as api from '../lib/api'
 import type { ActivityLog, Book, BookKondisi, Library, LibraryStatus, LibraryType } from '../lib/api'
 import { typeIcon, StatusBadge } from '../lib/libraryUi'
@@ -60,6 +62,9 @@ export default function LibraryDetailPage() {
   const [bookKondisiFilter, setBookKondisiFilter] = React.useState<'Semua' | BookKondisi>('Semua')
   const [bookKlasifikasiFilter, setBookKlasifikasiFilter] = React.useState('Semua')
   const [previewBook, setPreviewBook] = React.useState<Book | null>(null)
+  const [detailBook, setDetailBook] = React.useState<Book | null>(null)
+  const [bookToDelete, setBookToDelete] = React.useState<Book | null>(null)
+  const [deletingBook, setDeletingBook] = React.useState(false)
 
   async function load() {
     setLoading(true)
@@ -140,10 +145,16 @@ export default function LibraryDetailPage() {
     await load()
   }
 
-  async function handleDeleteBook(book: Book) {
-    if (!confirm(`Hapus "${book.judul}" dari koleksi buku?`)) return
-    await api.deleteBook(book.id)
-    await load()
+  async function handleDeleteBook() {
+    if (!bookToDelete) return
+    setDeletingBook(true)
+    try {
+      await api.deleteBook(bookToDelete.id)
+      setBookToDelete(null)
+      await load()
+    } finally {
+      setDeletingBook(false)
+    }
   }
 
   if (loading) {
@@ -534,12 +545,19 @@ export default function LibraryDetailPage() {
                 </thead>
                 <tbody>
                   {filteredBooks.map((book) => (
-                    <tr key={book.id} className="border-b border-slate-100 last:border-b-0">
+                    <tr
+                      key={book.id}
+                      onClick={() => setDetailBook(book)}
+                      className="cursor-pointer border-b border-slate-100 last:border-b-0 hover:bg-slate-50/60"
+                    >
                       <td className="px-6 py-3">
                         {book.cover_url ? (
                           <button
                             type="button"
-                            onClick={() => setPreviewBook(book)}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setPreviewBook(book)
+                            }}
                             className="group relative block h-14 w-10 shrink-0 overflow-hidden rounded shadow-sm"
                             aria-label={`Lihat cover ${book.judul}`}
                           >
@@ -585,7 +603,8 @@ export default function LibraryDetailPage() {
                       <td className="px-6 py-3">
                         <div className="flex items-center justify-end gap-3">
                           <button
-                            onClick={() => {
+                            onClick={(e) => {
+                              e.stopPropagation()
                               setEditingBook(book)
                               setBookModalOpen(true)
                             }}
@@ -595,7 +614,10 @@ export default function LibraryDetailPage() {
                             <Pencil size={16} />
                           </button>
                           <button
-                            onClick={() => handleDeleteBook(book)}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setBookToDelete(book)
+                            }}
                             className="text-slate-400 hover:text-rose-600"
                             aria-label="Hapus buku"
                           >
@@ -660,6 +682,33 @@ export default function LibraryDetailPage() {
           title={previewBook.judul}
           subtitle={previewBook.penulis}
           onClose={() => setPreviewBook(null)}
+        />
+      )}
+
+      {detailBook && (
+        <BookDetailModal
+          book={detailBook}
+          onClose={() => setDetailBook(null)}
+          onEdit={(book) => {
+            setDetailBook(null)
+            setEditingBook(book)
+            setBookModalOpen(true)
+          }}
+          onDelete={(book) => {
+            setDetailBook(null)
+            setBookToDelete(book)
+          }}
+        />
+      )}
+
+      {bookToDelete && (
+        <ConfirmDialog
+          title="Hapus buku ini?"
+          message={`Buku "${bookToDelete.judul}" akan dihapus permanen dari koleksi buku.`}
+          confirmLabel="Ya, Hapus"
+          loading={deletingBook}
+          onConfirm={handleDeleteBook}
+          onCancel={() => setBookToDelete(null)}
         />
       )}
     </DashboardLayout>
