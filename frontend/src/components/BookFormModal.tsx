@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { X, Upload, Link2, ImageOff } from 'lucide-react'
+import { X, Upload, Link2, ImageOff, Camera } from 'lucide-react'
 import imageCompression from 'browser-image-compression'
 import type { Book, BookKondisi } from '../lib/api'
 import { uploadBookCover } from '../lib/api'
@@ -90,6 +90,7 @@ export default function BookFormModal({ initial, onClose, onSubmit }: Props) {
   const [coverImgError, setCoverImgError] = React.useState(false)
   const [dragActive, setDragActive] = React.useState(false)
   const fileInputRef = React.useRef<HTMLInputElement>(null)
+  const cameraInputRef = React.useRef<HTMLInputElement>(null)
 
   React.useEffect(() => {
     setCoverImgError(false)
@@ -415,6 +416,19 @@ export default function BookFormModal({ initial, onClose, onSubmit }: Props) {
                   onChange={(e) => {
                     const file = e.target.files?.[0]
                     if (file) handleCoverFile(file)
+                    e.target.value = ''
+                  }}
+                />
+                <input
+                  ref={cameraInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  capture="environment"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file) handleCoverFile(file)
+                    e.target.value = ''
                   }}
                 />
                 {coverUploading ? (
@@ -433,22 +447,44 @@ export default function BookFormModal({ initial, onClose, onSubmit }: Props) {
                         className="h-28 w-20 rounded-md object-cover shadow-sm"
                       />
                     )}
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setCoverUrl('')
-                      }}
-                      className="text-xs font-semibold text-rose-600 hover:underline"
-                    >
-                      Hapus gambar
-                    </button>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setCoverUrl('')
+                        }}
+                        className="text-xs font-semibold text-rose-600 hover:underline"
+                      >
+                        Hapus gambar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          cameraInputRef.current?.click()
+                        }}
+                        className="inline-flex items-center gap-1 text-xs font-semibold text-sky-800 hover:underline lg:hidden"
+                      >
+                        <Camera size={12} /> Ambil ulang
+                      </button>
+                    </div>
                   </div>
                 ) : (
                   <>
                     <Upload className="mx-auto mb-2 text-slate-400" size={22} />
                     <p className="text-sm font-semibold text-slate-700">Klik atau drag &amp; drop</p>
                     <p className="text-xs text-slate-400">JPG, PNG, WEBP · Maks 5MB</p>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        cameraInputRef.current?.click()
+                      }}
+                      className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-sky-200 bg-white px-3 py-1.5 text-xs font-semibold text-sky-800 hover:bg-sky-50 lg:hidden"
+                    >
+                      <Camera size={14} /> Ambil Foto dengan Kamera
+                    </button>
                   </>
                 )}
               </div>
