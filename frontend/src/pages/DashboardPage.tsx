@@ -3,6 +3,7 @@ import { Pencil, Trash2, Plus, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import DashboardLayout from '../layout/DashboardLayout'
 import LibraryFormModal from '../components/LibraryFormModal'
+import ConfirmDialog from '../components/ConfirmDialog'
 import * as api from '../lib/api'
 import type { Library, LibraryStatus, LibraryType } from '../lib/api'
 import { typeIcon, StatusBadge } from '../lib/libraryUi'
@@ -17,6 +18,8 @@ export default function DashboardPage() {
   const [page, setPage] = React.useState(1)
   const [modalOpen, setModalOpen] = React.useState(false)
   const [editing, setEditing] = React.useState<Library | null>(null)
+  const [libraryToDelete, setLibraryToDelete] = React.useState<Library | null>(null)
+  const [deletingLibrary, setDeletingLibrary] = React.useState(false)
 
   async function load() {
     setLoading(true)
@@ -57,10 +60,16 @@ export default function DashboardPage() {
     await load()
   }
 
-  async function handleDelete(item: Library) {
-    if (!confirm(`Hapus "${item.nama}" dari daftar perpustakaan?`)) return
-    await api.deleteLibrary(item.id)
-    await load()
+  async function handleDelete() {
+    if (!libraryToDelete) return
+    setDeletingLibrary(true)
+    try {
+      await api.deleteLibrary(libraryToDelete.id)
+      setLibraryToDelete(null)
+      await load()
+    } finally {
+      setDeletingLibrary(false)
+    }
   }
 
   return (
@@ -157,7 +166,7 @@ export default function DashboardPage() {
                         <button
                           onClick={(e) => {
                             e.stopPropagation()
-                            handleDelete(item)
+                            setLibraryToDelete(item)
                           }}
                           className="text-slate-400 hover:text-rose-600"
                           aria-label={`Hapus ${item.nama}`}
@@ -218,6 +227,17 @@ export default function DashboardPage() {
             setEditing(null)
           }}
           onSubmit={handleCreateOrUpdate}
+        />
+      )}
+
+      {libraryToDelete && (
+        <ConfirmDialog
+          title="Hapus perpustakaan ini?"
+          message={`Perpustakaan "${libraryToDelete.nama}" akan dihapus permanen dari daftar perpustakaan.`}
+          confirmLabel="Ya, Hapus"
+          loading={deletingLibrary}
+          onConfirm={handleDelete}
+          onCancel={() => setLibraryToDelete(null)}
         />
       )}
     </DashboardLayout>
