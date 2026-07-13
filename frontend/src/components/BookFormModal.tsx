@@ -391,34 +391,71 @@ export default function BookFormModal({ initial, onClose, onSubmit }: Props) {
             </div>
 
             {coverMode === 'upload' ? (
-              <div
-                onClick={() => fileInputRef.current?.click()}
-                onDragOver={(e) => {
-                  e.preventDefault()
-                  setDragActive(true)
-                }}
-                onDragLeave={() => setDragActive(false)}
-                onDrop={(e) => {
-                  e.preventDefault()
-                  setDragActive(false)
-                  const file = e.dataTransfer.files?.[0]
-                  if (file) handleCoverFile(file)
-                }}
-                className={`cursor-pointer rounded-xl border-2 border-dashed p-6 text-center transition ${
-                  dragActive ? 'border-sky-500 bg-sky-50' : 'border-sky-200 bg-sky-50/40 hover:bg-sky-50'
-                }`}
-              >
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0]
-                    if (file) handleCoverFile(file)
-                    e.target.value = ''
+              <div className="space-y-2">
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  onDragOver={(e) => {
+                    e.preventDefault()
+                    setDragActive(true)
                   }}
-                />
+                  onDragLeave={() => setDragActive(false)}
+                  onDrop={(e) => {
+                    e.preventDefault()
+                    setDragActive(false)
+                    const file = e.dataTransfer.files?.[0]
+                    if (file) handleCoverFile(file)
+                  }}
+                  className={`cursor-pointer rounded-xl border-2 border-dashed p-6 text-center transition ${
+                    dragActive ? 'border-sky-500 bg-sky-50' : 'border-sky-200 bg-sky-50/40 hover:bg-sky-50'
+                  }`}
+                >
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0]
+                      if (file) handleCoverFile(file)
+                      e.target.value = ''
+                    }}
+                  />
+                  {coverUploading ? (
+                    <p className="text-sm font-semibold text-slate-600">Mengompres &amp; mengunggah...</p>
+                  ) : coverUrl ? (
+                    <div className="flex flex-col items-center gap-2">
+                      {coverImgError ? (
+                        <div className="flex h-28 w-20 items-center justify-center rounded-md bg-slate-100 text-slate-400">
+                          <ImageOff size={20} />
+                        </div>
+                      ) : (
+                        <img
+                          src={coverUrl}
+                          alt="Cover buku"
+                          onError={() => setCoverImgError(true)}
+                          className="h-28 w-20 rounded-md object-cover shadow-sm"
+                        />
+                      )}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setCoverUrl('')
+                        }}
+                        className="text-xs font-semibold text-rose-600 hover:underline"
+                      >
+                        Hapus gambar
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <Upload className="mx-auto mb-2 text-slate-400" size={22} />
+                      <p className="text-sm font-semibold text-slate-700">Klik atau drag &amp; drop</p>
+                      <p className="text-xs text-slate-400">JPG, PNG, WEBP · Maks 5MB</p>
+                    </>
+                  )}
+                </div>
+
                 <input
                   ref={cameraInputRef}
                   type="file"
@@ -431,62 +468,14 @@ export default function BookFormModal({ initial, onClose, onSubmit }: Props) {
                     e.target.value = ''
                   }}
                 />
-                {coverUploading ? (
-                  <p className="text-sm font-semibold text-slate-600">Mengompres &amp; mengunggah...</p>
-                ) : coverUrl ? (
-                  <div className="flex flex-col items-center gap-2">
-                    {coverImgError ? (
-                      <div className="flex h-28 w-20 items-center justify-center rounded-md bg-slate-100 text-slate-400">
-                        <ImageOff size={20} />
-                      </div>
-                    ) : (
-                      <img
-                        src={coverUrl}
-                        alt="Cover buku"
-                        onError={() => setCoverImgError(true)}
-                        className="h-28 w-20 rounded-md object-cover shadow-sm"
-                      />
-                    )}
-                    <div className="flex items-center gap-3">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setCoverUrl('')
-                        }}
-                        className="text-xs font-semibold text-rose-600 hover:underline"
-                      >
-                        Hapus gambar
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          cameraInputRef.current?.click()
-                        }}
-                        className="inline-flex items-center gap-1 text-xs font-semibold text-sky-800 hover:underline lg:hidden"
-                      >
-                        <Camera size={12} /> Ambil ulang
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <Upload className="mx-auto mb-2 text-slate-400" size={22} />
-                    <p className="text-sm font-semibold text-slate-700">Klik atau drag &amp; drop</p>
-                    <p className="text-xs text-slate-400">JPG, PNG, WEBP · Maks 5MB</p>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        cameraInputRef.current?.click()
-                      }}
-                      className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-sky-200 bg-white px-3 py-1.5 text-xs font-semibold text-sky-800 hover:bg-sky-50 lg:hidden"
-                    >
-                      <Camera size={14} /> Ambil Foto dengan Kamera
-                    </button>
-                  </>
-                )}
+                <button
+                  type="button"
+                  onClick={() => cameraInputRef.current?.click()}
+                  disabled={coverUploading}
+                  className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-sky-200 bg-white px-3 py-2 text-xs font-semibold text-sky-800 hover:bg-sky-50 disabled:opacity-50 lg:hidden"
+                >
+                  <Camera size={14} /> {coverUrl ? 'Ambil Ulang dengan Kamera' : 'Ambil Foto dengan Kamera'}
+                </button>
               </div>
             ) : (
               <div className="space-y-2">
