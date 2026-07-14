@@ -13,6 +13,7 @@ export const changelog: ChangelogEntry[] = [
     version: '1.4.0',
     date: '2026-07-14',
     changes: [
+      { type: 'Baru', text: 'Menambahkan fitur profile.' },
       { type: 'Baru', text: 'Download laporan unit perpustakaan dalam format Excel (.xlsx) atau PDF.' },
       { type: 'Baru', text: 'Fitur melihat riwayat pembaruan aplikasi lewat ikon roket di header.' },
     ],
