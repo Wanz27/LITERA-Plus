@@ -23,15 +23,21 @@ export default function UpdatesMenu() {
     setUnread(lastSeen !== APP_VERSION)
   }, [])
 
-  React.useEffect(() => {
+  React.useLayoutEffect(() => {
     if (!open) return
     function updatePosition() {
-      const rect = buttonRef.current?.getBoundingClientRect()
-      if (!rect) return
+      const buttonRect = buttonRef.current?.getBoundingClientRect()
+      const menuWidth = menuRef.current?.offsetWidth
+      if (!buttonRect || !menuWidth) return
+      const margin = 8
+      const left = Math.min(
+        Math.max(buttonRect.right - menuWidth, margin),
+        window.innerWidth - menuWidth - margin,
+      )
       setMenuStyle({
         position: 'fixed',
-        right: window.innerWidth - rect.right,
-        top: rect.bottom + 10,
+        left,
+        top: buttonRect.bottom + 10,
       })
     }
     updatePosition()
@@ -73,7 +79,7 @@ export default function UpdatesMenu() {
         ref={buttonRef}
         type="button"
         onClick={handleToggle}
-        className="relative hidden text-slate-400 transition-colors hover:text-slate-600 sm:block"
+        className="relative text-slate-400 transition-colors hover:text-slate-600"
         aria-label="Lihat pembaruan aplikasi"
       >
         <Rocket size={20} />

@@ -112,12 +112,12 @@ export default function DashboardLayout({ children }: LayoutProps) {
           </div>
 
           <div className="flex items-center gap-3 sm:gap-6">
-            <button className="relative hidden text-slate-400 transition-colors hover:text-slate-600 sm:block">
+            <button className="relative text-slate-400 transition-colors hover:text-slate-600">
               <Bell size={20} />
               <span className="absolute top-0 right-0 h-2 w-2 rounded-full border border-white bg-rose-500"></span>
             </button>
             <UpdatesMenu />
-            <button className="hidden text-slate-400 transition-colors hover:text-slate-600 sm:block">
+            <button className="text-slate-400 transition-colors hover:text-slate-600">
               <HelpCircle size={20} />
             </button>
 
