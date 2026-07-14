@@ -9,7 +9,6 @@ import {
   AlertTriangle,
   Clock,
   User,
-  Download,
   SlidersHorizontal,
   Trash2,
   ZoomIn,
@@ -20,6 +19,7 @@ import BookFormModal from '../components/BookFormModal'
 import CoverPreviewModal from '../components/CoverPreviewModal'
 import BookDetailModal from '../components/BookDetailModal'
 import ConfirmDialog from '../components/ConfirmDialog'
+import ExportReportMenu from '../components/ExportReportMenu'
 import * as api from '../lib/api'
 import type { ActivityLog, Book, BookKondisi, Library, LibraryStatus, LibraryType } from '../lib/api'
 import { typeIcon, StatusBadge } from '../lib/libraryUi'
@@ -386,9 +386,7 @@ export default function LibraryDetailPage() {
                       <Pencil size={14} />
                     </button>
                   </div>
-                  <button className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">
-                    <Download size={16} /> Download Laporan Unit
-                  </button>
+                  <ExportReportMenu library={library} books={books} />
                 </div>
               </div>
             </div>
