@@ -2,6 +2,7 @@ import { useState, type ReactNode } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { BookMarked, Bell, HelpCircle, LayoutGrid, History, LogOut, Menu, X } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
+import UpdatesMenu from '../components/UpdatesMenu'
 
 interface LayoutProps {
   children: ReactNode
@@ -115,6 +116,7 @@ export default function DashboardLayout({ children }: LayoutProps) {
               <Bell size={20} />
               <span className="absolute top-0 right-0 h-2 w-2 rounded-full border border-white bg-rose-500"></span>
             </button>
+            <UpdatesMenu />
             <button className="hidden text-slate-400 transition-colors hover:text-slate-600 sm:block">
               <HelpCircle size={20} />
             </button>
