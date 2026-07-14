@@ -121,7 +121,10 @@ export default function DashboardLayout({ children }: LayoutProps) {
               <HelpCircle size={20} />
             </button>
 
-            <div className="flex items-center gap-3 sm:border-l sm:border-slate-200 sm:pl-6">
+            <Link
+              to="/profile"
+              className="flex items-center gap-3 sm:border-l sm:border-slate-200 sm:pl-6"
+            >
               <div className="hidden text-right sm:block">
                 <p className="text-sm font-bold text-slate-800">{fullName || 'Admin LITERA+'}</p>
                 <p className="text-xs text-slate-400">
@@ -134,7 +137,7 @@ export default function DashboardLayout({ children }: LayoutProps) {
                   alt="avatar"
                 />
               </div>
-            </div>
+            </Link>
           </div>
         </header>
 

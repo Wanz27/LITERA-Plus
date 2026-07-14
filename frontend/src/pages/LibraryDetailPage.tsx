@@ -23,7 +23,7 @@ import ExportReportMenu from '../components/ExportReportMenu'
 import * as api from '../lib/api'
 import type { ActivityLog, Book, BookKondisi, Library, LibraryStatus, LibraryType } from '../lib/api'
 import { typeIcon, StatusBadge } from '../lib/libraryUi'
-import { klasifikasiOptions, generateCallNumber } from '../lib/bookUi'
+import { klasifikasiOptions, klasifikasiMainClass, generateCallNumber } from '../lib/bookUi'
 
 const FACILITY_IMAGE =
   'https://images.unsplash.com/photo-1521587760476-6c12a4b040da?auto=format&fit=crop&w=1200&q=80'
@@ -188,14 +188,14 @@ export default function LibraryDetailPage() {
   const klasifikasiStats = klasifikasiOptions
     .map((opt) => {
       const jumlah = books
-        .filter((b) => b.kode_klasifikasi === opt.value)
+        .filter((b) => klasifikasiMainClass(b.kode_klasifikasi) === opt.value)
         .reduce((sum, b) => sum + b.jumlah, 0)
       return { label: opt.label, jumlah, pct: totalBuku > 0 ? Math.round((jumlah / totalBuku) * 100) : 0 }
     })
     .filter((k) => k.jumlah > 0)
 
   const belumDiklasifikasi = books
-    .filter((b) => !klasifikasiOptions.some((opt) => opt.value === b.kode_klasifikasi))
+    .filter((b) => klasifikasiMainClass(b.kode_klasifikasi) === null)
     .reduce((sum, b) => sum + b.jumlah, 0)
   if (belumDiklasifikasi > 0) {
     klasifikasiStats.push({

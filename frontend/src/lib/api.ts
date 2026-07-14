@@ -105,6 +105,18 @@ export const register = (payload: {
 
 export const getMe = () => request<AuthUser>('/auth/me')
 
+export const updateProfile = (payload: { full_name: string; email: string }) =>
+  request<{ token: string; user: AuthUser }>('/auth/me', {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  })
+
+export const changePassword = (payload: { current_password: string; new_password: string }) =>
+  request<{ message: string }>('/auth/change-password', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+
 export const checkEmail = (email: string) =>
   request<{ exists: boolean }>('/auth/check-email', {
     method: 'POST',

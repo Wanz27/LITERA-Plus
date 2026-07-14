@@ -26,6 +26,20 @@ export function klasifikasiLabel(code: string): string {
   return klasifikasiOptions.find((k) => k.value === code)?.label ?? code
 }
 
+/**
+ * Derives the DDC main-class bucket ("000", "100", ..., "900") from a classification code's
+ * leading digits, so custom codes (e.g. "822 - Drama Inggris") group under their main class
+ * ("800 - Karya Sastra") instead of always falling into "Belum diklasifikasi".
+ * Returns null when no leading digits can be found (truly unclassified).
+ */
+export function klasifikasiMainClass(code: string): string | null {
+  const match = code.trim().match(/^(\d+)/)
+  if (!match) return null
+  const num = parseInt(match[1], 10)
+  if (Number.isNaN(num) || num < 0 || num > 999) return null
+  return String(Math.floor(num / 100) * 100).padStart(3, '0')
+}
+
 export const ilustrasiOptions = ['Ada', 'Tidak ada'] as const
 
 /** Parses "123 - Some Text" into its number and text parts, or null if it doesn't match. */

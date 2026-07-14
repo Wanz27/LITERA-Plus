@@ -11,6 +11,8 @@ interface AuthContextValue {
   signIn: (identifier: string, password: string) => Promise<{ error?: string }>
   signUp: (payload: { full_name: string; email: string; password: string }) => Promise<{ error?: string }>
   signOut: () => void
+  updateProfile: (payload: { full_name: string; email: string }) => Promise<{ error?: string }>
+  changePassword: (payload: { current_password: string; new_password: string }) => Promise<{ error?: string }>
 }
 
 const AuthContext = React.createContext<AuthContextValue | undefined>(undefined)
@@ -63,6 +65,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null)
   }
 
+  const updateProfile: AuthContextValue['updateProfile'] = async (payload) => {
+    try {
+      const { token, user: nextUser } = await api.updateProfile(payload)
+      persist(token, nextUser)
+      return {}
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Gagal memperbarui profil.'
+      return { error: message }
+    }
+  }
+
+  const changePassword: AuthContextValue['changePassword'] = async (payload) => {
+    try {
+      await api.changePassword(payload)
+      return {}
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Gagal mengubah password.'
+      return { error: message }
+    }
+  }
+
   const value: AuthContextValue = {
     user,
     role: user?.role ?? null,
@@ -72,6 +95,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signIn,
     signUp,
     signOut,
+    updateProfile,
+    changePassword,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

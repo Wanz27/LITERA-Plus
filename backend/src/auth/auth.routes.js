@@ -7,6 +7,8 @@ const router = express.Router()
 router.post('/login', authController.login)
 router.post('/register', authController.register)
 router.get('/me', authenticate, authController.getMe)
+router.put('/me', authenticate, authController.updateMe)
+router.post('/change-password', authenticate, authController.changePassword)
 router.post('/check-email', authController.checkEmail)
 
 export default router
