@@ -39,6 +39,32 @@ function expandInventoryNumbers(start, count) {
   return Array.from({ length: count }, (_, i) => `${prefix}${String(startNum + i).padStart(width, '0')}${suffix}`)
 }
 
+/**
+ * Ensures none of the given (non-empty) inventory numbers collide with each other or with an
+ * existing book in the same library. `excludeBookId` lets an update skip comparing against
+ * itself. Throws a friendly Indonesian error on the first collision found.
+ */
+async function assertNomorInventarisAvailable(libraryId, numbers, excludeBookId) {
+  const filled = numbers.map((n) => n.trim()).filter(Boolean)
+  if (filled.length === 0) return
+
+  const seen = new Set()
+  for (const nomor of filled) {
+    if (seen.has(nomor)) {
+      throw new Error(
+        `Tidak bisa membuat nomor inventaris unik: "${nomor}" akan terpakai lebih dari sekali. Pastikan nomor awal diakhiri angka.`,
+      )
+    }
+    seen.add(nomor)
+  }
+
+  const existing = await booksRepo.findBooksByNomorInventaris(libraryId, filled)
+  const conflict = existing.find((book) => book.id !== excludeBookId)
+  if (conflict) {
+    throw new Error(`Nomor inventaris "${conflict.nomor_inventaris}" sudah dipakai buku lain di perpustakaan ini.`)
+  }
+}
+
 async function adjustLibraryTotal(libraryId, delta) {
   if (!delta) return
   const library = await librariesRepo.findLibraryById(libraryId)
@@ -78,6 +104,8 @@ export const create = async (payload, actor) => {
   }
 
   const inventoryNumbers = expandInventoryNumbers(payload.nomor_inventaris, jumlah)
+  await assertNomorInventarisAvailable(payload.library_id, inventoryNumbers)
+
   const batchId = randomUUID()
   const rows = inventoryNumbers.map((nomor_inventaris) => ({
     ...basePayload,
@@ -105,6 +133,10 @@ export const update = async (id, payload, actor) => {
   validate({ ...existing, ...payload })
 
   const nextJumlah = payload.jumlah !== undefined && payload.jumlah !== '' ? Number(payload.jumlah) : existing.jumlah
+
+  if (payload.nomor_inventaris !== undefined) {
+    await assertNomorInventarisAvailable(existing.library_id, [payload.nomor_inventaris], id)
+  }
 
   const book = await booksRepo.updateBook(id, {
     ...(payload.judul ? { judul: payload.judul.trim() } : {}),

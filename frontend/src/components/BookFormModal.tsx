@@ -10,10 +10,16 @@ import {
   CUSTOM_KLASIFIKASI_VALUE,
   parseCustomKlasifikasi,
   generateInventoryRange,
+  suggestNextInventoryNumber,
 } from '../lib/bookUi'
 
 interface Props {
   initial?: Book | null
+  existingNumbers?: string[]
+  existingPenulis?: string[]
+  existingPenerbit?: string[]
+  existingSubjek?: string[]
+  existingBahasa?: string[]
   onClose: () => void
   onSubmit: (payload: {
     judul: string
@@ -56,7 +62,16 @@ function initialKlasifikasiState(kode?: string) {
   return { isCustom: true, preset: '', customNumber: '', customText: kode }
 }
 
-export default function BookFormModal({ initial, onClose, onSubmit }: Props) {
+export default function BookFormModal({
+  initial,
+  existingNumbers = [],
+  existingPenulis = [],
+  existingPenerbit = [],
+  existingSubjek = [],
+  existingBahasa = [],
+  onClose,
+  onSubmit,
+}: Props) {
   const [judul, setJudul] = React.useState(initial?.judul ?? '')
   const [penulis, setPenulis] = React.useState(initial?.penulis ?? '')
   const [penerbit, setPenerbit] = React.useState(initial?.penerbit ?? '')
@@ -105,6 +120,11 @@ export default function BookFormModal({ initial, onClose, onSubmit }: Props) {
   const jumlahNum = Math.max(1, Number(jumlah) || 1)
   // Preview-only: each copy gets its own row/inventory number server-side (see books.service.js).
   const nomorInventarisPreview = generateInventoryRange(nomorInventarisAwal, jumlahNum)
+  const nomorInventarisSuggestion = isEditing
+    ? null
+    : suggestNextInventoryNumber(nomorInventarisAwal, existingNumbers)
+  const showSuggestion =
+    !!nomorInventarisSuggestion && nomorInventarisSuggestion !== nomorInventarisAwal.trim()
 
   async function handleCoverFile(file: File) {
     setCoverError(null)
@@ -196,8 +216,14 @@ export default function BookFormModal({ initial, onClose, onSubmit }: Props) {
               value={penulis}
               onChange={(e) => setPenulis(e.target.value)}
               placeholder="Andrea Hirata"
+              list="penulis-suggestions"
               className={inputClass}
             />
+            <datalist id="penulis-suggestions">
+              {existingPenulis.map((v) => (
+                <option key={v} value={v} />
+              ))}
+            </datalist>
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -207,8 +233,14 @@ export default function BookFormModal({ initial, onClose, onSubmit }: Props) {
                 value={penerbit}
                 onChange={(e) => setPenerbit(e.target.value)}
                 placeholder="Bentang Pustaka"
+                list="penerbit-suggestions"
                 className={inputClass}
               />
+              <datalist id="penerbit-suggestions">
+                {existingPenerbit.map((v) => (
+                  <option key={v} value={v} />
+                ))}
+              </datalist>
             </div>
             <div>
               <label className={labelClass}>Tahun Terbit</label>
@@ -229,8 +261,14 @@ export default function BookFormModal({ initial, onClose, onSubmit }: Props) {
                 value={subjek}
                 onChange={(e) => setSubjek(e.target.value)}
                 placeholder="Fiksi, Pendidikan"
+                list="subjek-suggestions"
                 className={inputClass}
               />
+              <datalist id="subjek-suggestions">
+                {existingSubjek.map((v) => (
+                  <option key={v} value={v} />
+                ))}
+              </datalist>
             </div>
             <div>
               <label className={labelClass}>Bahasa</label>
@@ -238,8 +276,14 @@ export default function BookFormModal({ initial, onClose, onSubmit }: Props) {
                 value={bahasa}
                 onChange={(e) => setBahasa(e.target.value)}
                 placeholder="Indonesia"
+                list="bahasa-suggestions"
                 className={inputClass}
               />
+              <datalist id="bahasa-suggestions">
+                {existingBahasa.map((v) => (
+                  <option key={v} value={v} />
+                ))}
+              </datalist>
             </div>
           </div>
 
@@ -273,15 +317,15 @@ export default function BookFormModal({ initial, onClose, onSubmit }: Props) {
 
           {isCustomKlasifikasi && (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-[auto_1fr]">
-              <div className="w-full sm:w-28">
-                <label className={labelClass}>Angka</label>
+              <div className="w-full sm:w-40">
+                <label className={labelClass}>Nomor Klasifikasi</label>
                 <input
-                  type="number"
                   value={klasifikasiCustomNumber}
                   onChange={(e) => setKlasifikasiCustomNumber(e.target.value)}
-                  placeholder="822"
+                  placeholder="499.223 2"
                   className={inputClass}
                 />
+                <p className="mt-1 text-xs text-slate-400">Boleh pakai desimal &amp; nomor buku, mis. "499.223 2".</p>
               </div>
               <div>
                 <label className={labelClass}>Keterangan</label>
@@ -338,8 +382,23 @@ export default function BookFormModal({ initial, onClose, onSubmit }: Props) {
                 value={nomorInventarisAwal}
                 onChange={(e) => setNomorInventarisAwal(e.target.value)}
                 placeholder="INV-0001"
+                list={!isEditing ? 'nomor-inventaris-suggestions' : undefined}
                 className={inputClass}
               />
+              {showSuggestion && (
+                <datalist id="nomor-inventaris-suggestions">
+                  <option value={nomorInventarisSuggestion!} />
+                </datalist>
+              )}
+              {showSuggestion && (
+                <button
+                  type="button"
+                  onClick={() => setNomorInventarisAwal(nomorInventarisSuggestion!)}
+                  className="mt-1 block text-xs font-semibold text-sky-700 hover:underline"
+                >
+                  Lanjutkan ke {nomorInventarisSuggestion}
+                </button>
+              )}
               {!isEditing && jumlahNum > 1 && (
                 <p className="mt-1 text-xs text-slate-400">Nomor untuk buku berikutnya dibuat otomatis secara berurutan.</p>
               )}

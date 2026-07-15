@@ -29,6 +29,7 @@ import {
   generateCallNumber,
   groupBooksByBatch,
   summarizeInventoryNumbers,
+  distinctValues,
 } from '../lib/bookUi'
 
 const FACILITY_IMAGE =
@@ -471,15 +472,6 @@ export default function LibraryDetailPage() {
                 Koleksi Buku ({groupedBookRows.length}
                 {bookFiltersActive ? ` dari ${totalGroupCount}` : ''})
               </h3>
-              <button
-                onClick={() => {
-                  setEditingBook(null)
-                  setBookModalOpen(true)
-                }}
-                className="flex items-center gap-1.5 text-sm font-semibold text-sky-700 hover:text-sky-900"
-              >
-                <Plus size={16} /> Tambah Buku
-              </button>
             </div>
 
             <div className="flex flex-wrap items-center gap-3 border-b border-slate-200 bg-slate-50 px-6 py-3">
@@ -694,6 +686,11 @@ export default function LibraryDetailPage() {
       {bookModalOpen && (
         <BookFormModal
           initial={editingBook}
+          existingNumbers={books.map((b) => b.nomor_inventaris)}
+          existingPenulis={distinctValues(books.map((b) => b.penulis))}
+          existingPenerbit={distinctValues(books.map((b) => b.penerbit))}
+          existingSubjek={distinctValues(books.map((b) => b.subjek))}
+          existingBahasa={distinctValues(books.map((b) => b.bahasa))}
           onClose={() => {
             setBookModalOpen(false)
             setEditingBook(null)

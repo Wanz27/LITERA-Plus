@@ -42,11 +42,22 @@ export function klasifikasiMainClass(code: string): string | null {
 
 export const ilustrasiOptions = ['Ada', 'Tidak ada'] as const
 
-/** Parses "123 - Some Text" into its number and text parts, or null if it doesn't match. */
+/**
+ * Parses "499.223 2 - Some Text" into its classification number ("499.223 2", digits/dots/spaces
+ * allowed so DDC decimals and Cutter/work marks are preserved) and description text, or null if
+ * it doesn't match.
+ */
 export function parseCustomKlasifikasi(value: string): { number: string; text: string } | null {
-  const match = value.trim().match(/^(\d+)\s*-\s*(.*)$/)
+  const match = value.trim().match(/^(\d[\d.\s]*?)\s*-\s*(.*)$/)
   if (!match) return null
   return { number: match[1], text: match[2] }
+}
+
+/** Extracts the full classification number from a stored code, stripping the " - text" suffix. */
+export function extractKlasifikasiNumber(kodeKlasifikasi: string): string {
+  const trimmed = kodeKlasifikasi.trim()
+  const parsed = parseCustomKlasifikasi(trimmed)
+  return parsed ? parsed.number : trimmed
 }
 
 /**
@@ -72,16 +83,16 @@ export function generateInventoryRange(start: string, jumlah: number): string {
 }
 
 /**
- * Builds a call number ("nomor panggil"): 3-digit classification + first 3 letters of the
- * author's name (uppercase) + first letter of the title (lowercase).
+ * Builds a call number ("nomor panggil"): the full classification number (as entered, e.g.
+ * "499.223 2") + first 3 letters of the author's name (uppercase) + first letter of the title
+ * (lowercase).
  */
 export function generateCallNumber(kodeKlasifikasi: string, penulis: string, judul: string): string {
-  const classMatch = kodeKlasifikasi.trim().match(/^(\d+)/)
-  const classDigits = classMatch ? classMatch[1].padStart(3, '0').slice(0, 3) : '---'
+  const classNumber = extractKlasifikasiNumber(kodeKlasifikasi)
   const authorLetters = penulis.replace(/[^a-zA-Z]/g, '').slice(0, 3).toUpperCase()
   const titleLetter = judul.trim().charAt(0).toLowerCase()
-  if (!classMatch && !authorLetters && !titleLetter) return '-'
-  return `${classDigits} ${authorLetters || '---'} ${titleLetter || '-'}`
+  if (!classNumber && !authorLetters && !titleLetter) return '-'
+  return `${classNumber || '---'} ${authorLetters || '---'} ${titleLetter || '-'}`
 }
 
 /**
@@ -110,4 +121,53 @@ export function summarizeInventoryNumbers(numbers: string[]): string {
   const first = filled[0]
   const last = filled[filled.length - 1]
   return first === last ? first : `${first} - ${last}`
+}
+
+/** Distinct non-empty values, sorted alphabetically — for autocomplete/datalist suggestions. */
+export function distinctValues(items: string[]): string[] {
+  const set = new Set(items.map((v) => v.trim()).filter(Boolean))
+  return Array.from(set).sort((a, b) => a.localeCompare(b))
+}
+
+/**
+ * Suggests the next inventory number in sequence for what's typed so far, based on existing
+ * numbers already used in the library (e.g. typing "BB" when "BB-01".."BB-03" are already taken
+ * suggests "BB-04"). Picks the most common matching prefix/suffix template and continues from
+ * its highest number. Returns null when there's nothing to suggest.
+ */
+export function suggestNextInventoryNumber(typed: string, existingNumbers: string[]): string | null {
+  const typedLower = typed.trim().toLowerCase()
+  if (!typedLower) return null
+
+  interface Entry {
+    prefix: string
+    suffix: string
+    width: number
+    num: number
+  }
+  const groups = new Map<string, Entry[]>()
+
+  for (const raw of existingNumbers) {
+    const value = raw.trim()
+    if (!value) continue
+    const match = value.match(/^(.*?)(\d+)(\D*)$/)
+    if (!match) continue
+    const [, prefix, digits, suffix] = match
+    if (!prefix.toLowerCase().startsWith(typedLower)) continue
+    const key = `${prefix.toLowerCase()}|${suffix.toLowerCase()}`
+    const entry: Entry = { prefix, suffix, width: digits.length, num: parseInt(digits, 10) }
+    if (!groups.has(key)) groups.set(key, [])
+    groups.get(key)!.push(entry)
+  }
+
+  let bestGroup: Entry[] | null = null
+  for (const entries of groups.values()) {
+    if (!bestGroup || entries.length > bestGroup.length) bestGroup = entries
+  }
+  if (!bestGroup) return null
+
+  const top = bestGroup.reduce((max, e) => (e.num > max.num ? e : max))
+  const nextText = String(top.num + 1)
+  const padded = nextText.length < top.width ? nextText.padStart(top.width, '0') : nextText
+  return `${top.prefix}${padded}${top.suffix}`
 }

@@ -21,9 +21,24 @@ export const findBookById = async (id) => {
   return data
 }
 
+/** Finds books in a library whose nomor_inventaris matches any of the given (non-empty) numbers. */
+export const findBooksByNomorInventaris = async (libraryId, numbers) => {
+  if (numbers.length === 0) return []
+  const { data, error } = await supabase
+    .from('books')
+    .select('id, nomor_inventaris')
+    .eq('library_id', libraryId)
+    .in('nomor_inventaris', numbers)
+
+  if (error) throw error
+  return data
+}
+
+const DUPLICATE_NOMOR_MESSAGE = 'Nomor inventaris sudah dipakai buku lain di perpustakaan ini.'
+
 export const createBooks = async (payloads) => {
   const { data, error } = await supabase.from('books').insert(payloads).select(COLUMNS)
-  if (error) throw error
+  if (error) throw error.code === '23505' ? new Error(DUPLICATE_NOMOR_MESSAGE) : error
   return data
 }
 
@@ -35,7 +50,7 @@ export const updateBook = async (id, payload) => {
     .select(COLUMNS)
     .single()
 
-  if (error) throw error
+  if (error) throw error.code === '23505' ? new Error(DUPLICATE_NOMOR_MESSAGE) : error
   return data
 }
 

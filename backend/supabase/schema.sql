@@ -132,6 +132,21 @@ end $$;
 -- Jadikan tiap baris seperti itu sebagai batch tunggal berisi dirinya sendiri.
 update books set batch_id = id where batch_id is null;
 
+-- Nomor inventaris tidak boleh sama untuk dua buku dalam perpustakaan yang sama. Nilai kosong
+-- dikecualikan (partial index) karena banyak buku belum diberi nomor inventaris. Backend juga
+-- memvalidasi ini lebih dulu (lihat books.service.js) supaya pesan errornya ramah pengguna;
+-- index ini adalah jaring pengaman di level database.
+-- Jika baris ini gagal karena "could not create unique index ... duplicate key", cek dulu
+-- duplikatnya dengan query berikut, lalu perbaiki manual sebelum menjalankan ulang:
+--   select library_id, nomor_inventaris, count(*)
+--   from books
+--   where nomor_inventaris <> ''
+--   group by library_id, nomor_inventaris
+--   having count(*) > 1;
+create unique index if not exists books_library_nomor_inventaris_idx
+  on books (library_id, nomor_inventaris)
+  where nomor_inventaris <> '';
+
 -- Tabel riwayat aktivitas
 create table if not exists activity_log (
   id uuid primary key default gen_random_uuid(),
