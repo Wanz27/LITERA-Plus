@@ -6,11 +6,9 @@ export interface ChangelogEntry {
   changes: { type: ChangeType; text: string }[]
 }
 
-export const APP_VERSION = '1.4.0'
-
 export const changelog: ChangelogEntry[] = [
   {
-    version: '1.4.0',
+    version: '2.0.0',
     date: '2026-07-14',
     changes: [
       { type: 'Baru', text: 'Menambahkan fitur profile.' },
@@ -19,7 +17,7 @@ export const changelog: ChangelogEntry[] = [
     ],
   },
   {
-    version: '1.3.0',
+    version: '1.1.0',
     date: '2026-07-13',
     changes: [
       { type: 'Baru', text: 'Pemindai barcode ISBN saat menambah data buku.' },
@@ -27,7 +25,7 @@ export const changelog: ChangelogEntry[] = [
     ],
   },
   {
-    version: '1.2.0',
+    version: '1.0.2',
     date: '2026-07-13',
     changes: [
       { type: 'Peningkatan', text: 'Berbagai perbaikan tampilan (UI) di seluruh halaman.' },
@@ -35,10 +33,9 @@ export const changelog: ChangelogEntry[] = [
     ],
   },
   {
-    version: '1.1.0',
+    version: '1.0.1',
     date: '2026-07-13',
     changes: [
-      { type: 'Baru', text: 'Unggah foto cover buku langsung dari kamera.' },
       { type: 'Peningkatan', text: 'Kompresi otomatis gambar cover buku agar lebih ringan.' },
     ],
   },
@@ -46,7 +43,10 @@ export const changelog: ChangelogEntry[] = [
     version: '1.0.0',
     date: '2026-07-12',
     changes: [
+      { type: 'Baru', text: 'Unggah foto cover buku langsung dari kamera.' },      
       { type: 'Baru', text: 'Rilis awal LITERA+: manajemen perpustakaan, koleksi buku, dan riwayat aktivitas.' },
     ],
   },
 ]
+
+export const APP_VERSION = changelog[0].version
