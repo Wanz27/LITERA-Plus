@@ -1,4 +1,4 @@
-import type { BookKondisi } from './api'
+import type { Book, BookKondisi } from './api'
 
 export const kondisiOptions: BookKondisi[] = ['Bagus', 'Rusak']
 
@@ -82,4 +82,32 @@ export function generateCallNumber(kodeKlasifikasi: string, penulis: string, jud
   const titleLetter = judul.trim().charAt(0).toLowerCase()
   if (!classMatch && !authorLetters && !titleLetter) return '-'
   return `${classDigits} ${authorLetters || '---'} ${titleLetter || '-'}`
+}
+
+/**
+ * Groups books added together in the same "Tambah Buku" batch (same batch_id), preserving
+ * each group's relative order from the input array (already sorted server-side by
+ * created_at + nomor_inventaris).
+ */
+export function groupBooksByBatch(books: Book[]): Book[][] {
+  const groups = new Map<string, Book[]>()
+  const order: string[] = []
+  for (const book of books) {
+    const key = book.batch_id || book.id
+    if (!groups.has(key)) {
+      groups.set(key, [])
+      order.push(key)
+    }
+    groups.get(key)!.push(book)
+  }
+  return order.map((key) => groups.get(key)!)
+}
+
+/** Summarizes a batch's individual inventory numbers as "first - last" (or a single value). */
+export function summarizeInventoryNumbers(numbers: string[]): string {
+  const filled = numbers.map((n) => n.trim()).filter(Boolean)
+  if (filled.length === 0) return '-'
+  const first = filled[0]
+  const last = filled[filled.length - 1]
+  return first === last ? first : `${first} - ${last}`
 }

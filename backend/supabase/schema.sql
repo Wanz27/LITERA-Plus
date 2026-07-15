@@ -60,6 +60,78 @@ alter table books add column if not exists subjek text not null default '';
 alter table books add column if not exists bahasa text not null default '';
 alter table books add column if not exists cover_url text not null default '';
 
+-- batch_id mengelompokkan eksemplar yang ditambahkan bersamaan dalam satu kali "Tambah Buku",
+-- supaya List Buku bisa menampilkannya sebagai satu baris ringkas (judul + jumlah + rentang
+-- nomor inventaris), sementara tiap eksemplar tetap 1 baris sendiri agar bisa diedit/dihapus
+-- satu-satu lewat modal detail (navigasi Berikutnya/Sebelumnya).
+alter table books add column if not exists batch_id uuid;
+create index if not exists books_batch_id_idx on books (batch_id);
+
+-- Migrasi satu-kali: sebelumnya 1 baris buku bisa mewakili banyak eksemplar sekaligus
+-- (kolom jumlah > 1 dengan nomor_inventaris berupa rentang, mis. "INV-01 - INV-03"). Sekarang
+-- 1 baris = 1 eksemplar fisik, supaya tiap eksemplar bisa ditampilkan, diedit, dan dihapus
+-- sendiri-sendiri. Blok ini memecah baris lama menjadi baris-baris individual dengan nomor
+-- inventaris berurutan, dan memberi mereka batch_id yang sama supaya tetap tampil sebagai satu
+-- baris ringkas di List Buku. Aman dijalankan berulang kali: setelah migrasi tidak ada lagi
+-- baris dengan jumlah > 1, sehingga loop di bawah tidak menemukan baris untuk diproses.
+do $$
+declare
+  r record;
+  i integer;
+  m text[];
+  prefix text;
+  digits text;
+  suffix text;
+  width integer;
+  start_num integer;
+  num_text text;
+  new_nomor text;
+  group_batch_id uuid;
+begin
+  for r in select * from books where jumlah > 1 loop
+    m := regexp_match(r.nomor_inventaris, '^(.*?)([0-9]+)([^0-9]*)$');
+    group_batch_id := gen_random_uuid();
+
+    for i in 1..r.jumlah loop
+      if m is null then
+        new_nomor := r.nomor_inventaris;
+      else
+        prefix := m[1];
+        digits := m[2];
+        suffix := m[3];
+        width := length(digits);
+        start_num := digits::integer;
+        -- lpad() truncates strings longer than `width` (unlike JS padStart), so once the
+        -- incremented number outgrows the original digit width (e.g. INV-98 .. INV-102),
+        -- only pad when it still fits to avoid mangling the number.
+        num_text := (start_num + i - 1)::text;
+        if length(num_text) < width then
+          num_text := lpad(num_text, width, '0');
+        end if;
+        new_nomor := prefix || num_text || suffix;
+      end if;
+
+      if i = 1 then
+        update books set jumlah = 1, nomor_inventaris = new_nomor, batch_id = group_batch_id where id = r.id;
+      else
+        insert into books (
+          library_id, judul, penulis, penerbit, tahun_terbit, isbn, kode_klasifikasi,
+          kondisi, subjek, bahasa, jumlah, nomor_inventaris, jumlah_halaman, ukuran_buku,
+          ilustrasi, cover_url, batch_id
+        ) values (
+          r.library_id, r.judul, r.penulis, r.penerbit, r.tahun_terbit, r.isbn, r.kode_klasifikasi,
+          r.kondisi, r.subjek, r.bahasa, 1, new_nomor, r.jumlah_halaman, r.ukuran_buku,
+          r.ilustrasi, r.cover_url, group_batch_id
+        );
+      end if;
+    end loop;
+  end loop;
+end $$;
+
+-- Backfill: baris lama yang belum pernah dipecah (jumlah selalu 1) belum punya batch_id.
+-- Jadikan tiap baris seperti itu sebagai batch tunggal berisi dirinya sendiri.
+update books set batch_id = id where batch_id is null;
+
 -- Tabel riwayat aktivitas
 create table if not exists activity_log (
   id uuid primary key default gen_random_uuid(),

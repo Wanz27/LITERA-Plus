@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { X, Upload, Link2, ImageOff, Camera } from 'lucide-react'
+import { X, Upload, Link2, ImageOff, Camera, Info } from 'lucide-react'
 import imageCompression from 'browser-image-compression'
 import type { Book, BookKondisi } from '../lib/api'
 import { uploadBookCover } from '../lib/api'
@@ -96,12 +96,15 @@ export default function BookFormModal({ initial, onClose, onSubmit }: Props) {
     setCoverImgError(false)
   }, [coverUrl])
 
+  const isEditing = !!initial
   const isCustomKlasifikasi = klasifikasiPreset === CUSTOM_KLASIFIKASI_VALUE
   const kodeKlasifikasiFinal = isCustomKlasifikasi
     ? `${klasifikasiCustomNumber.trim()} - ${klasifikasiCustomText.trim()}`
     : klasifikasiPreset
 
-  const nomorInventarisFinal = generateInventoryRange(nomorInventarisAwal, Number(jumlah) || 1)
+  const jumlahNum = Math.max(1, Number(jumlah) || 1)
+  // Preview-only: each copy gets its own row/inventory number server-side (see books.service.js).
+  const nomorInventarisPreview = generateInventoryRange(nomorInventarisAwal, jumlahNum)
 
   async function handleCoverFile(file: File) {
     setCoverError(null)
@@ -153,7 +156,7 @@ export default function BookFormModal({ initial, onClose, onSubmit }: Props) {
         subjek: subjek.trim(),
         bahasa: bahasa.trim(),
         jumlah: jumlah.trim(),
-        nomor_inventaris: nomorInventarisFinal,
+        nomor_inventaris: nomorInventarisAwal.trim(),
         jumlah_halaman: jumlahHalaman.trim(),
         ukuran_buku: ukuranBuku.trim(),
         ilustrasi,
@@ -315,22 +318,30 @@ export default function BookFormModal({ initial, onClose, onSubmit }: Props) {
                 value={jumlah}
                 onChange={(e) => setJumlah(e.target.value)}
                 placeholder="1"
-                className={inputClass}
+                disabled={isEditing}
+                className={`${inputClass} ${isEditing ? 'cursor-not-allowed opacity-60' : ''}`}
               />
+              {isEditing && (
+                <p className="mt-1 text-xs text-slate-400">
+                  Tiap buku tersimpan sebagai eksemplar sendiri. Gunakan "Tambah Buku" untuk menambah eksemplar baru.
+                </p>
+              )}
             </div>
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <label className={labelClass}>Nomor Inventaris</label>
+              <label className={labelClass}>
+                {!isEditing && jumlahNum > 1 ? 'Nomor Inventaris Awal' : 'Nomor Inventaris'}
+              </label>
               <input
                 value={nomorInventarisAwal}
                 onChange={(e) => setNomorInventarisAwal(e.target.value)}
                 placeholder="INV-0001"
                 className={inputClass}
               />
-              {nomorInventarisFinal && (
-                <p className="mt-1 text-xs text-slate-500">Tersimpan sebagai: {nomorInventarisFinal}</p>
+              {!isEditing && jumlahNum > 1 && (
+                <p className="mt-1 text-xs text-slate-400">Nomor untuk buku berikutnya dibuat otomatis secara berurutan.</p>
               )}
             </div>
             <div>
@@ -344,6 +355,16 @@ export default function BookFormModal({ initial, onClose, onSubmit }: Props) {
               />
             </div>
           </div>
+
+          {!isEditing && jumlahNum > 1 && nomorInventarisPreview && (
+            <div className="flex items-start gap-2 rounded-lg border border-sky-100 bg-sky-50 px-3 py-2 text-xs text-sky-800">
+              <Info size={14} className="mt-0.5 shrink-0" />
+              <p>
+                <span className="font-semibold">{jumlahNum} buku</span> akan disimpan sebagai eksemplar terpisah dengan
+                nomor inventaris berurutan: <span className="font-semibold">{nomorInventarisPreview}</span>
+              </p>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>

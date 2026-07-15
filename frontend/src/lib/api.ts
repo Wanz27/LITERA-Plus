@@ -44,6 +44,7 @@ export interface Book {
   ukuran_buku: string
   ilustrasi: string
   cover_url: string
+  batch_id: string
   created_at: string
 }
 
@@ -163,7 +164,7 @@ export const getBooks = (libraryId: string) =>
   request<Book[]>(`/books?library_id=${encodeURIComponent(libraryId)}`)
 
 export const createBook = (payload: BookInput) =>
-  request<Book>('/books', {
+  request<Book[]>('/books', {
     method: 'POST',
     body: JSON.stringify(payload),
   })

@@ -10,7 +10,7 @@ import {
   Clock,
   User,
   SlidersHorizontal,
-  Trash2,
+  Eye,
   ZoomIn,
 } from 'lucide-react'
 import DashboardLayout from '../layout/DashboardLayout'
@@ -23,7 +23,13 @@ import ExportReportMenu from '../components/ExportReportMenu'
 import * as api from '../lib/api'
 import type { ActivityLog, Book, BookKondisi, Library, LibraryStatus, LibraryType } from '../lib/api'
 import { typeIcon, StatusBadge } from '../lib/libraryUi'
-import { klasifikasiOptions, klasifikasiMainClass, generateCallNumber } from '../lib/bookUi'
+import {
+  klasifikasiOptions,
+  klasifikasiMainClass,
+  generateCallNumber,
+  groupBooksByBatch,
+  summarizeInventoryNumbers,
+} from '../lib/bookUi'
 
 const FACILITY_IMAGE =
   'https://images.unsplash.com/photo-1521587760476-6c12a4b040da?auto=format&fit=crop&w=1200&q=80'
@@ -62,7 +68,8 @@ export default function LibraryDetailPage() {
   const [bookKondisiFilter, setBookKondisiFilter] = React.useState<'Semua' | BookKondisi>('Semua')
   const [bookKlasifikasiFilter, setBookKlasifikasiFilter] = React.useState('Semua')
   const [previewBook, setPreviewBook] = React.useState<Book | null>(null)
-  const [detailBook, setDetailBook] = React.useState<Book | null>(null)
+  const [detailGroup, setDetailGroup] = React.useState<Book[] | null>(null)
+  const [detailIndex, setDetailIndex] = React.useState(0)
   const [bookToDelete, setBookToDelete] = React.useState<Book | null>(null)
   const [deletingBook, setDeletingBook] = React.useState(false)
 
@@ -220,6 +227,9 @@ export default function LibraryDetailPage() {
   })
   const bookFiltersActive =
     bookSearchLower !== '' || bookKondisiFilter !== 'Semua' || bookKlasifikasiFilter !== 'Semua'
+
+  const groupedBookRows = groupBooksByBatch(filteredBooks)
+  const totalGroupCount = groupBooksByBatch(books).length
 
   const relatedActivity = activity
     .filter((log) => `${log.aksi} ${log.detail}`.toLowerCase().includes(library.nama.toLowerCase()))
@@ -458,8 +468,8 @@ export default function LibraryDetailPage() {
           <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-6 py-4">
               <h3 className="font-bold text-slate-900">
-                Koleksi Buku ({filteredBooks.length}
-                {bookFiltersActive ? ` dari ${books.length}` : ''})
+                Koleksi Buku ({groupedBookRows.length}
+                {bookFiltersActive ? ` dari ${totalGroupCount}` : ''})
               </h3>
               <button
                 onClick={() => {
@@ -514,13 +524,13 @@ export default function LibraryDetailPage() {
               )}
             </div>
 
-            {filteredBooks.length === 0 && (
+            {groupedBookRows.length === 0 && (
               <p className="px-6 py-10 text-center text-sm text-slate-400">
                 Tidak ada buku yang cocok dengan filter.
               </p>
             )}
 
-            {filteredBooks.length > 0 && (
+            {groupedBookRows.length > 0 && (
             <div className="overflow-x-auto">
               <table className="w-full text-left">
                 <thead>
@@ -542,89 +552,107 @@ export default function LibraryDetailPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredBooks.map((book) => (
-                    <tr
-                      key={book.id}
-                      onClick={() => setDetailBook(book)}
-                      className="cursor-pointer border-b border-slate-100 last:border-b-0 hover:bg-slate-50/60"
-                    >
-                      <td className="px-6 py-3">
-                        {book.cover_url ? (
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setPreviewBook(book)
-                            }}
-                            className="group relative block h-14 w-10 shrink-0 overflow-hidden rounded shadow-sm"
-                            aria-label={`Lihat cover ${book.judul}`}
-                          >
-                            <img
-                              src={book.cover_url}
-                              alt={book.judul}
-                              className="h-full w-full object-cover transition group-hover:brightness-75"
-                            />
-                            <span className="absolute inset-0 flex items-center justify-center opacity-0 transition group-hover:opacity-100">
-                              <ZoomIn size={16} className="text-white drop-shadow" />
+                  {groupedBookRows.map((group) => {
+                    const book = group[0]
+                    const kondisiCounts = group.reduce<Record<string, number>>((acc, b) => {
+                      acc[b.kondisi] = (acc[b.kondisi] || 0) + 1
+                      return acc
+                    }, {})
+                    const kondisiKeys = Object.keys(kondisiCounts)
+                    return (
+                      <tr
+                        key={book.batch_id || book.id}
+                        onClick={() => {
+                          setDetailGroup(group)
+                          setDetailIndex(0)
+                        }}
+                        className="cursor-pointer border-b border-slate-100 last:border-b-0 hover:bg-slate-50/60"
+                      >
+                        <td className="px-6 py-3">
+                          {book.cover_url ? (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setPreviewBook(book)
+                              }}
+                              className="group relative block h-14 w-10 shrink-0 overflow-hidden rounded shadow-sm"
+                              aria-label={`Lihat cover ${book.judul}`}
+                            >
+                              <img
+                                src={book.cover_url}
+                                alt={book.judul}
+                                className="h-full w-full object-cover transition group-hover:brightness-75"
+                              />
+                              <span className="absolute inset-0 flex items-center justify-center opacity-0 transition group-hover:opacity-100">
+                                <ZoomIn size={16} className="text-white drop-shadow" />
+                              </span>
+                            </button>
+                          ) : (
+                            <div className="grid h-14 w-10 place-items-center rounded bg-slate-100 text-slate-300">
+                              <BookOpen size={16} />
+                            </div>
+                          )}
+                        </td>
+                        <td className="px-6 py-3 text-sm font-medium text-slate-800">{book.judul}</td>
+                        <td className="px-6 py-3 text-sm text-slate-600">{book.penulis}</td>
+                        <td className="px-6 py-3 text-sm text-slate-600">{book.penerbit || '-'}</td>
+                        <td className="px-6 py-3 text-sm text-slate-600">{book.tahun_terbit ?? '-'}</td>
+                        <td className="px-6 py-3 text-sm text-slate-600">{book.isbn || '-'}</td>
+                        <td className="px-6 py-3 text-sm text-slate-600">{book.kode_klasifikasi || '-'}</td>
+                        <td className="px-6 py-3">
+                          {kondisiKeys.length === 1 ? (
+                            <span
+                              className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                                kondisiKeys[0] === 'Rusak'
+                                  ? 'bg-rose-100 text-rose-700'
+                                  : 'bg-emerald-100 text-emerald-700'
+                              }`}
+                            >
+                              {kondisiKeys[0]}
                             </span>
-                          </button>
-                        ) : (
-                          <div className="grid h-14 w-10 place-items-center rounded bg-slate-100 text-slate-300">
-                            <BookOpen size={16} />
+                          ) : (
+                            <div className="flex flex-wrap gap-1">
+                              {kondisiKeys.map((k) => (
+                                <span
+                                  key={k}
+                                  className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+                                    k === 'Rusak' ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'
+                                  }`}
+                                >
+                                  {k} {kondisiCounts[k]}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </td>
+                        <td className="px-6 py-3 text-sm text-slate-600">{book.subjek || '-'}</td>
+                        <td className="px-6 py-3 text-sm text-slate-600">{book.bahasa || '-'}</td>
+                        <td className="px-6 py-3 text-sm text-slate-600">{group.length}</td>
+                        <td className="px-6 py-3 text-sm text-slate-600">
+                          {summarizeInventoryNumbers(group.map((b) => b.nomor_inventaris))}
+                        </td>
+                        <td className="px-6 py-3 text-sm font-mono text-slate-600">
+                          {generateCallNumber(book.kode_klasifikasi, book.penulis, book.judul)}
+                        </td>
+                        <td className="px-6 py-3">
+                          <div className="flex items-center justify-end">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setDetailGroup(group)
+                                setDetailIndex(0)
+                              }}
+                              className="text-slate-400 hover:text-sky-700"
+                              aria-label="Lihat detail buku"
+                            >
+                              <Eye size={16} />
+                            </button>
                           </div>
-                        )}
-                      </td>
-                      <td className="px-6 py-3 text-sm font-medium text-slate-800">{book.judul}</td>
-                      <td className="px-6 py-3 text-sm text-slate-600">{book.penulis}</td>
-                      <td className="px-6 py-3 text-sm text-slate-600">{book.penerbit || '-'}</td>
-                      <td className="px-6 py-3 text-sm text-slate-600">{book.tahun_terbit ?? '-'}</td>
-                      <td className="px-6 py-3 text-sm text-slate-600">{book.isbn || '-'}</td>
-                      <td className="px-6 py-3 text-sm text-slate-600">{book.kode_klasifikasi || '-'}</td>
-                      <td className="px-6 py-3">
-                        <span
-                          className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
-                            book.kondisi === 'Rusak'
-                              ? 'bg-rose-100 text-rose-700'
-                              : 'bg-emerald-100 text-emerald-700'
-                          }`}
-                        >
-                          {book.kondisi}
-                        </span>
-                      </td>
-                      <td className="px-6 py-3 text-sm text-slate-600">{book.subjek || '-'}</td>
-                      <td className="px-6 py-3 text-sm text-slate-600">{book.bahasa || '-'}</td>
-                      <td className="px-6 py-3 text-sm text-slate-600">{book.jumlah}</td>
-                      <td className="px-6 py-3 text-sm text-slate-600">{book.nomor_inventaris || '-'}</td>
-                      <td className="px-6 py-3 text-sm font-mono text-slate-600">
-                        {generateCallNumber(book.kode_klasifikasi, book.penulis, book.judul)}
-                      </td>
-                      <td className="px-6 py-3">
-                        <div className="flex items-center justify-end gap-3">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setEditingBook(book)
-                              setBookModalOpen(true)
-                            }}
-                            className="text-slate-400 hover:text-sky-700"
-                            aria-label="Ubah buku"
-                          >
-                            <Pencil size={16} />
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setBookToDelete(book)
-                            }}
-                            className="text-slate-400 hover:text-rose-600"
-                            aria-label="Hapus buku"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                        </td>
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </table>
             </div>
@@ -683,17 +711,19 @@ export default function LibraryDetailPage() {
         />
       )}
 
-      {detailBook && (
+      {detailGroup && (
         <BookDetailModal
-          book={detailBook}
-          onClose={() => setDetailBook(null)}
+          key={detailGroup[0]?.batch_id || detailGroup[0]?.id}
+          books={detailGroup}
+          initialIndex={detailIndex}
+          onClose={() => setDetailGroup(null)}
           onEdit={(book) => {
-            setDetailBook(null)
+            setDetailGroup(null)
             setEditingBook(book)
             setBookModalOpen(true)
           }}
           onDelete={(book) => {
-            setDetailBook(null)
+            setDetailGroup(null)
             setBookToDelete(book)
           }}
         />

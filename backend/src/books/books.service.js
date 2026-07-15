@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import * as booksRepo from './books.repository.js'
 import * as librariesRepo from '../libraries/libraries.repository.js'
 import * as activityRepo from '../activity/activity.repository.js'
@@ -22,6 +23,22 @@ function toIntOrNull(value) {
   return Number.isFinite(n) ? Math.trunc(n) : null
 }
 
+/**
+ * Expands a starting inventory number into `count` individual numbers by incrementing its
+ * trailing numeric run (e.g. "INV-01" x3 -> ["INV-01", "INV-02", "INV-03"]). Falls back to
+ * repeating the same value when no numeric run is found.
+ */
+function expandInventoryNumbers(start, count) {
+  const trimmed = (start || '').trim()
+  if (!trimmed) return Array.from({ length: count }, () => '')
+  const match = trimmed.match(/^(.*?)(\d+)(\D*)$/)
+  if (!match) return Array.from({ length: count }, () => trimmed)
+  const [, prefix, digits, suffix] = match
+  const width = digits.length
+  const startNum = parseInt(digits, 10)
+  return Array.from({ length: count }, (_, i) => `${prefix}${String(startNum + i).padStart(width, '0')}${suffix}`)
+}
+
 async function adjustLibraryTotal(libraryId, delta) {
   if (!delta) return
   const library = await librariesRepo.findLibraryById(libraryId)
@@ -43,7 +60,7 @@ export const create = async (payload, actor) => {
 
   const jumlah = payload.jumlah !== undefined && payload.jumlah !== '' ? Number(payload.jumlah) : 1
 
-  const book = await booksRepo.createBook({
+  const basePayload = {
     library_id: payload.library_id,
     judul: payload.judul.trim(),
     penulis: payload.penulis.trim(),
@@ -54,23 +71,32 @@ export const create = async (payload, actor) => {
     kondisi: payload.kondisi || 'Bagus',
     subjek: payload.subjek?.trim() || '',
     bahasa: payload.bahasa?.trim() || '',
-    jumlah,
-    nomor_inventaris: payload.nomor_inventaris?.trim() || '',
     jumlah_halaman: toIntOrNull(payload.jumlah_halaman),
     ukuran_buku: payload.ukuran_buku?.trim() || '',
     ilustrasi: payload.ilustrasi?.trim() || '',
     cover_url: payload.cover_url?.trim() || '',
-  })
+  }
 
-  await adjustLibraryTotal(book.library_id, jumlah)
+  const inventoryNumbers = expandInventoryNumbers(payload.nomor_inventaris, jumlah)
+  const batchId = randomUUID()
+  const rows = inventoryNumbers.map((nomor_inventaris) => ({
+    ...basePayload,
+    jumlah: 1,
+    nomor_inventaris,
+    batch_id: batchId,
+  }))
+
+  const books = await booksRepo.createBooks(rows)
+
+  await adjustLibraryTotal(payload.library_id, jumlah)
 
   await activityRepo.createActivity({
     aksi: 'Menambahkan Buku',
-    detail: `${book.judul} (${jumlah} eksemplar) ditambahkan ke ${library.nama}.`,
+    detail: `${basePayload.judul} (${jumlah} eksemplar) ditambahkan ke ${library.nama}.`,
     pelaku: actor?.full_name || 'Admin',
   })
 
-  return book
+  return books
 }
 
 export const update = async (id, payload, actor) => {
