@@ -356,18 +356,18 @@ export default function BookFormModal({
                   Buku dengan ISBN ini sudah terdaftar: <span className="font-semibold">{isbnMatch.judul}</span> oleh{' '}
                   {isbnMatch.penulis}. Gunakan data yang sama dan lanjutkan nomor inventaris?
                 </p>
-                <div className="mt-1.5 flex gap-3">
+                <div className="mt-2 flex gap-2">
                   <button
                     type="button"
                     onClick={applyIsbnSuggestion}
-                    className="font-semibold text-sky-700 hover:underline"
+                    className="rounded-md bg-sky-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-sky-800"
                   >
                     Gunakan data buku ini
                   </button>
                   <button
                     type="button"
                     onClick={() => setAppliedIsbn(normalizedIsbn)}
-                    className="text-slate-500 hover:underline"
+                    className="rounded-md border border-sky-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50"
                   >
                     Isi manual
                   </button>
