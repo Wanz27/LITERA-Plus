@@ -31,7 +31,7 @@ export const bookSortOptions: { value: BookSort; label: string }[] = [
   { value: 'inventaris_desc', label: 'No. Inventaris (Terbesar)' },
 ]
 
-/** Sorts grouped book batches (as produced by groupBooksByBatch) by the chosen field/direction. */
+/** Sorts grouped book rows (as produced by groupBooksByIdentity) by the chosen field/direction. */
 export function sortBookGroups(groups: Book[][], sort: BookSort): Book[][] {
   const sorted = [...groups]
   sorted.sort((a, b) => {
@@ -178,18 +178,30 @@ function compareInventoryNumbers(a: string, b: string): number {
   return a.localeCompare(b)
 }
 
+/** Normalizes a value for identity comparison (trim + lowercase). */
+function normalizeIdentityValue(value: string): string {
+  return value.trim().toLowerCase()
+}
+
+/** Identifies copies of the same book: matched by ISBN when filled in, otherwise by judul+penulis. */
+function bookIdentityKey(book: Book): string {
+  const isbn = normalizeIdentityValue(book.isbn)
+  if (isbn) return `isbn:${isbn}`
+  return `judul-penulis:${normalizeIdentityValue(book.judul)}|${normalizeIdentityValue(book.penulis)}`
+}
+
 /**
- * Groups books added together in the same "Tambah Buku" batch (same batch_id), preserving the
- * order batches first appear in the input array, and sorting each batch's copies by inventory
- * number. Sorting is needed because a batch's rows aren't guaranteed to come back in ascending
- * inventory-number order (e.g. rows split by a past migration keep their original created_at, so
- * the server's created_at ordering doesn't align with the inventory numbers assigned to them).
+ * Groups copies of the same book together — matched by ISBN when filled in, otherwise by
+ * judul+penulis — preserving the order each book first appears in the input array, and sorting
+ * each group's copies by inventory number. This way, adding another copy of an already-listed
+ * book (a new "Tambah Buku" submission with a different nomor_inventaris) increases that book's
+ * displayed Jumlah instead of showing up as a separate row.
  */
-export function groupBooksByBatch(books: Book[]): Book[][] {
+export function groupBooksByIdentity(books: Book[]): Book[][] {
   const groups = new Map<string, Book[]>()
   const order: string[] = []
   for (const book of books) {
-    const key = book.batch_id || book.id
+    const key = bookIdentityKey(book)
     if (!groups.has(key)) {
       groups.set(key, [])
       order.push(key)
@@ -199,6 +211,23 @@ export function groupBooksByBatch(books: Book[]): Book[][] {
   return order.map((key) =>
     [...groups.get(key)!].sort((a, b) => compareInventoryNumbers(a.nomor_inventaris, b.nomor_inventaris)),
   )
+}
+
+/**
+ * Suggests the next inventory number to continue an existing sequence, based on the highest
+ * inventory number already used (e.g. "BB-01".."BB-03" already exist suggests "BB-04"). Used to
+ * continue numbering when adding another copy of a book that's already in the database (matched
+ * by ISBN). Returns null when there's nothing to continue from.
+ */
+export function nextInventoryNumberInSequence(numbers: string[]): string | null {
+  const filled = numbers.map((n) => n.trim()).filter(Boolean)
+  if (filled.length === 0) return null
+  const highest = [...filled].sort(compareInventoryNumbers)[filled.length - 1]
+  const match = highest.match(/^(.*?)(\d+)(\D*)$/)
+  if (!match) return null
+  const [, prefix, digits, suffix] = match
+  const nextNum = parseInt(digits, 10) + 1
+  return `${prefix}${String(nextNum).padStart(digits.length, '0')}${suffix}`
 }
 
 /** Summarizes a batch's individual inventory numbers as "lowest - highest" (or a single value). */

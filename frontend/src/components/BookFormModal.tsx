@@ -11,6 +11,7 @@ import {
   parseCustomKlasifikasi,
   generateInventoryRange,
   suggestNextInventoryNumber,
+  nextInventoryNumberInSequence,
 } from '../lib/bookUi'
 
 interface Props {
@@ -20,6 +21,7 @@ interface Props {
   existingPenerbit?: string[]
   existingSubjek?: string[]
   existingBahasa?: string[]
+  existingBooks?: Book[]
   onClose: () => void
   onSubmit: (payload: {
     judul: string
@@ -69,6 +71,7 @@ export default function BookFormModal({
   existingPenerbit = [],
   existingSubjek = [],
   existingBahasa = [],
+  existingBooks = [],
   onClose,
   onSubmit,
 }: Props) {
@@ -97,6 +100,7 @@ export default function BookFormModal({
   )
   const [saving, setSaving] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
+  const [appliedIsbn, setAppliedIsbn] = React.useState<string | null>(null)
 
   const [coverMode, setCoverMode] = React.useState<'upload' | 'url'>('upload')
   const [coverUrl, setCoverUrl] = React.useState(initial?.cover_url ?? '')
@@ -125,6 +129,35 @@ export default function BookFormModal({
     : suggestNextInventoryNumber(nomorInventarisAwal, existingNumbers)
   const showSuggestion =
     !!nomorInventarisSuggestion && nomorInventarisSuggestion !== nomorInventarisAwal.trim()
+
+  const normalizedIsbn = isbn.trim().toLowerCase()
+  const matchingBooksByIsbn = normalizedIsbn
+    ? existingBooks.filter((b) => b.isbn.trim().toLowerCase() === normalizedIsbn)
+    : []
+  const isbnMatch = !isEditing ? matchingBooksByIsbn[0] : undefined
+  const showIsbnSuggestion = !!isbnMatch && appliedIsbn !== normalizedIsbn
+
+  function applyIsbnSuggestion() {
+    if (!isbnMatch) return
+    setJudul(isbnMatch.judul)
+    setPenulis(isbnMatch.penulis)
+    setPenerbit(isbnMatch.penerbit)
+    setTahunTerbit(isbnMatch.tahun_terbit?.toString() ?? '')
+    const klasifikasi = initialKlasifikasiState(isbnMatch.kode_klasifikasi)
+    setKlasifikasiPreset(klasifikasi.isCustom ? CUSTOM_KLASIFIKASI_VALUE : klasifikasi.preset)
+    setKlasifikasiCustomNumber(klasifikasi.customNumber)
+    setKlasifikasiCustomText(klasifikasi.customText)
+    setKondisi(isbnMatch.kondisi)
+    setSubjek(isbnMatch.subjek)
+    setBahasa(isbnMatch.bahasa)
+    setJumlahHalaman(isbnMatch.jumlah_halaman?.toString() ?? '')
+    setUkuranBuku(isbnMatch.ukuran_buku)
+    setIlustrasi(isbnMatch.ilustrasi === 'Ada' || isbnMatch.ilustrasi === 'Tidak ada' ? isbnMatch.ilustrasi : 'Tidak ada')
+    setCoverUrl(isbnMatch.cover_url)
+    const continuation = nextInventoryNumberInSequence(matchingBooksByIsbn.map((b) => b.nomor_inventaris))
+    if (continuation) setNomorInventarisAwal(continuation)
+    setAppliedIsbn(normalizedIsbn)
+  }
 
   async function handleCoverFile(file: File) {
     setCoverError(null)
@@ -314,6 +347,34 @@ export default function BookFormModal({
               </select>
             </div>
           </div>
+
+          {showIsbnSuggestion && isbnMatch && (
+            <div className="flex items-start gap-2 rounded-lg border border-sky-100 bg-sky-50 px-3 py-2 text-xs text-sky-800">
+              <Info size={14} className="mt-0.5 shrink-0" />
+              <div className="flex-1">
+                <p>
+                  Buku dengan ISBN ini sudah terdaftar: <span className="font-semibold">{isbnMatch.judul}</span> oleh{' '}
+                  {isbnMatch.penulis}. Gunakan data yang sama dan lanjutkan nomor inventaris?
+                </p>
+                <div className="mt-1.5 flex gap-3">
+                  <button
+                    type="button"
+                    onClick={applyIsbnSuggestion}
+                    className="font-semibold text-sky-700 hover:underline"
+                  >
+                    Gunakan data buku ini
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAppliedIsbn(normalizedIsbn)}
+                    className="text-slate-500 hover:underline"
+                  >
+                    Isi manual
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {isCustomKlasifikasi && (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-[auto_1fr]">

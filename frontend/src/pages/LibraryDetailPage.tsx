@@ -29,7 +29,7 @@ import {
   klasifikasiOptions,
   klasifikasiMainClass,
   generateCallNumber,
-  groupBooksByBatch,
+  groupBooksByIdentity,
   summarizeInventoryNumbers,
   distinctValues,
   sortBookGroups,
@@ -251,8 +251,8 @@ export default function LibraryDetailPage() {
     (bookBahasaFilter !== 'Semua' ? 1 : 0) +
     (bookSort !== DEFAULT_BOOK_SORT ? 1 : 0)
 
-  const groupedBookRows = sortBookGroups(groupBooksByBatch(filteredBooks), bookSort)
-  const totalGroupCount = groupBooksByBatch(books).length
+  const groupedBookRows = sortBookGroups(groupBooksByIdentity(filteredBooks), bookSort)
+  const totalGroupCount = groupBooksByIdentity(books).length
 
   const relatedActivity = activity
     .filter((log) => `${log.aksi} ${log.detail}`.toLowerCase().includes(library.nama.toLowerCase()))
@@ -721,6 +721,7 @@ export default function LibraryDetailPage() {
           existingPenerbit={distinctValues(books.map((b) => b.penerbit))}
           existingSubjek={distinctValues(books.map((b) => b.subjek))}
           existingBahasa={distinctValues(books.map((b) => b.bahasa))}
+          existingBooks={books}
           onClose={() => {
             setBookModalOpen(false)
             setEditingBook(null)
