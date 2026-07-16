@@ -10,6 +10,12 @@ interface Props {
   klasifikasiFilter: string
   onKlasifikasiChange: (value: string) => void
   klasifikasiChoices: string[]
+  subjekFilter: string
+  onSubjekChange: (value: string) => void
+  subjekChoices: string[]
+  bahasaFilter: string
+  onBahasaChange: (value: string) => void
+  bahasaChoices: string[]
   sort: BookSort
   onSortChange: (value: BookSort) => void
   activeCount: number
@@ -24,6 +30,12 @@ export default function BookFilterSortMenu({
   klasifikasiFilter,
   onKlasifikasiChange,
   klasifikasiChoices,
+  subjekFilter,
+  onSubjekChange,
+  subjekChoices,
+  bahasaFilter,
+  onBahasaChange,
+  bahasaChoices,
   sort,
   onSortChange,
   activeCount,
@@ -95,7 +107,7 @@ export default function BookFilterSortMenu({
           <div
             ref={panelRef}
             style={panelStyle}
-            className="z-50 rounded-xl border border-slate-200 bg-white p-4 shadow-lg"
+            className="z-50 max-h-[80vh] overflow-y-auto rounded-xl border border-slate-200 bg-white p-4 shadow-lg"
           >
             <div className="mb-4">
               <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Kondisi</p>
@@ -130,6 +142,42 @@ export default function BookFilterSortMenu({
                 {klasifikasiChoices.map((code) => (
                   <option key={code} value={code}>
                     {klasifikasiOptions.find((k) => k.value === code)?.label ?? code}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="mb-4">
+              <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Subjek
+              </label>
+              <select
+                value={subjekFilter}
+                onChange={(e) => onSubjekChange(e.target.value)}
+                className="h-9 w-full rounded-lg border border-slate-200 bg-white px-2.5 text-sm focus:border-violet-600 focus:outline-none focus:ring-2 focus:ring-violet-600/20"
+              >
+                <option value="Semua">Semua Subjek</option>
+                {subjekChoices.map((subjek) => (
+                  <option key={subjek} value={subjek}>
+                    {subjek}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="mb-4">
+              <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Bahasa
+              </label>
+              <select
+                value={bahasaFilter}
+                onChange={(e) => onBahasaChange(e.target.value)}
+                className="h-9 w-full rounded-lg border border-slate-200 bg-white px-2.5 text-sm focus:border-violet-600 focus:outline-none focus:ring-2 focus:ring-violet-600/20"
+              >
+                <option value="Semua">Semua Bahasa</option>
+                {bahasaChoices.map((bahasa) => (
+                  <option key={bahasa} value={bahasa}>
+                    {bahasa}
                   </option>
                 ))}
               </select>

@@ -1,16 +1,34 @@
 import type { Book, BookKondisi } from './api'
 
-export type BookSort = 'judul_asc' | 'judul_desc' | 'tahun_desc' | 'tahun_asc' | 'jumlah_desc' | 'jumlah_asc'
+export type BookSort =
+  | 'judul_asc'
+  | 'judul_desc'
+  | 'penulis_asc'
+  | 'penulis_desc'
+  | 'penerbit_asc'
+  | 'penerbit_desc'
+  | 'tahun_desc'
+  | 'tahun_asc'
+  | 'jumlah_desc'
+  | 'jumlah_asc'
+  | 'inventaris_asc'
+  | 'inventaris_desc'
 
 export const DEFAULT_BOOK_SORT: BookSort = 'judul_asc'
 
 export const bookSortOptions: { value: BookSort; label: string }[] = [
   { value: 'judul_asc', label: 'Judul (A-Z)' },
   { value: 'judul_desc', label: 'Judul (Z-A)' },
+  { value: 'penulis_asc', label: 'Penulis (A-Z)' },
+  { value: 'penulis_desc', label: 'Penulis (Z-A)' },
+  { value: 'penerbit_asc', label: 'Penerbit (A-Z)' },
+  { value: 'penerbit_desc', label: 'Penerbit (Z-A)' },
   { value: 'tahun_desc', label: 'Tahun Terbit (Terbaru)' },
   { value: 'tahun_asc', label: 'Tahun Terbit (Terlama)' },
   { value: 'jumlah_desc', label: 'Jumlah (Terbanyak)' },
   { value: 'jumlah_asc', label: 'Jumlah (Tersedikit)' },
+  { value: 'inventaris_asc', label: 'No. Inventaris (Terkecil)' },
+  { value: 'inventaris_desc', label: 'No. Inventaris (Terbesar)' },
 ]
 
 /** Sorts grouped book batches (as produced by groupBooksByBatch) by the chosen field/direction. */
@@ -24,6 +42,14 @@ export function sortBookGroups(groups: Book[][], sort: BookSort): Book[][] {
         return bookA.judul.localeCompare(bookB.judul)
       case 'judul_desc':
         return bookB.judul.localeCompare(bookA.judul)
+      case 'penulis_asc':
+        return bookA.penulis.localeCompare(bookB.penulis)
+      case 'penulis_desc':
+        return bookB.penulis.localeCompare(bookA.penulis)
+      case 'penerbit_asc':
+        return bookA.penerbit.localeCompare(bookB.penerbit)
+      case 'penerbit_desc':
+        return bookB.penerbit.localeCompare(bookA.penerbit)
       case 'tahun_desc':
         return (bookB.tahun_terbit ?? -Infinity) - (bookA.tahun_terbit ?? -Infinity)
       case 'tahun_asc':
@@ -32,6 +58,10 @@ export function sortBookGroups(groups: Book[][], sort: BookSort): Book[][] {
         return b.length - a.length
       case 'jumlah_asc':
         return a.length - b.length
+      case 'inventaris_asc':
+        return compareInventoryNumbers(bookA.nomor_inventaris, bookB.nomor_inventaris)
+      case 'inventaris_desc':
+        return compareInventoryNumbers(bookB.nomor_inventaris, bookA.nomor_inventaris)
       default:
         return 0
     }

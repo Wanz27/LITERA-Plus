@@ -73,6 +73,8 @@ export default function LibraryDetailPage() {
   const [bookSearch, setBookSearch] = React.useState('')
   const [bookKondisiFilter, setBookKondisiFilter] = React.useState<'Semua' | BookKondisi>('Semua')
   const [bookKlasifikasiFilter, setBookKlasifikasiFilter] = React.useState('Semua')
+  const [bookSubjekFilter, setBookSubjekFilter] = React.useState('Semua')
+  const [bookBahasaFilter, setBookBahasaFilter] = React.useState('Semua')
   const [bookSort, setBookSort] = React.useState<BookSort>(DEFAULT_BOOK_SORT)
   const [previewBook, setPreviewBook] = React.useState<Book | null>(null)
   const [detailGroup, setDetailGroup] = React.useState<Book[] | null>(null)
@@ -221,11 +223,15 @@ export default function LibraryDetailPage() {
   klasifikasiStats.sort((a, b) => b.pct - a.pct)
 
   const usedKlasifikasi = Array.from(new Set(books.map((b) => b.kode_klasifikasi).filter(Boolean)))
+  const usedSubjek = distinctValues(books.map((b) => b.subjek))
+  const usedBahasa = distinctValues(books.map((b) => b.bahasa))
 
   const bookSearchLower = bookSearch.trim().toLowerCase()
   const filteredBooks = books.filter((book) => {
     if (bookKondisiFilter !== 'Semua' && book.kondisi !== bookKondisiFilter) return false
     if (bookKlasifikasiFilter !== 'Semua' && book.kode_klasifikasi !== bookKlasifikasiFilter) return false
+    if (bookSubjekFilter !== 'Semua' && book.subjek !== bookSubjekFilter) return false
+    if (bookBahasaFilter !== 'Semua' && book.bahasa !== bookBahasaFilter) return false
     if (bookSearchLower) {
       const haystack = `${book.judul} ${book.penulis} ${book.isbn} ${book.penerbit}`.toLowerCase()
       if (!haystack.includes(bookSearchLower)) return false
@@ -233,10 +239,16 @@ export default function LibraryDetailPage() {
     return true
   })
   const bookFiltersActive =
-    bookSearchLower !== '' || bookKondisiFilter !== 'Semua' || bookKlasifikasiFilter !== 'Semua'
+    bookSearchLower !== '' ||
+    bookKondisiFilter !== 'Semua' ||
+    bookKlasifikasiFilter !== 'Semua' ||
+    bookSubjekFilter !== 'Semua' ||
+    bookBahasaFilter !== 'Semua'
   const bookFilterSortActiveCount =
     (bookKondisiFilter !== 'Semua' ? 1 : 0) +
     (bookKlasifikasiFilter !== 'Semua' ? 1 : 0) +
+    (bookSubjekFilter !== 'Semua' ? 1 : 0) +
+    (bookBahasaFilter !== 'Semua' ? 1 : 0) +
     (bookSort !== DEFAULT_BOOK_SORT ? 1 : 0)
 
   const groupedBookRows = sortBookGroups(groupBooksByBatch(filteredBooks), bookSort)
@@ -500,12 +512,20 @@ export default function LibraryDetailPage() {
                 klasifikasiFilter={bookKlasifikasiFilter}
                 onKlasifikasiChange={setBookKlasifikasiFilter}
                 klasifikasiChoices={usedKlasifikasi}
+                subjekFilter={bookSubjekFilter}
+                onSubjekChange={setBookSubjekFilter}
+                subjekChoices={usedSubjek}
+                bahasaFilter={bookBahasaFilter}
+                onBahasaChange={setBookBahasaFilter}
+                bahasaChoices={usedBahasa}
                 sort={bookSort}
                 onSortChange={setBookSort}
                 activeCount={bookFilterSortActiveCount}
                 onReset={() => {
                   setBookKondisiFilter('Semua')
                   setBookKlasifikasiFilter('Semua')
+                  setBookSubjekFilter('Semua')
+                  setBookBahasaFilter('Semua')
                   setBookSort(DEFAULT_BOOK_SORT)
                 }}
               />
@@ -515,6 +535,8 @@ export default function LibraryDetailPage() {
                     setBookSearch('')
                     setBookKondisiFilter('Semua')
                     setBookKlasifikasiFilter('Semua')
+                    setBookSubjekFilter('Semua')
+                    setBookBahasaFilter('Semua')
                     setBookSort(DEFAULT_BOOK_SORT)
                   }}
                   className="text-sm font-semibold text-sky-700 hover:text-sky-900"
