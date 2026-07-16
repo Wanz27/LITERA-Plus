@@ -12,6 +12,7 @@ import {
   SlidersHorizontal,
   Eye,
   ZoomIn,
+  Search,
 } from 'lucide-react'
 import DashboardLayout from '../layout/DashboardLayout'
 import LibraryFormModal from '../components/LibraryFormModal'
@@ -20,6 +21,7 @@ import CoverPreviewModal from '../components/CoverPreviewModal'
 import BookDetailModal from '../components/BookDetailModal'
 import ConfirmDialog from '../components/ConfirmDialog'
 import ExportReportMenu from '../components/ExportReportMenu'
+import BookFilterSortMenu from '../components/BookFilterSortMenu'
 import * as api from '../lib/api'
 import type { ActivityLog, Book, BookKondisi, Library, LibraryStatus, LibraryType } from '../lib/api'
 import { typeIcon, StatusBadge } from '../lib/libraryUi'
@@ -30,6 +32,9 @@ import {
   groupBooksByBatch,
   summarizeInventoryNumbers,
   distinctValues,
+  sortBookGroups,
+  DEFAULT_BOOK_SORT,
+  type BookSort,
 } from '../lib/bookUi'
 
 const FACILITY_IMAGE =
@@ -68,6 +73,7 @@ export default function LibraryDetailPage() {
   const [bookSearch, setBookSearch] = React.useState('')
   const [bookKondisiFilter, setBookKondisiFilter] = React.useState<'Semua' | BookKondisi>('Semua')
   const [bookKlasifikasiFilter, setBookKlasifikasiFilter] = React.useState('Semua')
+  const [bookSort, setBookSort] = React.useState<BookSort>(DEFAULT_BOOK_SORT)
   const [previewBook, setPreviewBook] = React.useState<Book | null>(null)
   const [detailGroup, setDetailGroup] = React.useState<Book[] | null>(null)
   const [detailIndex, setDetailIndex] = React.useState(0)
@@ -228,8 +234,12 @@ export default function LibraryDetailPage() {
   })
   const bookFiltersActive =
     bookSearchLower !== '' || bookKondisiFilter !== 'Semua' || bookKlasifikasiFilter !== 'Semua'
+  const bookFilterSortActiveCount =
+    (bookKondisiFilter !== 'Semua' ? 1 : 0) +
+    (bookKlasifikasiFilter !== 'Semua' ? 1 : 0) +
+    (bookSort !== DEFAULT_BOOK_SORT ? 1 : 0)
 
-  const groupedBookRows = groupBooksByBatch(filteredBooks)
+  const groupedBookRows = sortBookGroups(groupBooksByBatch(filteredBooks), bookSort)
   const totalGroupCount = groupBooksByBatch(books).length
 
   const relatedActivity = activity
@@ -475,39 +485,37 @@ export default function LibraryDetailPage() {
             </div>
 
             <div className="flex flex-wrap items-center gap-3 border-b border-slate-200 bg-slate-50 px-6 py-3">
-              <input
-                value={bookSearch}
-                onChange={(e) => setBookSearch(e.target.value)}
-                placeholder="Cari judul, penulis, ISBN..."
-                className="h-9 min-w-[200px] flex-1 rounded-lg border border-slate-200 bg-white px-3 text-sm focus:border-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-700/20"
+              <div className="relative min-w-[200px] flex-1">
+                <Search size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  value={bookSearch}
+                  onChange={(e) => setBookSearch(e.target.value)}
+                  placeholder="Cari judul, penulis, ISBN..."
+                  className="h-10 w-full rounded-full border border-slate-300 bg-white pl-10 pr-3 text-sm focus:border-violet-600 focus:outline-none focus:ring-2 focus:ring-violet-600/20"
+                />
+              </div>
+              <BookFilterSortMenu
+                kondisiFilter={bookKondisiFilter}
+                onKondisiChange={setBookKondisiFilter}
+                klasifikasiFilter={bookKlasifikasiFilter}
+                onKlasifikasiChange={setBookKlasifikasiFilter}
+                klasifikasiChoices={usedKlasifikasi}
+                sort={bookSort}
+                onSortChange={setBookSort}
+                activeCount={bookFilterSortActiveCount}
+                onReset={() => {
+                  setBookKondisiFilter('Semua')
+                  setBookKlasifikasiFilter('Semua')
+                  setBookSort(DEFAULT_BOOK_SORT)
+                }}
               />
-              <select
-                value={bookKondisiFilter}
-                onChange={(e) => setBookKondisiFilter(e.target.value as 'Semua' | BookKondisi)}
-                className="h-9 rounded-lg border border-slate-200 bg-white px-2.5 text-sm focus:border-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-700/20"
-              >
-                <option value="Semua">Semua Kondisi</option>
-                <option value="Bagus">Bagus</option>
-                <option value="Rusak">Rusak</option>
-              </select>
-              <select
-                value={bookKlasifikasiFilter}
-                onChange={(e) => setBookKlasifikasiFilter(e.target.value)}
-                className="h-9 rounded-lg border border-slate-200 bg-white px-2.5 text-sm focus:border-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-700/20"
-              >
-                <option value="Semua">Semua Klasifikasi</option>
-                {usedKlasifikasi.map((code) => (
-                  <option key={code} value={code}>
-                    {klasifikasiOptions.find((k) => k.value === code)?.label ?? code}
-                  </option>
-                ))}
-              </select>
-              {bookFiltersActive && (
+              {(bookFiltersActive || bookSort !== DEFAULT_BOOK_SORT) && (
                 <button
                   onClick={() => {
                     setBookSearch('')
                     setBookKondisiFilter('Semua')
                     setBookKlasifikasiFilter('Semua')
+                    setBookSort(DEFAULT_BOOK_SORT)
                   }}
                   className="text-sm font-semibold text-sky-700 hover:text-sky-900"
                 >
