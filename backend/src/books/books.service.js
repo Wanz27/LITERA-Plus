@@ -127,12 +127,25 @@ export const create = async (payload, actor) => {
   return books
 }
 
+/**
+ * `jumlah` is fixed at 1 per row once a book is created (each row is one physical copy; see the
+ * schema comment on `batch_id`). Editing it here instead of splitting into new rows would leave a
+ * single row representing multiple copies with only one nomor_inventaris, breaking the invariant
+ * that Total Buku (sum of jumlah) always matches the count of assigned inventory numbers. Adding
+ * copies must go through "Tambah Buku" (create), which fans them out into separate rows.
+ */
+function assertJumlahUnchanged(payload, existing) {
+  if (payload.jumlah === undefined || payload.jumlah === '') return
+  if (Number(payload.jumlah) !== existing.jumlah) {
+    throw new Error('Jumlah buku tidak bisa diubah lewat Edit Buku. Gunakan "Tambah Buku" untuk menambah eksemplar baru.')
+  }
+}
+
 export const update = async (id, payload, actor) => {
   const existing = await booksRepo.findBookById(id)
   if (!existing) throw new Error('Buku tidak ditemukan')
   validate({ ...existing, ...payload })
-
-  const nextJumlah = payload.jumlah !== undefined && payload.jumlah !== '' ? Number(payload.jumlah) : existing.jumlah
+  assertJumlahUnchanged(payload, existing)
 
   if (payload.nomor_inventaris !== undefined) {
     await assertNomorInventarisAvailable(existing.library_id, [payload.nomor_inventaris], id)
@@ -148,15 +161,12 @@ export const update = async (id, payload, actor) => {
     ...(payload.kondisi ? { kondisi: payload.kondisi } : {}),
     ...(payload.subjek !== undefined ? { subjek: payload.subjek.trim() } : {}),
     ...(payload.bahasa !== undefined ? { bahasa: payload.bahasa.trim() } : {}),
-    ...(payload.jumlah !== undefined ? { jumlah: nextJumlah } : {}),
     ...(payload.nomor_inventaris !== undefined ? { nomor_inventaris: payload.nomor_inventaris.trim() } : {}),
     ...(payload.jumlah_halaman !== undefined ? { jumlah_halaman: toIntOrNull(payload.jumlah_halaman) } : {}),
     ...(payload.ukuran_buku !== undefined ? { ukuran_buku: payload.ukuran_buku.trim() } : {}),
     ...(payload.ilustrasi !== undefined ? { ilustrasi: payload.ilustrasi.trim() } : {}),
     ...(payload.cover_url !== undefined ? { cover_url: payload.cover_url.trim() } : {}),
   })
-
-  await adjustLibraryTotal(book.library_id, nextJumlah - existing.jumlah)
 
   await activityRepo.createActivity({
     aksi: 'Mengubah Buku',

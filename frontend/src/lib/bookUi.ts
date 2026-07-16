@@ -95,10 +95,26 @@ export function generateCallNumber(kodeKlasifikasi: string, penulis: string, jud
   return `${classNumber || '---'} ${authorLetters || '---'} ${titleLetter || '-'}`
 }
 
+/** Extracts an inventory number's trailing numeric run (e.g. "INV-02" -> 2), or null if none. */
+function trailingInventoryNumber(value: string): number | null {
+  const match = value.match(/^(.*?)(\d+)(\D*)$/)
+  return match ? parseInt(match[2], 10) : null
+}
+
+/** Compares two inventory numbers by their trailing numeric run, falling back to text order. */
+function compareInventoryNumbers(a: string, b: string): number {
+  const na = trailingInventoryNumber(a)
+  const nb = trailingInventoryNumber(b)
+  if (na !== null && nb !== null && na !== nb) return na - nb
+  return a.localeCompare(b)
+}
+
 /**
- * Groups books added together in the same "Tambah Buku" batch (same batch_id), preserving
- * each group's relative order from the input array (already sorted server-side by
- * created_at + nomor_inventaris).
+ * Groups books added together in the same "Tambah Buku" batch (same batch_id), preserving the
+ * order batches first appear in the input array, and sorting each batch's copies by inventory
+ * number. Sorting is needed because a batch's rows aren't guaranteed to come back in ascending
+ * inventory-number order (e.g. rows split by a past migration keep their original created_at, so
+ * the server's created_at ordering doesn't align with the inventory numbers assigned to them).
  */
 export function groupBooksByBatch(books: Book[]): Book[][] {
   const groups = new Map<string, Book[]>()
@@ -111,15 +127,18 @@ export function groupBooksByBatch(books: Book[]): Book[][] {
     }
     groups.get(key)!.push(book)
   }
-  return order.map((key) => groups.get(key)!)
+  return order.map((key) =>
+    [...groups.get(key)!].sort((a, b) => compareInventoryNumbers(a.nomor_inventaris, b.nomor_inventaris)),
+  )
 }
 
-/** Summarizes a batch's individual inventory numbers as "first - last" (or a single value). */
+/** Summarizes a batch's individual inventory numbers as "lowest - highest" (or a single value). */
 export function summarizeInventoryNumbers(numbers: string[]): string {
   const filled = numbers.map((n) => n.trim()).filter(Boolean)
   if (filled.length === 0) return '-'
-  const first = filled[0]
-  const last = filled[filled.length - 1]
+  const sorted = [...filled].sort(compareInventoryNumbers)
+  const first = sorted[0]
+  const last = sorted[sorted.length - 1]
   return first === last ? first : `${first} - ${last}`
 }
 
