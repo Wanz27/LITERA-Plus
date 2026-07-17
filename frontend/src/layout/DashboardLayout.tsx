@@ -1,8 +1,23 @@
-import { useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { BookMarked, BookOpen, Bell, HelpCircle, LayoutGrid, History, LogOut, Menu, Users, X } from 'lucide-react'
+import {
+  BookMarked,
+  BookOpen,
+  Bell,
+  HelpCircle,
+  LayoutGrid,
+  History,
+  LogOut,
+  Menu,
+  Users,
+  X,
+  ChevronDown,
+  Library as LibraryIcon,
+} from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import UpdatesMenu from '../components/UpdatesMenu'
+import * as api from '../lib/api'
+import type { Library } from '../lib/api'
 
 interface LayoutProps {
   children: ReactNode
@@ -23,6 +38,15 @@ export default function DashboardLayout({ children }: LayoutProps) {
   const { fullName, role, signOut } = useAuth()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const menu = role === 'admin' ? [...baseMenu, ...adminMenu] : role === 'visitor' ? visitorMenu : baseMenu
+  const isLibraryRoute = location.pathname.startsWith('/dashboard')
+  const [librariesExpanded, setLibrariesExpanded] = useState(isLibraryRoute)
+  const [libraries, setLibraries] = useState<Library[]>([])
+  const showLibraryMenu = role === 'admin' || role === 'petugas'
+
+  useEffect(() => {
+    if (!showLibraryMenu) return
+    api.getLibraries().then(setLibraries).catch(() => setLibraries([]))
+  }, [showLibraryMenu])
 
   const handleLogout = () => {
     signOut()
@@ -67,23 +91,84 @@ export default function DashboardLayout({ children }: LayoutProps) {
           </button>
         </div>
 
-        <nav className="mt-4 flex-1">
+        <nav className="mt-4 flex-1 overflow-y-auto">
           {menu.map((item) => {
-            const isActive = location.pathname === item.path
+            const isDashboardItem = item.path === '/dashboard'
+            const isActive = isDashboardItem ? isLibraryRoute : location.pathname === item.path
+
+            if (!isDashboardItem) {
+              return (
+                <Link
+                  key={item.name}
+                  to={item.path}
+                  onClick={() => setSidebarOpen(false)}
+                  className={`flex items-center gap-3 px-6 py-3 transition-colors ${
+                    isActive
+                      ? 'border-l-4 border-sky-500 bg-slate-800 text-white'
+                      : 'hover:bg-slate-800/50 hover:text-white'
+                  }`}
+                >
+                  <item.icon size={20} className={isActive ? 'text-sky-500' : 'text-slate-400'} />
+                  {item.name}
+                </Link>
+              )
+            }
+
             return (
-              <Link
-                key={item.name}
-                to={item.path}
-                onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-3 px-6 py-3 transition-colors ${
-                  isActive
-                    ? 'border-l-4 border-sky-500 bg-slate-800 text-white'
-                    : 'hover:bg-slate-800/50 hover:text-white'
-                }`}
-              >
-                <item.icon size={20} className={isActive ? 'text-sky-500' : 'text-slate-400'} />
-                {item.name}
-              </Link>
+              <div key={item.name}>
+                <div
+                  className={`flex items-center transition-colors ${
+                    isActive ? 'border-l-4 border-sky-500 bg-slate-800 text-white' : 'hover:bg-slate-800/50 hover:text-white'
+                  }`}
+                >
+                  <Link
+                    to={item.path}
+                    onClick={() => setSidebarOpen(false)}
+                    className="flex flex-1 items-center gap-3 py-3 pl-6"
+                  >
+                    <item.icon size={20} className={isActive ? 'text-sky-500' : 'text-slate-400'} />
+                    {item.name}
+                  </Link>
+                  {showLibraryMenu && (
+                    <button
+                      onClick={() => setLibrariesExpanded((prev) => !prev)}
+                      className="px-4 py-3 text-slate-400 hover:text-white"
+                      aria-label={librariesExpanded ? 'Sembunyikan daftar perpustakaan' : 'Tampilkan daftar perpustakaan'}
+                      aria-expanded={librariesExpanded}
+                    >
+                      <ChevronDown
+                        size={16}
+                        className={`transition-transform ${librariesExpanded ? 'rotate-180' : ''}`}
+                      />
+                    </button>
+                  )}
+                </div>
+
+                {showLibraryMenu && librariesExpanded && (
+                  <div className="border-l-4 border-transparent">
+                    {libraries.length === 0 ? (
+                      <p className="px-6 py-2 pl-14 text-xs text-slate-500">Belum ada perpustakaan</p>
+                    ) : (
+                      libraries.map((lib) => {
+                        const libActive = location.pathname === `/dashboard/${lib.id}`
+                        return (
+                          <Link
+                            key={lib.id}
+                            to={`/dashboard/${lib.id}`}
+                            onClick={() => setSidebarOpen(false)}
+                            className={`flex items-center gap-2 py-2 pl-14 pr-4 text-sm transition-colors ${
+                              libActive ? 'text-sky-400' : 'text-slate-400 hover:text-white'
+                            }`}
+                          >
+                            <LibraryIcon size={14} className="shrink-0" />
+                            <span className="truncate">{lib.nama}</span>
+                          </Link>
+                        )
+                      })
+                    )}
+                  </div>
+                )}
+              </div>
             )
           })}
         </nav>

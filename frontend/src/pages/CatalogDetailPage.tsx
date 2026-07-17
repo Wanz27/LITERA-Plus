@@ -101,7 +101,7 @@ export default function CatalogDetailPage() {
     if (subjekFilter !== 'Semua' && book.subjek !== subjekFilter) return false
     if (bahasaFilter !== 'Semua' && book.bahasa !== bahasaFilter) return false
     if (searchLower) {
-      const haystack = `${book.judul} ${book.penulis} ${book.isbn} ${book.penerbit}`.toLowerCase()
+      const haystack = `${book.judul} ${book.penulis} ${book.isbn} ${book.penerbit} ${book.nomor_inventaris}`.toLowerCase()
       if (!haystack.includes(searchLower)) return false
     }
     return true
@@ -173,7 +173,7 @@ export default function CatalogDetailPage() {
                 <input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Cari judul, penulis, ISBN..."
+                  placeholder="Cari judul, penulis, ISBN, penerbit, no. inventaris..."
                   className="h-10 w-full rounded-full border border-slate-300 bg-white pl-10 pr-3 text-sm focus:border-violet-600 focus:outline-none focus:ring-2 focus:ring-violet-600/20"
                 />
               </div>

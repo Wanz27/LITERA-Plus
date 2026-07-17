@@ -6,11 +6,11 @@ import {
   MapPin,
   Pencil,
   Plus,
+  BookPlus,
   BookOpen,
   AlertTriangle,
   Clock,
   User,
-  SlidersHorizontal,
   Eye,
   ZoomIn,
   Search,
@@ -64,6 +64,23 @@ function timeAgo(dateStr: string) {
   if (hours < 24) return `${hours} Jam yang lalu`
   const days = Math.floor(hours / 24)
   return `${days} Hari yang lalu`
+}
+
+function formatDateTime(dateStr: string) {
+  return new Date(dateStr).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })
+}
+
+function activityMeta(aksi: string) {
+  if (aksi.includes('Impor')) return { icon: Upload, badge: 'bg-violet-100 text-violet-700' }
+  if (aksi.includes('Menghapus')) return { icon: Trash2, badge: 'bg-rose-100 text-rose-700' }
+  if (aksi.includes('Mengubah')) return { icon: Pencil, badge: 'bg-amber-100 text-amber-700' }
+  if (aksi.includes('Menambahkan')) return { icon: BookPlus, badge: 'bg-sky-100 text-sky-700' }
+  return { icon: BookOpen, badge: 'bg-slate-100 text-slate-600' }
+}
+
+function initials(name: string) {
+  const parts = name.trim().split(/\s+/)
+  return ((parts[0]?.[0] || '') + (parts[1]?.[0] || '')).toUpperCase()
 }
 
 export default function LibraryDetailPage() {
@@ -286,7 +303,7 @@ export default function LibraryDetailPage() {
     if (bookSubjekFilter !== 'Semua' && book.subjek !== bookSubjekFilter) return false
     if (bookBahasaFilter !== 'Semua' && book.bahasa !== bookBahasaFilter) return false
     if (bookSearchLower) {
-      const haystack = `${book.judul} ${book.penulis} ${book.isbn} ${book.penerbit}`.toLowerCase()
+      const haystack = `${book.judul} ${book.penulis} ${book.isbn} ${book.penerbit} ${book.nomor_inventaris}`.toLowerCase()
       if (!haystack.includes(bookSearchLower)) return false
     }
     return true
@@ -497,8 +514,16 @@ export default function LibraryDetailPage() {
 
             <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
               <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
-                <h3 className="font-bold text-slate-900">Aktivitas Terkini</h3>
-                <SlidersHorizontal size={16} className="text-slate-400" />
+                <div>
+                  <h3 className="font-bold text-slate-900">Aktivitas Terkini</h3>
+                  <p className="text-xs text-slate-400">Perubahan koleksi buku terbaru di unit ini</p>
+                </div>
+                <button
+                  onClick={() => setTab('riwayat')}
+                  className="flex items-center gap-1 text-xs font-semibold text-sky-700 hover:text-sky-900"
+                >
+                  Lihat Semua <ChevronRight size={14} />
+                </button>
               </div>
               <div className="overflow-x-auto">
               <table className="w-full text-left">
@@ -518,14 +543,46 @@ export default function LibraryDetailPage() {
                       </td>
                     </tr>
                   )}
-                  {activityRows.map((log) => (
-                    <tr key={log.id} className="border-b border-slate-100 last:border-b-0">
-                      <td className="px-6 py-3 text-sm text-slate-500">{timeAgo(log.created_at)}</td>
-                      <td className="px-6 py-3 text-sm font-medium text-sky-800">{log.aksi}</td>
-                      <td className="px-6 py-3 text-sm text-slate-600">{log.pelaku}</td>
-                      <td className="px-6 py-3 text-sm font-semibold text-emerald-600">BERHASIL</td>
-                    </tr>
-                  ))}
+                  {activityRows.map((log) => {
+                    const meta = activityMeta(log.aksi)
+                    const Icon = meta.icon
+                    return (
+                      <tr key={log.id} className="border-b border-slate-100 last:border-b-0 hover:bg-slate-50">
+                        <td
+                          className="whitespace-nowrap px-6 py-3 text-sm text-slate-500"
+                          title={formatDateTime(log.created_at)}
+                        >
+                          {timeAgo(log.created_at)}
+                        </td>
+                        <td className="px-6 py-3">
+                          <div className="flex items-start gap-2.5">
+                            <div className={`mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-lg ${meta.badge}`}>
+                              <Icon size={14} />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium text-slate-800">{log.aksi}</p>
+                              <p className="max-w-xs truncate text-xs text-slate-400" title={log.detail}>
+                                {log.detail}
+                              </p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-3">
+                          <div className="flex items-center gap-2">
+                            <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-slate-100 text-xs font-semibold text-slate-600">
+                              {initials(log.pelaku)}
+                            </span>
+                            <span className="whitespace-nowrap text-sm text-slate-600">{log.pelaku}</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-3">
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">
+                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Berhasil
+                          </span>
+                        </td>
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </table>
               </div>
@@ -592,7 +649,7 @@ export default function LibraryDetailPage() {
                 <input
                   value={bookSearch}
                   onChange={(e) => setBookSearch(e.target.value)}
-                  placeholder="Cari judul, penulis, ISBN..."
+                  placeholder="Cari judul, penulis, ISBN, penerbit, no. inventaris..."
                   className="h-10 w-full rounded-full border border-slate-300 bg-white pl-10 pr-3 text-sm focus:border-violet-600 focus:outline-none focus:ring-2 focus:ring-violet-600/20"
                 />
               </div>

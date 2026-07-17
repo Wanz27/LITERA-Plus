@@ -231,9 +231,11 @@ export const update = async (id, payload, actor) => {
     ...(payload.cover_url !== undefined ? { cover_url: payload.cover_url.trim() } : {}),
   })
 
+  const library = await librariesRepo.findLibraryById(existing.library_id)
+
   await activityRepo.createActivity({
     aksi: 'Mengubah Buku',
-    detail: `${book.judul} diperbarui.`,
+    detail: `${book.judul} diperbarui${library ? ` di ${library.nama}` : ''}.`,
     pelaku: actor?.full_name || 'Admin',
   })
 
@@ -244,12 +246,14 @@ export const remove = async (id, actor) => {
   const existing = await booksRepo.findBookById(id)
   if (!existing) throw new Error('Buku tidak ditemukan')
 
+  const library = await librariesRepo.findLibraryById(existing.library_id)
+
   await booksRepo.deleteBook(id)
   await adjustLibraryTotal(existing.library_id, -existing.jumlah)
 
   await activityRepo.createActivity({
     aksi: 'Menghapus Buku',
-    detail: `${existing.judul} dihapus.`,
+    detail: `${existing.judul} dihapus${library ? ` dari ${library.nama}` : ''}.`,
     pelaku: actor?.full_name || 'Admin',
   })
 
