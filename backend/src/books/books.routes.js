@@ -9,6 +9,7 @@ const router = express.Router()
 
 router.get('/', authenticate, booksController.list)
 router.post('/', authenticate, booksController.create)
+router.post('/import', authenticate, booksController.bulkImport)
 router.post('/cover', authenticate, upload.single('file'), booksController.uploadCover)
 router.put('/:id', authenticate, booksController.update)
 router.delete('/:id', authenticate, booksController.remove)

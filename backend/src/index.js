@@ -5,6 +5,7 @@ import authRoutes from './auth/auth.routes.js'
 import librariesRoutes from './libraries/libraries.routes.js'
 import booksRoutes from './books/books.routes.js'
 import activityRoutes from './activity/activity.routes.js'
+import usersRoutes from './users/users.routes.js'
 
 dotenv.config()
 
@@ -21,6 +22,7 @@ app.use('/api/auth', authRoutes)
 app.use('/api/libraries', librariesRoutes)
 app.use('/api/books', booksRoutes)
 app.use('/api/activity-log', activityRoutes)
+app.use('/api/users', usersRoutes)
 
 // 3. Server Listener (Untuk Local Development)
 const PORT = process.env.PORT || 5000

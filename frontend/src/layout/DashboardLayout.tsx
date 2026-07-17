@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { BookMarked, Bell, HelpCircle, LayoutGrid, History, LogOut, Menu, X } from 'lucide-react'
+import { BookMarked, Bell, HelpCircle, LayoutGrid, History, LogOut, Menu, Users, X } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import UpdatesMenu from '../components/UpdatesMenu'
 
@@ -8,16 +8,19 @@ interface LayoutProps {
   children: ReactNode
 }
 
-const menu = [
+const baseMenu = [
   { name: 'Manajemen Perpustakaan', icon: LayoutGrid, path: '/dashboard' },
   { name: 'Riwayat', icon: History, path: '/riwayat' },
 ]
+
+const adminMenu = [{ name: 'Manajemen Akun', icon: Users, path: '/akun' }]
 
 export default function DashboardLayout({ children }: LayoutProps) {
   const navigate = useNavigate()
   const location = useLocation()
   const { fullName, role, signOut } = useAuth()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const menu = role === 'admin' ? [...baseMenu, ...adminMenu] : baseMenu
 
   const handleLogout = () => {
     signOut()

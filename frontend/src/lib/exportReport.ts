@@ -4,7 +4,7 @@ import autoTable from 'jspdf-autotable'
 import type { Book, Library } from './api'
 import { generateCallNumber, klasifikasiLabel } from './bookUi'
 
-const REPORT_COLUMNS = [
+export const REPORT_COLUMNS = [
   'No',
   'Judul',
   'Penulis',
@@ -20,7 +20,26 @@ const REPORT_COLUMNS = [
   'No. Panggil',
 ] as const
 
-function bookRows(books: Book[]): (string | number)[][] {
+export function reportSummary(library: Library, books: Book[]) {
+  const totalBuku = books.reduce((sum, b) => sum + b.jumlah, 0)
+  const damagedCount = books.filter((b) => b.kondisi === 'Rusak').reduce((sum, b) => sum + b.jumlah, 0)
+  return {
+    totalBuku,
+    damagedCount,
+    fields: [
+      ['Nama Unit', library.nama],
+      ['Lokasi', library.lokasi],
+      ['Status', library.status],
+      ['Kepala Unit', library.kepala_unit || 'Belum ditentukan'],
+      ['Jam Operasional', library.jam_operasional.replace(/\n/g, ' | ')],
+      ['Total Koleksi Buku', String(totalBuku)],
+      ['Buku Rusak/Hilang', String(damagedCount)],
+      ['Tanggal Export', new Date().toLocaleString('id-ID')],
+    ] as [string, string][],
+  }
+}
+
+export function bookRows(books: Book[]): (string | number)[][] {
   return books.map((book, i) => [
     i + 1,
     book.judul,
@@ -38,6 +57,44 @@ function bookRows(books: Book[]): (string | number)[][] {
   ])
 }
 
+export const IMPORT_COLUMNS = [
+  'Judul',
+  'Penulis',
+  'Penerbit',
+  'Tahun',
+  'ISBN',
+  'Klasifikasi',
+  'Kondisi',
+  'Subjek',
+  'Bahasa',
+  'Jumlah',
+  'No. Inventaris',
+] as const
+
+export function downloadImportTemplate() {
+  const exampleRow = [
+    'Laskar Pelangi',
+    'Andrea Hirata',
+    'Bentang Pustaka',
+    2005,
+    '978-979-1227-01-7',
+    '800',
+    'Bagus',
+    'Fiksi',
+    'Indonesia',
+    1,
+    'INV-0001',
+  ]
+
+  const sheetData = [[...IMPORT_COLUMNS], exampleRow]
+  const worksheet = XLSX.utils.aoa_to_sheet(sheetData)
+  worksheet['!cols'] = IMPORT_COLUMNS.map((col) => ({ wch: col === 'Judul' ? 32 : 16 }))
+
+  const workbook = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Import Buku')
+  XLSX.writeFile(workbook, 'Template_Import_Buku.xlsx')
+}
+
 function reportFilename(library: Library, ext: string) {
   const safeName = library.nama.replace(/[^a-z0-9]+/gi, '_').replace(/^_+|_+$/g, '')
   const date = new Date().toISOString().slice(0, 10)
@@ -45,22 +102,9 @@ function reportFilename(library: Library, ext: string) {
 }
 
 export function exportBooksToExcel(library: Library, books: Book[]) {
-  const totalBuku = books.reduce((sum, b) => sum + b.jumlah, 0)
-  const damagedCount = books.filter((b) => b.kondisi === 'Rusak').reduce((sum, b) => sum + b.jumlah, 0)
+  const { fields } = reportSummary(library, books)
 
-  const infoRows: (string | number)[][] = [
-    ['Laporan Unit Perpustakaan'],
-    [],
-    ['Nama Unit', library.nama],
-    ['Lokasi', library.lokasi],
-    ['Status', library.status],
-    ['Kepala Unit', library.kepala_unit || 'Belum ditentukan'],
-    ['Jam Operasional', library.jam_operasional.replace(/\n/g, ' | ')],
-    ['Total Koleksi Buku', totalBuku],
-    ['Buku Rusak/Hilang', damagedCount],
-    ['Tanggal Export', new Date().toLocaleString('id-ID')],
-    [],
-  ]
+  const infoRows: (string | number)[][] = [['Laporan Unit Perpustakaan'], [], ...fields, []]
 
   const sheetData = [...infoRows, [...REPORT_COLUMNS], ...bookRows(books)]
   const worksheet = XLSX.utils.aoa_to_sheet(sheetData)
@@ -72,8 +116,7 @@ export function exportBooksToExcel(library: Library, books: Book[]) {
 }
 
 export function exportBooksToPdf(library: Library, books: Book[]) {
-  const totalBuku = books.reduce((sum, b) => sum + b.jumlah, 0)
-  const damagedCount = books.filter((b) => b.kondisi === 'Rusak').reduce((sum, b) => sum + b.jumlah, 0)
+  const { fields } = reportSummary(library, books)
 
   const doc = new jsPDF({ orientation: 'landscape' })
 
@@ -83,15 +126,7 @@ export function exportBooksToPdf(library: Library, books: Book[]) {
 
   doc.setFontSize(9)
   doc.setFont('helvetica', 'normal')
-  const info = [
-    `Nama Unit: ${library.nama}`,
-    `Lokasi: ${library.lokasi}`,
-    `Status: ${library.status}`,
-    `Kepala Unit: ${library.kepala_unit || 'Belum ditentukan'}`,
-    `Jam Operasional: ${library.jam_operasional.replace(/\n/g, ' | ')}`,
-    `Total Koleksi: ${totalBuku} | Buku Rusak/Hilang: ${damagedCount}`,
-    `Tanggal Export: ${new Date().toLocaleString('id-ID')}`,
-  ]
+  const info = fields.map(([label, value]) => `${label}: ${value}`)
   info.forEach((line, i) => doc.text(line, 14, 22 + i * 5))
 
   autoTable(doc, {

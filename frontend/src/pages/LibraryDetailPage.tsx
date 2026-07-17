@@ -2,6 +2,7 @@ import * as React from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import {
   ChevronLeft,
+  ChevronRight,
   MapPin,
   Pencil,
   Plus,
@@ -13,14 +14,19 @@ import {
   Eye,
   ZoomIn,
   Search,
+  Trash2,
+  Upload,
+  X,
 } from 'lucide-react'
 import DashboardLayout from '../layout/DashboardLayout'
 import LibraryFormModal from '../components/LibraryFormModal'
 import BookFormModal from '../components/BookFormModal'
 import CoverPreviewModal from '../components/CoverPreviewModal'
+import InventoryNumbersPopover from '../components/InventoryNumbersPopover'
 import BookDetailModal from '../components/BookDetailModal'
 import ConfirmDialog from '../components/ConfirmDialog'
 import ExportReportMenu from '../components/ExportReportMenu'
+import ImportBooksModal from '../components/ImportBooksModal'
 import BookFilterSortMenu from '../components/BookFilterSortMenu'
 import * as api from '../lib/api'
 import type { ActivityLog, Book, BookKondisi, Library, LibraryStatus, LibraryType } from '../lib/api'
@@ -30,7 +36,6 @@ import {
   klasifikasiMainClass,
   generateCallNumber,
   groupBooksByIdentity,
-  summarizeInventoryNumbers,
   distinctValues,
   sortBookGroups,
   DEFAULT_BOOK_SORT,
@@ -46,6 +51,10 @@ const tabs = [
   { key: 'riwayat', label: 'Riwayat' },
 ] as const
 type TabKey = (typeof tabs)[number]['key']
+
+function groupKey(group: Book[]): string {
+  return group[0]?.batch_id || group[0]?.id
+}
 
 function timeAgo(dateStr: string) {
   const diffMs = Date.now() - new Date(dateStr).getTime()
@@ -76,11 +85,17 @@ export default function LibraryDetailPage() {
   const [bookSubjekFilter, setBookSubjekFilter] = React.useState('Semua')
   const [bookBahasaFilter, setBookBahasaFilter] = React.useState('Semua')
   const [bookSort, setBookSort] = React.useState<BookSort>(DEFAULT_BOOK_SORT)
+  const [bookPage, setBookPage] = React.useState(1)
+  const [bookPageSize, setBookPageSize] = React.useState(10)
   const [previewBook, setPreviewBook] = React.useState<Book | null>(null)
   const [detailGroup, setDetailGroup] = React.useState<Book[] | null>(null)
   const [detailIndex, setDetailIndex] = React.useState(0)
   const [bookToDelete, setBookToDelete] = React.useState<Book | null>(null)
   const [deletingBook, setDeletingBook] = React.useState(false)
+  const [selectedGroupKeys, setSelectedGroupKeys] = React.useState<Set<string>>(new Set())
+  const [bulkDeleteOpen, setBulkDeleteOpen] = React.useState(false)
+  const [bulkDeleting, setBulkDeleting] = React.useState(false)
+  const [importModalOpen, setImportModalOpen] = React.useState(false)
 
   async function load() {
     setLoading(true)
@@ -113,6 +128,11 @@ export default function LibraryDetailPage() {
     load()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
+
+  React.useEffect(() => {
+    setBookPage(1)
+    setSelectedGroupKeys(new Set())
+  }, [bookSearch, bookKondisiFilter, bookKlasifikasiFilter, bookSubjekFilter, bookBahasaFilter, bookSort, bookPageSize])
 
   async function handleUpdate(payload: {
     nama: string
@@ -173,6 +193,40 @@ export default function LibraryDetailPage() {
     }
   }
 
+  function toggleGroupSelected(key: string) {
+    setSelectedGroupKeys((prev) => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+  }
+
+  function toggleSelectAllOnPage(groups: Book[][]) {
+    setSelectedGroupKeys((prev) => {
+      const next = new Set(prev)
+      const allSelected = groups.length > 0 && groups.every((g) => next.has(groupKey(g)))
+      groups.forEach((g) => {
+        if (allSelected) next.delete(groupKey(g))
+        else next.add(groupKey(g))
+      })
+      return next
+    })
+  }
+
+  async function handleBulkDeleteBooks(selectedGroups: Book[][]) {
+    setBulkDeleting(true)
+    try {
+      const ids = selectedGroups.flatMap((group) => group.map((b) => b.id))
+      await Promise.all(ids.map((id) => api.deleteBook(id)))
+      setSelectedGroupKeys(new Set())
+      setBulkDeleteOpen(false)
+      await load()
+    } finally {
+      setBulkDeleting(false)
+    }
+  }
+
   if (loading) {
     return (
       <DashboardLayout>
@@ -220,7 +274,6 @@ export default function LibraryDetailPage() {
       pct: totalBuku > 0 ? Math.round((belumDiklasifikasi / totalBuku) * 100) : 0,
     })
   }
-  klasifikasiStats.sort((a, b) => b.pct - a.pct)
 
   const usedKlasifikasi = Array.from(new Set(books.map((b) => b.kode_klasifikasi).filter(Boolean)))
   const usedSubjek = distinctValues(books.map((b) => b.subjek))
@@ -254,6 +307,15 @@ export default function LibraryDetailPage() {
   const groupedBookRows = sortBookGroups(groupBooksByIdentity(filteredBooks), bookSort)
   const totalGroupCount = groupBooksByIdentity(books).length
 
+  const totalBookPages = Math.max(1, Math.ceil(groupedBookRows.length / bookPageSize))
+  const currentBookPage = Math.min(bookPage, totalBookPages)
+  const bookPageStart = (currentBookPage - 1) * bookPageSize
+  const pagedBookRows = groupedBookRows.slice(bookPageStart, bookPageStart + bookPageSize)
+  const selectedGroups = groupedBookRows.filter((g) => selectedGroupKeys.has(groupKey(g)))
+  const selectedBookCount = selectedGroups.reduce((sum, g) => sum + g.length, 0)
+  const allOnPageSelected =
+    pagedBookRows.length > 0 && pagedBookRows.every((g) => selectedGroupKeys.has(groupKey(g)))
+
   const relatedActivity = activity
     .filter((log) => `${log.aksi} ${log.detail}`.toLowerCase().includes(library.nama.toLowerCase()))
     .slice(0, 5)
@@ -285,6 +347,15 @@ export default function LibraryDetailPage() {
               className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
             >
               <Pencil size={16} /> Edit Detail
+            </button>
+            <button
+              onClick={() => {
+                setTab('list-buku')
+                setImportModalOpen(true)
+              }}
+              className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
+            >
+              <Upload size={16} /> Import Excel
             </button>
             <button
               onClick={() => {
@@ -494,6 +565,25 @@ export default function LibraryDetailPage() {
                 Koleksi Buku ({groupedBookRows.length}
                 {bookFiltersActive ? ` dari ${totalGroupCount}` : ''})
               </h3>
+              {selectedGroups.length > 0 && (
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-semibold text-slate-600">
+                    {selectedGroups.length} judul ({selectedBookCount} eksemplar) dipilih
+                  </span>
+                  <button
+                    onClick={() => setBulkDeleteOpen(true)}
+                    className="flex items-center gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-600 hover:bg-rose-100"
+                  >
+                    <Trash2 size={16} /> Hapus Terpilih
+                  </button>
+                  <button
+                    onClick={() => setSelectedGroupKeys(new Set())}
+                    className="flex items-center gap-1.5 text-sm font-semibold text-slate-500 hover:text-slate-700"
+                  >
+                    <X size={16} /> Batal
+                  </button>
+                </div>
+              )}
             </div>
 
             <div className="flex flex-wrap items-center gap-3 border-b border-slate-200 bg-slate-50 px-6 py-3">
@@ -553,10 +643,19 @@ export default function LibraryDetailPage() {
             )}
 
             {groupedBookRows.length > 0 && (
-            <div className="overflow-x-auto">
+            <div className="h-[600px] overflow-auto">
               <table className="w-full text-left">
                 <thead>
-                  <tr className="border-b border-slate-200 bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <tr className="sticky top-0 z-10 border-b border-slate-200 bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    <th className="px-6 py-3">
+                      <input
+                        type="checkbox"
+                        checked={allOnPageSelected}
+                        onChange={() => toggleSelectAllOnPage(pagedBookRows)}
+                        className="h-4 w-4 rounded border-slate-300 text-sky-700 focus:ring-sky-700/40"
+                        aria-label="Pilih semua buku di halaman ini"
+                      />
+                    </th>
                     <th className="px-6 py-3">Cover</th>
                     <th className="px-6 py-3">Judul</th>
                     <th className="px-6 py-3">Penulis</th>
@@ -574,7 +673,7 @@ export default function LibraryDetailPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {groupedBookRows.map((group) => {
+                  {pagedBookRows.map((group) => {
                     const book = group[0]
                     const kondisiCounts = group.reduce<Record<string, number>>((acc, b) => {
                       acc[b.kondisi] = (acc[b.kondisi] || 0) + 1
@@ -590,6 +689,15 @@ export default function LibraryDetailPage() {
                         }}
                         className="cursor-pointer border-b border-slate-100 last:border-b-0 hover:bg-slate-50/60"
                       >
+                        <td className="px-6 py-3" onClick={(e) => e.stopPropagation()}>
+                          <input
+                            type="checkbox"
+                            checked={selectedGroupKeys.has(groupKey(group))}
+                            onChange={() => toggleGroupSelected(groupKey(group))}
+                            className="h-4 w-4 rounded border-slate-300 text-sky-700 focus:ring-sky-700/40"
+                            aria-label={`Pilih ${book.judul}`}
+                          />
+                        </td>
                         <td className="px-6 py-3">
                           {book.cover_url ? (
                             <button
@@ -652,7 +760,23 @@ export default function LibraryDetailPage() {
                         <td className="px-6 py-3 text-sm text-slate-600">{book.bahasa || '-'}</td>
                         <td className="px-6 py-3 text-sm text-slate-600">{group.length}</td>
                         <td className="px-6 py-3 text-sm text-slate-600">
-                          {summarizeInventoryNumbers(group.map((b) => b.nomor_inventaris))}
+                          {group.length <= 2 ? (
+                            <div className="space-y-0.5">
+                              {group.map((b) => (
+                                <div key={b.id}>{b.nomor_inventaris || '-'}</div>
+                              ))}
+                            </div>
+                          ) : (
+                            <InventoryNumbersPopover
+                              judul={book.judul}
+                              penulis={book.penulis}
+                              books={group}
+                              onSelect={(selected) => {
+                                setDetailGroup(group)
+                                setDetailIndex(group.findIndex((b) => b.id === selected.id))
+                              }}
+                            />
+                          )}
                         </td>
                         <td className="px-6 py-3 text-sm font-mono text-slate-600">
                           {generateCallNumber(book.kode_klasifikasi, book.penulis, book.judul)}
@@ -678,6 +802,55 @@ export default function LibraryDetailPage() {
                 </tbody>
               </table>
             </div>
+            )}
+
+            {groupedBookRows.length > 0 && (
+              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 px-6 py-3">
+                <div className="flex items-center gap-2 text-sm text-slate-500">
+                  <span>Tampilkan</span>
+                  <select
+                    value={bookPageSize}
+                    onChange={(e) => setBookPageSize(Number(e.target.value))}
+                    className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-600 focus:border-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-700/20"
+                  >
+                    {[10, 20, 50, 100].map((size) => (
+                      <option key={size} value={size}>
+                        {size}
+                      </option>
+                    ))}
+                  </select>
+                  <span>data</span>
+                </div>
+                <div className="flex items-center gap-3 text-sm text-slate-500">
+                  <span>
+                    Menampilkan {bookPageStart + 1}-{Math.min(bookPageStart + bookPageSize, groupedBookRows.length)}{' '}
+                    dari {groupedBookRows.length}
+                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setBookPage((p) => Math.max(1, p - 1))}
+                      disabled={currentBookPage <= 1}
+                      className="grid h-8 w-8 place-items-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                      aria-label="Halaman sebelumnya"
+                    >
+                      <ChevronLeft size={16} />
+                    </button>
+                    <span className="grid h-8 w-8 place-items-center rounded-lg bg-sky-800 text-sm font-semibold text-white">
+                      {currentBookPage}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setBookPage((p) => Math.min(totalBookPages, p + 1))}
+                      disabled={currentBookPage >= totalBookPages}
+                      className="grid h-8 w-8 place-items-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                      aria-label="Halaman berikutnya"
+                    >
+                      <ChevronRight size={16} />
+                    </button>
+                  </div>
+                </div>
+              </div>
             )}
           </div>
         )}
@@ -765,6 +938,25 @@ export default function LibraryDetailPage() {
           loading={deletingBook}
           onConfirm={handleDeleteBook}
           onCancel={() => setBookToDelete(null)}
+        />
+      )}
+
+      {bulkDeleteOpen && (
+        <ConfirmDialog
+          title="Hapus buku terpilih?"
+          message={`${selectedGroups.length} judul (${selectedBookCount} eksemplar) akan dihapus permanen dari koleksi buku.`}
+          confirmLabel="Ya, Hapus"
+          loading={bulkDeleting}
+          onConfirm={() => handleBulkDeleteBooks(selectedGroups)}
+          onCancel={() => setBulkDeleteOpen(false)}
+        />
+      )}
+
+      {importModalOpen && (
+        <ImportBooksModal
+          libraryId={library.id}
+          onClose={() => setImportModalOpen(false)}
+          onImported={load}
         />
       )}
     </DashboardLayout>

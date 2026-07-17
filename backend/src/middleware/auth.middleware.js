@@ -17,3 +17,10 @@ export function authenticate(req, res, next) {
     return res.status(401).json({ success: false, message: 'Token tidak valid atau kedaluwarsa' })
   }
 }
+
+export function requireAdmin(req, res, next) {
+  if (req.user?.role !== 'admin') {
+    return res.status(403).json({ success: false, message: 'Akses khusus admin' })
+  }
+  next()
+}

@@ -8,6 +8,7 @@ import DashboardPage from './pages/DashboardPage'
 import LibraryDetailPage from './pages/LibraryDetailPage'
 import RiwayatPage from './pages/RiwayatPage'
 import ProfilePage from './pages/ProfilePage'
+import UserManagementPage from './pages/UserManagementPage'
 
 export default function App() {
   return (
@@ -22,6 +23,7 @@ export default function App() {
           <Route path="/dashboard/:id" element={<LibraryDetailPage />} />
           <Route path="/riwayat" element={<RiwayatPage />} />
           <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/akun" element={<UserManagementPage />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

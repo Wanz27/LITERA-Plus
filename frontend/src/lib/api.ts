@@ -9,6 +9,14 @@ export interface AuthUser {
   role: Role
 }
 
+export interface ManagedUser {
+  user_id: string
+  full_name: string
+  email: string
+  role: Role
+  created_at: string
+}
+
 export type LibraryStatus = 'Tersedia' | 'Penuh' | 'Pemeliharaan'
 export type LibraryType = 'utama' | 'digital' | 'referensi' | 'arsip'
 
@@ -124,6 +132,23 @@ export const checkEmail = (email: string) =>
     body: JSON.stringify({ email }),
   })
 
+export const getUsers = () => request<ManagedUser[]>('/users')
+
+export const updateUser = (id: string, payload: { full_name: string; email: string; role: Role }) =>
+  request<ManagedUser>(`/users/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  })
+
+export const deleteUser = (id: string) =>
+  request<{ id: string }>(`/users/${id}`, { method: 'DELETE' })
+
+export const resetUserPassword = (id: string, newPassword: string) =>
+  request<{ message: string }>(`/users/${id}/password`, {
+    method: 'PUT',
+    body: JSON.stringify({ new_password: newPassword }),
+  })
+
 export const getLibraries = () => request<Library[]>('/libraries')
 
 export const createLibrary = (payload: Partial<Library>) =>
@@ -167,6 +192,12 @@ export const createBook = (payload: BookInput) =>
   request<Book[]>('/books', {
     method: 'POST',
     body: JSON.stringify(payload),
+  })
+
+export const importBooks = (libraryId: string, books: BookInput[]) =>
+  request<Book[]>('/books/import', {
+    method: 'POST',
+    body: JSON.stringify({ library_id: libraryId, books }),
   })
 
 export const updateBook = (id: string, payload: Partial<BookInput>) =>

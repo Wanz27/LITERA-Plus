@@ -19,6 +19,15 @@ export const create = async (req, res) => {
   }
 }
 
+export const bulkImport = async (req, res) => {
+  try {
+    const data = await booksService.bulkImport(req.body, req.user)
+    return res.status(201).json({ success: true, data })
+  } catch (error) {
+    return res.status(400).json({ success: false, message: error.message })
+  }
+}
+
 export const update = async (req, res) => {
   try {
     const data = await booksService.update(req.params.id, req.body, req.user)

@@ -127,6 +127,69 @@ export const create = async (payload, actor) => {
   return books
 }
 
+export const bulkImport = async (payload, actor) => {
+  const { library_id, books } = payload
+  if (!library_id) throw new Error('library_id wajib diisi')
+  if (!Array.isArray(books) || books.length === 0) throw new Error('Tidak ada data buku untuk diimpor')
+
+  const library = await librariesRepo.findLibraryById(library_id)
+  if (!library) throw new Error('Perpustakaan tidak ditemukan')
+
+  const batchRows = []
+  const allInventoryNumbers = []
+  let totalJumlah = 0
+
+  books.forEach((book, index) => {
+    try {
+      validate(book)
+    } catch (err) {
+      throw new Error(`Baris ${index + 2}: ${err.message}`)
+    }
+
+    const jumlah = book.jumlah !== undefined && book.jumlah !== null && book.jumlah !== '' ? Number(book.jumlah) : 1
+    const basePayload = {
+      library_id,
+      judul: book.judul.trim(),
+      penulis: book.penulis.trim(),
+      penerbit: book.penerbit?.trim() || '',
+      tahun_terbit: toIntOrNull(book.tahun_terbit),
+      isbn: book.isbn?.trim() || '',
+      kode_klasifikasi: book.kode_klasifikasi?.trim() || '',
+      kondisi: book.kondisi || 'Bagus',
+      subjek: book.subjek?.trim() || '',
+      bahasa: book.bahasa?.trim() || '',
+      jumlah_halaman: toIntOrNull(book.jumlah_halaman),
+      ukuran_buku: book.ukuran_buku?.trim() || '',
+      ilustrasi: book.ilustrasi?.trim() || '',
+      cover_url: '',
+    }
+
+    const inventoryNumbers = expandInventoryNumbers(book.nomor_inventaris, jumlah)
+    allInventoryNumbers.push(...inventoryNumbers)
+
+    const batchId = randomUUID()
+    inventoryNumbers.forEach((nomor_inventaris) => {
+      batchRows.push({ ...basePayload, jumlah: 1, nomor_inventaris, batch_id: batchId })
+    })
+
+    totalJumlah += jumlah
+  })
+
+  await assertNomorInventarisAvailable(library_id, allInventoryNumbers)
+
+  const createdBooks = await booksRepo.createBooks(batchRows)
+
+  await adjustLibraryTotal(library_id, totalJumlah)
+
+  await activityRepo.createActivity({
+    aksi: 'Impor Buku dari Excel',
+    detail: `${books.length} judul (${totalJumlah} eksemplar) diimpor ke ${library.nama}.`,
+    pelaku: actor?.full_name || 'Admin',
+  })
+
+  return createdBooks
+}
+
 /**
  * `jumlah` is fixed at 1 per row once a book is created (each row is one physical copy; see the
  * schema comment on `batch_id`). Editing it here instead of splitting into new rows would leave a

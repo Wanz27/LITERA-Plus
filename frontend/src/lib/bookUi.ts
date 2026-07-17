@@ -230,16 +230,6 @@ export function nextInventoryNumberInSequence(numbers: string[]): string | null 
   return `${prefix}${String(nextNum).padStart(digits.length, '0')}${suffix}`
 }
 
-/** Summarizes a batch's individual inventory numbers as "lowest - highest" (or a single value). */
-export function summarizeInventoryNumbers(numbers: string[]): string {
-  const filled = numbers.map((n) => n.trim()).filter(Boolean)
-  if (filled.length === 0) return '-'
-  const sorted = [...filled].sort(compareInventoryNumbers)
-  const first = sorted[0]
-  const last = sorted[sorted.length - 1]
-  return first === last ? first : `${first} - ${last}`
-}
-
 /** Distinct non-empty values, sorted alphabetically — for autocomplete/datalist suggestions. */
 export function distinctValues(items: string[]): string[] {
   const set = new Set(items.map((v) => v.trim()).filter(Boolean))
