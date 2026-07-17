@@ -110,6 +110,7 @@ export default function BookFormModal({
   const [dragActive, setDragActive] = React.useState(false)
   const fileInputRef = React.useRef<HTMLInputElement>(null)
   const cameraInputRef = React.useRef<HTMLInputElement>(null)
+  const nomorInventarisInputRef = React.useRef<HTMLInputElement>(null)
 
   React.useEffect(() => {
     setCoverImgError(false)
@@ -157,6 +158,27 @@ export default function BookFormModal({
     const continuation = nextInventoryNumberInSequence(matchingBooksByIsbn.map((b) => b.nomor_inventaris))
     if (continuation) setNomorInventarisAwal(continuation)
     setAppliedIsbn(normalizedIsbn)
+  }
+
+  function handleNomorInventarisChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const raw = e.target.value
+    const inputType = (e.nativeEvent as InputEvent).inputType
+    const isDeleting = inputType?.startsWith('delete')
+
+    if (isEditing || isDeleting || !raw.trim()) {
+      setNomorInventarisAwal(raw)
+      return
+    }
+
+    const suggestion = suggestNextInventoryNumber(raw, existingNumbers)
+    if (suggestion && suggestion.length > raw.length && suggestion.toLowerCase().startsWith(raw.toLowerCase())) {
+      setNomorInventarisAwal(suggestion)
+      requestAnimationFrame(() => {
+        nomorInventarisInputRef.current?.setSelectionRange(raw.length, suggestion.length)
+      })
+    } else {
+      setNomorInventarisAwal(raw)
+    }
   }
 
   async function handleCoverFile(file: File) {
@@ -440,8 +462,9 @@ export default function BookFormModal({
                 {!isEditing && jumlahNum > 1 ? 'Nomor Inventaris Awal' : 'Nomor Inventaris'}
               </label>
               <input
+                ref={nomorInventarisInputRef}
                 value={nomorInventarisAwal}
-                onChange={(e) => setNomorInventarisAwal(e.target.value)}
+                onChange={handleNomorInventarisChange}
                 placeholder="INV-0001"
                 list={!isEditing ? 'nomor-inventaris-suggestions' : undefined}
                 className={inputClass}
