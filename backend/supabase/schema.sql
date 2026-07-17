@@ -9,9 +9,14 @@ create table if not exists users (
   full_name text not null,
   email text not null unique,
   password_hash text not null,
-  role text not null default 'petugas' check (role in ('admin', 'petugas')),
+  role text not null default 'visitor' check (role in ('admin', 'petugas', 'visitor')),
   created_at timestamptz not null default now()
 );
+
+-- Migrasi untuk database yang sudah ada sebelum role 'visitor' ditambahkan
+alter table users drop constraint if exists users_role_check;
+alter table users add constraint users_role_check check (role in ('admin', 'petugas', 'visitor'));
+alter table users alter column role set default 'visitor';
 
 -- Tabel perpustakaan (lokasi / fasilitas perpustakaan)
 create table if not exists libraries (

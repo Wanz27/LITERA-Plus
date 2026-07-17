@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
 import ProtectedRoute from './routes/ProtectedRoute'
+import RoleRoute from './routes/RoleRoute'
 import LandingPage from './pages/LandingPage'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
@@ -9,6 +10,8 @@ import LibraryDetailPage from './pages/LibraryDetailPage'
 import RiwayatPage from './pages/RiwayatPage'
 import ProfilePage from './pages/ProfilePage'
 import UserManagementPage from './pages/UserManagementPage'
+import CatalogPage from './pages/CatalogPage'
+import CatalogDetailPage from './pages/CatalogDetailPage'
 
 export default function App() {
   return (
@@ -19,11 +22,19 @@ export default function App() {
         <Route path="/register" element={<RegisterPage />} />
 
         <Route element={<ProtectedRoute />}>
-          <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/dashboard/:id" element={<LibraryDetailPage />} />
-          <Route path="/riwayat" element={<RiwayatPage />} />
+          <Route path="/katalog" element={<CatalogPage />} />
+          <Route path="/katalog/:id" element={<CatalogDetailPage />} />
           <Route path="/profile" element={<ProfilePage />} />
-          <Route path="/akun" element={<UserManagementPage />} />
+
+          <Route element={<RoleRoute allow={['admin', 'petugas']} />}>
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/dashboard/:id" element={<LibraryDetailPage />} />
+            <Route path="/riwayat" element={<RiwayatPage />} />
+          </Route>
+
+          <Route element={<RoleRoute allow={['admin']} />}>
+            <Route path="/akun" element={<UserManagementPage />} />
+          </Route>
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

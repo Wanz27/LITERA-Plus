@@ -7,7 +7,7 @@ export const listUsers = () => usersRepo.listUsers()
 export const updateUser = async (actorUser, targetId, { full_name, email, role }) => {
   if (!full_name || !full_name.trim()) throw new Error('Nama lengkap wajib diisi')
   if (!email || !email.trim()) throw new Error('Email wajib diisi')
-  if (!['admin', 'petugas'].includes(role)) throw new Error('Role tidak valid')
+  if (!['admin', 'petugas', 'visitor'].includes(role)) throw new Error('Role tidak valid')
 
   const target = await usersRepo.findUserById(targetId)
   if (!target) throw new Error('Akun tidak ditemukan')

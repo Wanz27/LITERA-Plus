@@ -38,7 +38,7 @@ export default function UserManagementPage() {
   }, [role])
 
   if (role !== 'admin') {
-    return <Navigate to="/dashboard" replace />
+    return <Navigate to={role === 'visitor' ? '/katalog' : '/dashboard'} replace />
   }
 
   async function handleUpdateUser(payload: { full_name: string; email: string; role: Role }) {
@@ -121,10 +121,14 @@ export default function UserManagementPage() {
                         <td className="px-6 py-3">
                           <span
                             className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
-                              u.role === 'admin' ? 'bg-violet-100 text-violet-700' : 'bg-sky-100 text-sky-700'
+                              u.role === 'admin'
+                                ? 'bg-violet-100 text-violet-700'
+                                : u.role === 'petugas'
+                                  ? 'bg-sky-100 text-sky-700'
+                                  : 'bg-slate-100 text-slate-600'
                             }`}
                           >
-                            {u.role === 'admin' ? 'Admin' : 'Petugas'}
+                            {u.role === 'admin' ? 'Admin' : u.role === 'petugas' ? 'Petugas' : 'Visitor'}
                           </span>
                         </td>
                         <td className="px-6 py-3 text-sm text-slate-600">

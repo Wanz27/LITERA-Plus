@@ -59,7 +59,7 @@ export default function LoginPage() {
 
   const navigate = useNavigate()
   const location = useLocation()
-  const { signIn, isAuthenticated, authError } = useAuth()
+  const { signIn, isAuthenticated, authError, role } = useAuth()
 
   const errors = React.useMemo(() => validate(values), [values])
   const canSubmit = Object.keys(errors).length === 0
@@ -90,8 +90,9 @@ export default function LoginPage() {
   React.useEffect(() => {
     if (!isAuthenticated) return
     const from = (location.state as { from?: string } | null)?.from
-    navigate(from && from.startsWith('/') ? from : '/dashboard', { replace: true })
-  }, [isAuthenticated, navigate, location.state])
+    const fallback = role === 'visitor' ? '/katalog' : '/dashboard'
+    navigate(from && from.startsWith('/') ? from : fallback, { replace: true })
+  }, [isAuthenticated, navigate, location.state, role])
 
   React.useEffect(() => {
     if (authError) setApiError(authError)

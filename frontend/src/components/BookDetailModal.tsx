@@ -7,8 +7,8 @@ interface Props {
   books: Book[]
   initialIndex?: number
   onClose: () => void
-  onEdit: (book: Book) => void
-  onDelete: (book: Book) => void
+  onEdit?: (book: Book) => void
+  onDelete?: (book: Book) => void
 }
 
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
@@ -134,20 +134,26 @@ export default function BookDetailModal({ books, initialIndex = 0, onClose, onEd
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-3 border-t border-slate-100 px-5 py-4">
-          <button
-            onClick={() => onEdit(book)}
-            className="flex items-center gap-2 rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-          >
-            <Pencil size={16} /> Edit Buku
-          </button>
-          <button
-            onClick={() => onDelete(book)}
-            className="flex items-center gap-2 rounded-lg border border-rose-200 px-4 py-2 text-sm font-semibold text-rose-600 hover:bg-rose-50"
-          >
-            <Trash2 size={16} /> Hapus Buku
-          </button>
-        </div>
+        {(onEdit || onDelete) && (
+          <div className="flex items-center justify-end gap-3 border-t border-slate-100 px-5 py-4">
+            {onEdit && (
+              <button
+                onClick={() => onEdit(book)}
+                className="flex items-center gap-2 rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              >
+                <Pencil size={16} /> Edit Buku
+              </button>
+            )}
+            {onDelete && (
+              <button
+                onClick={() => onDelete(book)}
+                className="flex items-center gap-2 rounded-lg border border-rose-200 px-4 py-2 text-sm font-semibold text-rose-600 hover:bg-rose-50"
+              >
+                <Trash2 size={16} /> Hapus Buku
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )

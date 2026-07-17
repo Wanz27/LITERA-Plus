@@ -58,7 +58,7 @@ function LogoMark() {
 
 export default function RegisterPage() {
   const navigate = useNavigate()
-  const { signUp, isAuthenticated } = useAuth()
+  const { signUp, isAuthenticated, role } = useAuth()
 
   const [values, setValues] = React.useState<FormState>(initialState)
   const [touched, setTouched] = React.useState<TouchedState>({
@@ -129,8 +129,8 @@ export default function RegisterPage() {
   }
 
   React.useEffect(() => {
-    if (isAuthenticated) navigate('/dashboard', { replace: true })
-  }, [isAuthenticated, navigate])
+    if (isAuthenticated) navigate(role === 'visitor' ? '/katalog' : '/dashboard', { replace: true })
+  }, [isAuthenticated, navigate, role])
 
   return (
     <div className="min-h-screen bg-white">

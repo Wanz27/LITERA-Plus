@@ -11,6 +11,7 @@ import type { AuthUser } from '../lib/api'
 const roleLabel: Record<AuthUser['role'], string> = {
   admin: 'Super Administrator',
   petugas: 'Petugas Perpustakaan',
+  visitor: 'Visitor',
 }
 
 export default function ProfilePage() {

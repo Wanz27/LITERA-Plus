@@ -77,6 +77,7 @@ export default function UserFormModal({ initial, onClose, onSubmit }: Props) {
             >
               <option value="admin">Admin</option>
               <option value="petugas">Petugas</option>
+              <option value="visitor">Visitor</option>
             </select>
           </div>
 

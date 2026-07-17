@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { BookMarked, Bell, HelpCircle, LayoutGrid, History, LogOut, Menu, Users, X } from 'lucide-react'
+import { BookMarked, BookOpen, Bell, HelpCircle, LayoutGrid, History, LogOut, Menu, Users, X } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import UpdatesMenu from '../components/UpdatesMenu'
 
@@ -15,12 +15,14 @@ const baseMenu = [
 
 const adminMenu = [{ name: 'Manajemen Akun', icon: Users, path: '/akun' }]
 
+const visitorMenu = [{ name: 'Katalog Buku', icon: BookOpen, path: '/katalog' }]
+
 export default function DashboardLayout({ children }: LayoutProps) {
   const navigate = useNavigate()
   const location = useLocation()
   const { fullName, role, signOut } = useAuth()
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const menu = role === 'admin' ? [...baseMenu, ...adminMenu] : baseMenu
+  const menu = role === 'admin' ? [...baseMenu, ...adminMenu] : role === 'visitor' ? visitorMenu : baseMenu
 
   const handleLogout = () => {
     signOut()
@@ -131,7 +133,7 @@ export default function DashboardLayout({ children }: LayoutProps) {
               <div className="hidden text-right sm:block">
                 <p className="text-sm font-bold text-slate-800">{fullName || 'Admin LITERA+'}</p>
                 <p className="text-xs text-slate-400">
-                  {role === 'admin' ? 'Super Administrator' : 'Petugas Perpustakaan'}
+                  {role === 'admin' ? 'Super Administrator' : role === 'petugas' ? 'Petugas Perpustakaan' : 'Visitor'}
                 </p>
               </div>
               <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full border border-slate-200 bg-slate-200 sm:h-10 sm:w-10">

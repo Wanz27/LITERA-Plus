@@ -1,6 +1,6 @@
 const API_URL = import.meta.env.VITE_API_URL || 'https://litera-plus.vercel.app/api'
 
-export type Role = 'admin' | 'petugas'
+export type Role = 'admin' | 'petugas' | 'visitor'
 
 export interface AuthUser {
   user_id: string

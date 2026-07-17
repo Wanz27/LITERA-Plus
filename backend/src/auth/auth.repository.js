@@ -57,7 +57,7 @@ export const updateUserPassword = async (user_id, password_hash) => {
 export const createUser = async ({ full_name, email, password_hash }) => {
   const { data, error } = await supabase
     .from('users')
-    .insert([{ full_name, email, password_hash, role: 'petugas' }])
+    .insert([{ full_name, email, password_hash, role: 'visitor' }])
     .select('user_id, email, role, full_name')
     .single()
 
