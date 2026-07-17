@@ -83,6 +83,50 @@ function initials(name: string) {
   return ((parts[0]?.[0] || '') + (parts[1]?.[0] || '')).toUpperCase()
 }
 
+type RiwayatPeriod = 'Semua' | 'Hari Ini' | 'Minggu Ini' | 'Bulan Ini' | 'Tahun Ini' | 'Lebih Lama'
+type RiwayatSort = 'terbaru' | 'terlama'
+
+const RIWAYAT_PERIOD_FILTERS: RiwayatPeriod[] = ['Semua', 'Hari Ini', 'Minggu Ini', 'Bulan Ini', 'Tahun Ini']
+
+function startOfDay(d: Date) {
+  const x = new Date(d)
+  x.setHours(0, 0, 0, 0)
+  return x
+}
+
+function startOfWeek(d: Date) {
+  const x = startOfDay(d)
+  const day = (x.getDay() + 6) % 7
+  x.setDate(x.getDate() - day)
+  return x
+}
+
+function startOfMonth(d: Date) {
+  return new Date(d.getFullYear(), d.getMonth(), 1)
+}
+
+function startOfYear(d: Date) {
+  return new Date(d.getFullYear(), 0, 1)
+}
+
+/** Inclusive range check for the period chips: "Bulan Ini" also matches items from today/this week. */
+function isWithinPeriod(dateStr: string, period: Exclude<RiwayatPeriod, 'Semua'>) {
+  const date = new Date(dateStr)
+  const now = new Date()
+  switch (period) {
+    case 'Hari Ini':
+      return date >= startOfDay(now)
+    case 'Minggu Ini':
+      return date >= startOfWeek(now)
+    case 'Bulan Ini':
+      return date >= startOfMonth(now)
+    case 'Tahun Ini':
+      return date >= startOfYear(now)
+    case 'Lebih Lama':
+      return date < startOfYear(now)
+  }
+}
+
 export default function LibraryDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
@@ -96,6 +140,9 @@ export default function LibraryDetailPage() {
   const [editingBook, setEditingBook] = React.useState<Book | null>(null)
   const [booksError, setBooksError] = React.useState<string | null>(null)
   const [tab, setTab] = React.useState<TabKey>('dashboard')
+  const [riwayatPeriod, setRiwayatPeriod] = React.useState<RiwayatPeriod>('Semua')
+  const [riwayatAksiFilter, setRiwayatAksiFilter] = React.useState('Semua')
+  const [riwayatSort, setRiwayatSort] = React.useState<RiwayatSort>('terbaru')
   const [bookSearch, setBookSearch] = React.useState('')
   const [bookKondisiFilter, setBookKondisiFilter] = React.useState<'Semua' | BookKondisi>('Semua')
   const [bookKlasifikasiFilter, setBookKlasifikasiFilter] = React.useState('Semua')
@@ -333,11 +380,20 @@ export default function LibraryDetailPage() {
   const allOnPageSelected =
     pagedBookRows.length > 0 && pagedBookRows.every((g) => selectedGroupKeys.has(groupKey(g)))
 
-  const relatedActivity = activity
-    .filter((log) => `${log.aksi} ${log.detail}`.toLowerCase().includes(library.nama.toLowerCase()))
-    .slice(0, 5)
+  const libraryActivity = activity.filter((log) =>
+    `${log.aksi} ${log.detail}`.toLowerCase().includes(library.nama.toLowerCase()),
+  )
+  const relatedActivity = libraryActivity.slice(0, 5)
   const activityRows = relatedActivity.length > 0 ? relatedActivity : activity.slice(0, 5)
 
+  const riwayatAksiChoices = Array.from(new Set(libraryActivity.map((log) => log.aksi))).sort()
+  const riwayatFiltered = libraryActivity
+    .filter((log) => riwayatAksiFilter === 'Semua' || log.aksi === riwayatAksiFilter)
+    .filter((log) => riwayatPeriod === 'Semua' || isWithinPeriod(log.created_at, riwayatPeriod))
+    .sort((a, b) => {
+      const diff = new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      return riwayatSort === 'terbaru' ? -diff : diff
+    })
   return (
     <DashboardLayout>
       <div className="mx-auto w-full max-w-7xl p-4 sm:p-6 lg:p-8">
@@ -913,27 +969,84 @@ export default function LibraryDetailPage() {
         )}
 
         {tab === 'riwayat' && (
-          <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-            {activityRows.length === 0 && (
-              <p className="px-6 py-10 text-center text-sm text-slate-400">Belum ada aktivitas tercatat.</p>
-            )}
-            {activityRows.length > 0 && (
-              <ul>
-                {activityRows.map((log) => (
-                  <li key={log.id} className="flex items-start gap-4 border-b border-slate-100 px-6 py-4 last:border-b-0">
-                    <div className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-sky-100 text-sky-800">
-                      <Clock size={16} />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-slate-800">{log.aksi}</p>
-                      <p className="text-sm text-slate-500">{log.detail}</p>
-                      <p className="mt-1 text-xs text-slate-400">
-                        {log.pelaku} · {new Date(log.created_at).toLocaleString('id-ID')}
-                      </p>
-                    </div>
-                  </li>
+          <div className="space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+              <div className="flex flex-wrap gap-1.5">
+                {RIWAYAT_PERIOD_FILTERS.map((period) => (
+                  <button
+                    key={period}
+                    type="button"
+                    onClick={() => setRiwayatPeriod(period)}
+                    className={`rounded-full px-3 py-1.5 text-xs font-semibold ${
+                      riwayatPeriod === period
+                        ? 'bg-sky-800 text-white'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                  >
+                    {period}
+                  </button>
                 ))}
-              </ul>
+              </div>
+              <div className="flex items-center gap-2">
+                <select
+                  value={riwayatAksiFilter}
+                  onChange={(e) => setRiwayatAksiFilter(e.target.value)}
+                  aria-label="Filter jenis aktivitas"
+                  className="h-9 rounded-lg border border-slate-200 bg-white px-2.5 text-sm text-slate-600 focus:border-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-700/20"
+                >
+                  <option value="Semua">Semua Aktivitas</option>
+                  {riwayatAksiChoices.map((aksi) => (
+                    <option key={aksi} value={aksi}>
+                      {aksi}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={riwayatSort}
+                  onChange={(e) => setRiwayatSort(e.target.value as RiwayatSort)}
+                  aria-label="Urutkan riwayat"
+                  className="h-9 rounded-lg border border-slate-200 bg-white px-2.5 text-sm text-slate-600 focus:border-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-700/20"
+                >
+                  <option value="terbaru">Terbaru Dahulu</option>
+                  <option value="terlama">Terlama Dahulu</option>
+                </select>
+              </div>
+            </div>
+
+            {riwayatFiltered.length === 0 && (
+              <div className="rounded-xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-400 shadow-sm">
+                {libraryActivity.length === 0
+                  ? 'Belum ada aktivitas tercatat.'
+                  : 'Tidak ada aktivitas yang cocok dengan filter ini.'}
+              </div>
+            )}
+
+            {riwayatFiltered.length > 0 && (
+              <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                <ul>
+                  {riwayatFiltered.map((log) => {
+                    const meta = activityMeta(log.aksi)
+                    const Icon = meta.icon
+                    return (
+                      <li key={log.id} className="flex items-start gap-4 border-b border-slate-100 px-6 py-4 last:border-b-0">
+                        <div className={`mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-lg ${meta.badge}`}>
+                          <Icon size={16} />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-semibold text-slate-800">{log.aksi}</p>
+                          <p className="text-sm text-slate-500">{log.detail}</p>
+                          <p className="mt-1 flex items-center gap-1.5 text-xs text-slate-400">
+                            <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-slate-100 text-[10px] font-semibold text-slate-600">
+                              {initials(log.pelaku)}
+                            </span>
+                            {log.pelaku} · {formatDateTime(log.created_at)}
+                          </p>
+                        </div>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </div>
             )}
           </div>
         )}
