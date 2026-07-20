@@ -33,6 +33,7 @@ export interface Library {
 }
 
 export type BookKondisi = 'Bagus' | 'Rusak'
+export type BookStatus = 'tersedia' | 'dipinjam'
 
 export interface Book {
   id: string
@@ -53,6 +54,21 @@ export interface Book {
   ilustrasi: string
   cover_url: string
   batch_id: string
+  status: BookStatus
+  created_at: string
+}
+
+export type CirculationStatus = 'dipinjam' | 'kembali'
+
+export interface Circulation {
+  id: string
+  book_id: string
+  library_id: string
+  borrower_name: string
+  borrower_nis: string | null
+  status: CirculationStatus
+  borrow_date: string
+  return_date: string | null
   created_at: string
 }
 
@@ -228,3 +244,25 @@ export async function uploadBookCover(file: File): Promise<{ url: string }> {
 }
 
 export const getActivityLog = () => request<ActivityLog[]>('/activity-log')
+
+export const getCirculations = (libraryId: string, status?: CirculationStatus) =>
+  request<Circulation[]>(
+    `/circulations?library_id=${encodeURIComponent(libraryId)}${status ? `&status=${status}` : ''}`,
+  )
+
+export const borrowBook = (payload: {
+  library_id: string
+  nomor_inventaris: string
+  borrower_name: string
+  borrower_nis?: string
+}) =>
+  request<{ book: Book; circulation: Circulation }>('/circulations/borrow', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+
+export const returnBook = (payload: { library_id: string; nomor_inventaris: string }) =>
+  request<{ book: Book; circulation: Circulation }>('/circulations/return', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })

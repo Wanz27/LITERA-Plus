@@ -161,6 +161,30 @@ create table if not exists activity_log (
   created_at timestamptz not null default now()
 );
 
+-- Status ketersediaan tiap eksemplar buku (untuk fitur peminjaman/pengembalian)
+alter table books add column if not exists status text not null default 'tersedia' check (status in ('tersedia', 'dipinjam'));
+
+-- Tabel transaksi peminjaman & pengembalian buku
+create table if not exists circulations (
+  id uuid primary key default gen_random_uuid(),
+  book_id uuid not null references books(id) on delete cascade,
+  library_id uuid not null references libraries(id) on delete cascade,
+  borrower_name text not null,
+  borrower_nis text,
+  status text not null default 'dipinjam' check (status in ('dipinjam', 'kembali')),
+  borrow_date timestamptz not null default now(),
+  return_date timestamptz,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists circulations_library_id_idx on circulations (library_id);
+create index if not exists circulations_book_id_idx on circulations (book_id);
+
+-- Satu eksemplar buku hanya boleh punya satu transaksi peminjaman aktif pada satu waktu
+-- (jaring pengaman DB; service juga mengecek ini lebih dulu untuk pesan error yang ramah).
+create unique index if not exists circulations_active_book_unique
+  on circulations (book_id) where status = 'dipinjam';
+
 -- Seed: akun admin default (email: admin@litera.id / password: admin123)
 insert into users (full_name, email, password_hash, role)
 values (

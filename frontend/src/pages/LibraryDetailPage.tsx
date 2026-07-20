@@ -8,6 +8,7 @@ import {
   Plus,
   BookPlus,
   BookOpen,
+  BookMarked,
   AlertTriangle,
   Clock,
   User,
@@ -28,6 +29,7 @@ import ConfirmDialog from '../components/ConfirmDialog'
 import ExportReportMenu from '../components/ExportReportMenu'
 import ImportBooksModal from '../components/ImportBooksModal'
 import BookFilterSortMenu from '../components/BookFilterSortMenu'
+import PeminjamanTab from '../components/PeminjamanTab'
 import * as api from '../lib/api'
 import type { ActivityLog, Book, BookKondisi, Library, LibraryStatus, LibraryType } from '../lib/api'
 import { typeIcon, StatusBadge } from '../lib/libraryUi'
@@ -48,6 +50,7 @@ const FACILITY_IMAGE =
 const tabs = [
   { key: 'dashboard', label: 'Dashboard' },
   { key: 'list-buku', label: 'List Buku' },
+  { key: 'peminjaman', label: 'Peminjaman' },
   { key: 'riwayat', label: 'Riwayat' },
 ] as const
 type TabKey = (typeof tabs)[number]['key']
@@ -188,6 +191,21 @@ export default function LibraryDetailPage() {
     }
   }
 
+  /**
+   * Refresh buku & aktivitas setelah aksi pinjam/kembali, tanpa lewat `load()` — `load()` men-set
+   * `loading=true` yang membuat seluruh halaman (termasuk PeminjamanTab) unmount sesaat, sehingga
+   * banner sukses & state form di tab Peminjaman hilang sebelum sempat terlihat.
+   */
+  async function refreshAfterCirculation() {
+    if (!library) return
+    try {
+      setActivity(await api.getActivityLog())
+    } catch {
+      // Diamkan; Riwayat/Aktivitas Terkini tetap menampilkan data lama dan bisa dicoba lagi nanti.
+    }
+    await loadBooks(library.id)
+  }
+
   React.useEffect(() => {
     load()
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -318,6 +336,8 @@ export default function LibraryDetailPage() {
   const totalBuku = books.reduce((sum, b) => sum + b.jumlah, 0)
   const damagedCount = books.filter((b) => b.kondisi === 'Rusak').reduce((sum, b) => sum + b.jumlah, 0)
   const damagedPct = totalBuku > 0 ? Math.round((damagedCount / totalBuku) * 100) : 0
+  const dipinjamCount = books.filter((b) => b.status === 'dipinjam').reduce((sum, b) => sum + b.jumlah, 0)
+  const dipinjamPct = totalBuku > 0 ? Math.round((dipinjamCount / totalBuku) * 100) : 0
 
   const klasifikasiStats = klasifikasiOptions
     .map((opt) => {
@@ -459,7 +479,7 @@ export default function LibraryDetailPage() {
 
         {tab === 'dashboard' && (
           <>
-            <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
               <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
                 <div className="mb-4 flex items-center justify-between">
                   <div className="grid h-10 w-10 place-items-center rounded-lg bg-sky-100 text-sky-800">
@@ -468,6 +488,16 @@ export default function LibraryDetailPage() {
                 </div>
                 <p className="text-sm text-slate-500">Total Buku</p>
                 <p className="text-2xl font-bold text-slate-900">{totalBuku.toLocaleString('id-ID')}</p>
+              </div>
+              <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+                <div className="mb-4 flex items-center justify-between">
+                  <div className="grid h-10 w-10 place-items-center rounded-lg bg-amber-100 text-amber-600">
+                    <BookMarked size={18} />
+                  </div>
+                  <span className="text-xs font-semibold text-amber-600">{dipinjamPct}%</span>
+                </div>
+                <p className="text-sm text-slate-500">Buku Dipinjam</p>
+                <p className="text-2xl font-bold text-slate-900">{dipinjamCount.toLocaleString('id-ID')}</p>
               </div>
               <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
                 <div className="mb-4 flex items-center justify-between">
@@ -780,6 +810,7 @@ export default function LibraryDetailPage() {
                     <th className="px-6 py-3">Subjek</th>
                     <th className="px-6 py-3">Bahasa</th>
                     <th className="px-6 py-3">Jumlah</th>
+                    <th className="px-6 py-3">Stok</th>
                     <th className="px-6 py-3">No. Inventaris</th>
                     <th className="px-6 py-3">No. Panggil</th>
                     <th className="px-6 py-3 text-right">Aksi</th>
@@ -793,6 +824,7 @@ export default function LibraryDetailPage() {
                       return acc
                     }, {})
                     const kondisiKeys = Object.keys(kondisiCounts)
+                    const stokTersedia = group.filter((b) => b.status === 'tersedia').length
                     return (
                       <tr
                         key={book.batch_id || book.id}
@@ -872,6 +904,12 @@ export default function LibraryDetailPage() {
                         <td className="px-6 py-3 text-sm text-slate-600">{book.subjek || '-'}</td>
                         <td className="px-6 py-3 text-sm text-slate-600">{book.bahasa || '-'}</td>
                         <td className="px-6 py-3 text-sm text-slate-600">{group.length}</td>
+                        <td className="px-6 py-3 text-sm">
+                          <span className={stokTersedia === 0 ? 'font-semibold text-rose-600' : 'font-semibold text-slate-700'}>
+                            {stokTersedia}
+                          </span>
+                          <span className="text-slate-400"> / {group.length}</span>
+                        </td>
                         <td className="px-6 py-3 text-sm text-slate-600">
                           {group.length <= 2 ? (
                             <div className="space-y-0.5">
@@ -966,6 +1004,10 @@ export default function LibraryDetailPage() {
               </div>
             )}
           </div>
+        )}
+
+        {tab === 'peminjaman' && (
+          <PeminjamanTab libraryId={library.id} books={books} onChanged={refreshAfterCirculation} />
         )}
 
         {tab === 'riwayat' && (

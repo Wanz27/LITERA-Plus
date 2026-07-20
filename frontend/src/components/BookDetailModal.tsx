@@ -100,13 +100,22 @@ export default function BookDetailModal({ books, initialIndex = 0, onClose, onEd
                 <BookOpen size={28} />
               </div>
             )}
-            <span
-              className={`mt-3 inline-block rounded-full px-2.5 py-1 text-xs font-semibold ${
-                book.kondisi === 'Rusak' ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'
-              }`}
-            >
-              {book.kondisi}
-            </span>
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              <span
+                className={`inline-block rounded-full px-2.5 py-1 text-xs font-semibold ${
+                  book.kondisi === 'Rusak' ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'
+                }`}
+              >
+                {book.kondisi}
+              </span>
+              <span
+                className={`inline-block rounded-full px-2.5 py-1 text-xs font-semibold ${
+                  book.status === 'dipinjam' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'
+                }`}
+              >
+                {book.status === 'dipinjam' ? 'Dipinjam' : 'Tersedia'}
+              </span>
+            </div>
           </div>
 
           <div className="grid flex-1 grid-cols-2 gap-x-4 gap-y-4">

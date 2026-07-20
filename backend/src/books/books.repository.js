@@ -1,7 +1,7 @@
 import { supabase } from '../lib/supabase.js'
 
 const COLUMNS =
-  'id, library_id, judul, penulis, penerbit, tahun_terbit, isbn, kode_klasifikasi, kondisi, subjek, bahasa, jumlah, nomor_inventaris, jumlah_halaman, ukuran_buku, ilustrasi, cover_url, batch_id, created_at'
+  'id, library_id, judul, penulis, penerbit, tahun_terbit, isbn, kode_klasifikasi, kondisi, subjek, bahasa, jumlah, nomor_inventaris, jumlah_halaman, ukuran_buku, ilustrasi, cover_url, batch_id, status, created_at'
 
 export const listBooksByLibrary = async (libraryId) => {
   const { data, error } = await supabase
@@ -30,6 +30,25 @@ export const findBooksByNomorInventaris = async (libraryId, numbers) => {
     .eq('library_id', libraryId)
     .in('nomor_inventaris', numbers)
 
+  if (error) throw error
+  return data
+}
+
+/** Finds a single book copy in a library by its (unique) nomor_inventaris. Used by the borrow/return flow. */
+export const findBookByNomorInventaris = async (libraryId, nomorInventaris) => {
+  const { data, error } = await supabase
+    .from('books')
+    .select(COLUMNS)
+    .eq('library_id', libraryId)
+    .eq('nomor_inventaris', nomorInventaris)
+    .maybeSingle()
+
+  if (error) throw error
+  return data
+}
+
+export const updateBookStatus = async (id, status) => {
+  const { data, error } = await supabase.from('books').update({ status }).eq('id', id).select(COLUMNS).single()
   if (error) throw error
   return data
 }
