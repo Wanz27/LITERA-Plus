@@ -5,6 +5,10 @@ import * as activityRepo from '../activity/activity.repository.js'
 
 const KONDISI_VALUES = ['Bagus', 'Rusak']
 
+// 'dipinjam' sengaja tidak termasuk di sini — status itu hanya boleh berubah lewat alur
+// peminjaman/pengembalian (lihat circulations.service.js), bukan lewat toggle manual ini.
+const MANUAL_STATUS_VALUES = ['tersedia', 'hilang']
+
 function validate({ judul, penulis, jumlah, kondisi }) {
   if (!judul || !judul.trim()) throw new Error('Judul buku wajib diisi')
   if (!penulis || !penulis.trim()) throw new Error('Nama penulis wajib diisi')
@@ -231,11 +235,44 @@ export const update = async (id, payload, actor) => {
     ...(payload.cover_url !== undefined ? { cover_url: payload.cover_url.trim() } : {}),
   })
 
+  // Semua eksemplar yang ditambahkan bersamaan (batch_id sama) dianggap satu judul fisik yang
+  // sama, jadi cover-nya juga harus sama — begitu cover salah satu eksemplar benar-benar diganti
+  // (bukan sekadar dikirim ulang tanpa berubah saat edit field lain), samakan ke eksemplar lain
+  // dalam batch yang sama.
+  const newCoverUrl = payload.cover_url !== undefined ? payload.cover_url.trim() : undefined
+  if (newCoverUrl !== undefined && newCoverUrl !== existing.cover_url && existing.batch_id) {
+    await booksRepo.updateCoverForBatch(existing.batch_id, newCoverUrl, id)
+  }
+
   const library = await librariesRepo.findLibraryById(existing.library_id)
 
   await activityRepo.createActivity({
     aksi: 'Mengubah Buku',
     detail: `${book.judul} diperbarui${library ? ` di ${library.nama}` : ''}.`,
+    pelaku: actor?.full_name || 'Admin',
+  })
+
+  return book
+}
+
+export const updateStatus = async (id, status, actor) => {
+  if (!MANUAL_STATUS_VALUES.includes(status)) throw new Error('Status tidak valid')
+
+  const existing = await booksRepo.findBookById(id)
+  if (!existing) throw new Error('Buku tidak ditemukan')
+  if (existing.status === 'dipinjam') {
+    throw new Error('Buku sedang dipinjam. Proses pengembalian terlebih dahulu sebelum mengubah status.')
+  }
+  if (existing.status === status) return existing
+
+  const book = await booksRepo.updateBookStatus(id, status)
+  const library = await librariesRepo.findLibraryById(existing.library_id)
+
+  await activityRepo.createActivity({
+    aksi: status === 'hilang' ? 'Menandai Buku Hilang' : 'Menandai Buku Ditemukan',
+    detail: `"${book.judul}" (No. Inv ${book.nomor_inventaris}) ditandai ${
+      status === 'hilang' ? 'hilang' : 'tersedia kembali'
+    }${library ? ` di ${library.nama}` : ''} oleh ${actor?.full_name || 'Admin'}.`,
     pelaku: actor?.full_name || 'Admin',
   })
 

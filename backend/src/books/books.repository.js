@@ -77,3 +77,9 @@ export const deleteBook = async (id) => {
   const { error } = await supabase.from('books').delete().eq('id', id)
   if (error) throw error
 }
+
+/** Menyamakan cover_url semua eksemplar lain dalam batch yang sama (lihat komentar batch_id di schema.sql). */
+export const updateCoverForBatch = async (batchId, coverUrl, excludeId) => {
+  const { error } = await supabase.from('books').update({ cover_url: coverUrl }).eq('batch_id', batchId).neq('id', excludeId)
+  if (error) throw error
+}

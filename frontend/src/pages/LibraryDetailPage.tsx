@@ -10,6 +10,7 @@ import {
   BookOpen,
   BookMarked,
   AlertTriangle,
+  PackageX,
   Clock,
   User,
   ZoomIn,
@@ -158,6 +159,8 @@ export default function LibraryDetailPage() {
   const [detailIndex, setDetailIndex] = React.useState(0)
   const [bookToDelete, setBookToDelete] = React.useState<Book | null>(null)
   const [deletingBook, setDeletingBook] = React.useState(false)
+  const [bookToMarkLost, setBookToMarkLost] = React.useState<Book | null>(null)
+  const [markingLost, setMarkingLost] = React.useState(false)
   const [selectedGroupKeys, setSelectedGroupKeys] = React.useState<Set<string>>(new Set())
   const [bulkDeleteOpen, setBulkDeleteOpen] = React.useState(false)
   const [bulkDeleting, setBulkDeleting] = React.useState(false)
@@ -275,6 +278,23 @@ export default function LibraryDetailPage() {
     }
   }
 
+  async function handleMarkBookLost() {
+    if (!bookToMarkLost) return
+    setMarkingLost(true)
+    try {
+      await api.updateBookStatus(bookToMarkLost.id, 'hilang')
+      setBookToMarkLost(null)
+      await load()
+    } finally {
+      setMarkingLost(false)
+    }
+  }
+
+  async function handleMarkBookFound(book: Book) {
+    await api.updateBookStatus(book.id, 'tersedia')
+    await load()
+  }
+
   function toggleGroupSelected(key: string) {
     setSelectedGroupKeys((prev) => {
       const next = new Set(prev)
@@ -338,6 +358,8 @@ export default function LibraryDetailPage() {
   const damagedPct = totalBuku > 0 ? Math.round((damagedCount / totalBuku) * 100) : 0
   const dipinjamCount = books.filter((b) => b.status === 'dipinjam').reduce((sum, b) => sum + b.jumlah, 0)
   const dipinjamPct = totalBuku > 0 ? Math.round((dipinjamCount / totalBuku) * 100) : 0
+  const lostCount = books.filter((b) => b.status === 'hilang').reduce((sum, b) => sum + b.jumlah, 0)
+  const lostPct = totalBuku > 0 ? Math.round((lostCount / totalBuku) * 100) : 0
 
   const klasifikasiStats = klasifikasiOptions
     .map((opt) => {
@@ -479,7 +501,7 @@ export default function LibraryDetailPage() {
 
         {tab === 'dashboard' && (
           <>
-            <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
                 <div className="mb-4 flex items-center justify-between">
                   <div className="grid h-10 w-10 place-items-center rounded-lg bg-sky-100 text-sky-800">
@@ -506,8 +528,18 @@ export default function LibraryDetailPage() {
                   </div>
                   <span className="text-xs font-semibold text-rose-600">{damagedPct}%</span>
                 </div>
-                <p className="text-sm text-slate-500">Buku Rusak/Hilang</p>
+                <p className="text-sm text-slate-500">Buku Rusak</p>
                 <p className="text-2xl font-bold text-slate-900">{damagedCount.toLocaleString('id-ID')}</p>
+              </div>
+              <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+                <div className="mb-4 flex items-center justify-between">
+                  <div className="grid h-10 w-10 place-items-center rounded-lg bg-slate-200 text-slate-600">
+                    <PackageX size={18} />
+                  </div>
+                  <span className="text-xs font-semibold text-slate-500">{lostPct}%</span>
+                </div>
+                <p className="text-sm text-slate-500">Buku Hilang</p>
+                <p className="text-2xl font-bold text-slate-900">{lostCount.toLocaleString('id-ID')}</p>
               </div>
             </div>
 
@@ -1109,6 +1141,25 @@ export default function LibraryDetailPage() {
             setDetailGroup(null)
             setBookToDelete(book)
           }}
+          onMarkLost={(book) => {
+            setDetailGroup(null)
+            setBookToMarkLost(book)
+          }}
+          onMarkFound={(book) => {
+            setDetailGroup(null)
+            handleMarkBookFound(book)
+          }}
+        />
+      )}
+
+      {bookToMarkLost && (
+        <ConfirmDialog
+          title="Tandai buku ini hilang?"
+          message={`Buku "${bookToMarkLost.judul}" (No. Inv ${bookToMarkLost.nomor_inventaris}) akan ditandai hilang dan tidak bisa dipinjamkan sampai ditemukan kembali.`}
+          confirmLabel="Ya, Tandai Hilang"
+          loading={markingLost}
+          onConfirm={handleMarkBookLost}
+          onCancel={() => setBookToMarkLost(null)}
         />
       )}
 

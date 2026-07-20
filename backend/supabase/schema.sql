@@ -166,6 +166,10 @@ create table if not exists activity_log (
 -- Status ketersediaan tiap eksemplar buku (untuk fitur peminjaman/pengembalian)
 alter table books add column if not exists status text not null default 'tersedia' check (status in ('tersedia', 'dipinjam'));
 
+-- Migrasi untuk database yang sudah ada sebelum status 'hilang' ditambahkan
+alter table books drop constraint if exists books_status_check;
+alter table books add constraint books_status_check check (status in ('tersedia', 'dipinjam', 'hilang'));
+
 -- Tabel transaksi peminjaman & pengembalian buku
 create table if not exists circulations (
   id uuid primary key default gen_random_uuid(),

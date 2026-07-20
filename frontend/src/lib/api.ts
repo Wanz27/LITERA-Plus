@@ -34,7 +34,7 @@ export interface Library {
 }
 
 export type BookKondisi = 'Bagus' | 'Rusak'
-export type BookStatus = 'tersedia' | 'dipinjam'
+export type BookStatus = 'tersedia' | 'dipinjam' | 'hilang'
 
 export interface Book {
   id: string
@@ -72,6 +72,13 @@ export interface Circulation {
   due_date: string | null
   return_date: string | null
   created_at: string
+}
+
+export interface BorrowerSuggestion {
+  borrower_name: string
+  borrower_nis: string | null
+  source?: 'riwayat' | 'akun'
+  role?: 'admin' | 'petugas' | 'visitor'
 }
 
 export interface ActivityLog {
@@ -245,6 +252,12 @@ export const updateBook = (id: string, payload: Partial<BookInput>) =>
 export const deleteBook = (id: string) =>
   request<{ id: string }>(`/books/${id}`, { method: 'DELETE' })
 
+export const updateBookStatus = (id: string, status: 'tersedia' | 'hilang') =>
+  request<Book>(`/books/${id}/status`, {
+    method: 'PATCH',
+    body: JSON.stringify({ status }),
+  })
+
 export async function uploadBookCover(file: File): Promise<{ url: string }> {
   const token = getToken()
   const formData = new FormData()
@@ -268,6 +281,11 @@ export const getActivityLog = () => request<ActivityLog[]>('/activity-log')
 export const getCirculations = (libraryId: string, status?: CirculationStatus) =>
   request<Circulation[]>(
     `/circulations?library_id=${encodeURIComponent(libraryId)}${status ? `&status=${status}` : ''}`,
+  )
+
+export const searchBorrowers = (libraryId: string, query: string) =>
+  request<BorrowerSuggestion[]>(
+    `/circulations/borrowers?library_id=${encodeURIComponent(libraryId)}&query=${encodeURIComponent(query)}`,
   )
 
 export const borrowBook = (payload: {

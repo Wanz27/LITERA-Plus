@@ -36,6 +36,64 @@ export const createCirculation = async (payload) => {
   return data
 }
 
+// Usulan nama peminjam digabung dari dua sumber: riwayat peminjaman di perpustakaan ini
+// (borrower_name/borrower_nis siswa yang pernah dicatat) dan akun terdaftar di tabel users
+// (admin/petugas/visitor) — supaya siapa pun, apa pun rolenya, tetap muncul sebagai usulan dan
+// bisa langsung meminjam buku.
+export const searchBorrowers = async (libraryId, query) => {
+  let historyRequest = supabase
+    .from('circulations')
+    .select('borrower_name, borrower_nis')
+    .eq('library_id', libraryId)
+    .order('created_at', { ascending: false })
+    .limit(100)
+  if (query) historyRequest = historyRequest.ilike('borrower_name', `%${query}%`)
+
+  let usersRequest = supabase.from('users').select('full_name, role').order('full_name', { ascending: true }).limit(50)
+  if (query) usersRequest = usersRequest.ilike('full_name', `%${query}%`)
+
+  const [historyResult, usersResult] = await Promise.all([historyRequest, usersRequest])
+  if (historyResult.error) throw historyResult.error
+  if (usersResult.error) throw usersResult.error
+
+  const seen = new Set()
+  const suggestions = []
+
+  for (const row of historyResult.data) {
+    const key = `${row.borrower_nis || ''}|${row.borrower_name.trim().toLowerCase()}`
+    if (seen.has(key)) continue
+    seen.add(key)
+    suggestions.push({ borrower_name: row.borrower_name, borrower_nis: row.borrower_nis, source: 'riwayat' })
+    if (suggestions.length >= 5) break
+  }
+
+  for (const row of usersResult.data) {
+    const key = `|${row.full_name.trim().toLowerCase()}`
+    if (seen.has(key)) continue
+    seen.add(key)
+    suggestions.push({ borrower_name: row.full_name, borrower_nis: null, source: 'akun', role: row.role })
+    if (suggestions.length >= 8) break
+  }
+
+  return suggestions
+}
+
+export const countActiveLoansForBorrower = async (libraryId, { borrowerName, borrowerNis }) => {
+  let request = supabase
+    .from('circulations')
+    .select('id', { count: 'exact', head: true })
+    .eq('library_id', libraryId)
+    .eq('status', 'dipinjam')
+
+  request = borrowerNis
+    ? request.eq('borrower_nis', borrowerNis)
+    : request.is('borrower_nis', null).ilike('borrower_name', borrowerName)
+
+  const { count, error } = await request
+  if (error) throw error
+  return count ?? 0
+}
+
 export const completeCirculation = async (id) => {
   const { data, error } = await supabase
     .from('circulations')

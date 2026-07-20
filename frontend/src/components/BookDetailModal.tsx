@@ -1,7 +1,8 @@
 import * as React from 'react'
-import { X, BookOpen, Pencil, Trash2, ChevronLeft, ChevronRight } from 'lucide-react'
+import { X, BookOpen, Pencil, Trash2, ChevronLeft, ChevronRight, ZoomIn, PackageX, PackageCheck } from 'lucide-react'
 import type { Book } from '../lib/api'
 import { klasifikasiLabel, generateCallNumber } from '../lib/bookUi'
+import CoverPreviewModal from './CoverPreviewModal'
 
 interface Props {
   books: Book[]
@@ -9,6 +10,8 @@ interface Props {
   onClose: () => void
   onEdit?: (book: Book) => void
   onDelete?: (book: Book) => void
+  onMarkLost?: (book: Book) => void
+  onMarkFound?: (book: Book) => void
 }
 
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
@@ -20,8 +23,9 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
   )
 }
 
-export default function BookDetailModal({ books, initialIndex = 0, onClose, onEdit, onDelete }: Props) {
+export default function BookDetailModal({ books, initialIndex = 0, onClose, onEdit, onDelete, onMarkLost, onMarkFound }: Props) {
   const [index, setIndex] = React.useState(() => Math.min(Math.max(initialIndex, 0), books.length - 1))
+  const [previewOpen, setPreviewOpen] = React.useState(false)
   const hasMultiple = books.length > 1
   const book = books[index]
 
@@ -30,13 +34,14 @@ export default function BookDetailModal({ books, initialIndex = 0, onClose, onEd
 
   React.useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
+      if (previewOpen) return
       if (e.key === 'Escape') onClose()
       if (e.key === 'ArrowLeft') goPrev()
       if (e.key === 'ArrowRight') goNext()
     }
     document.addEventListener('keydown', onKeyDown)
     return () => document.removeEventListener('keydown', onKeyDown)
-  }, [onClose, goPrev, goNext])
+  }, [onClose, goPrev, goNext, previewOpen])
 
   if (!book) return null
 
@@ -90,11 +95,21 @@ export default function BookDetailModal({ books, initialIndex = 0, onClose, onEd
         <div className="flex flex-1 gap-5 overflow-y-auto p-5">
           <div className="shrink-0">
             {book.cover_url ? (
-              <img
-                src={book.cover_url}
-                alt={book.judul}
-                className="h-40 w-28 rounded-lg object-cover shadow-sm"
-              />
+              <button
+                type="button"
+                onClick={() => setPreviewOpen(true)}
+                className="group relative block h-40 w-28 overflow-hidden rounded-lg shadow-sm"
+                aria-label={`Lihat cover ${book.judul}`}
+              >
+                <img
+                  src={book.cover_url}
+                  alt={book.judul}
+                  className="h-full w-full object-cover transition group-hover:brightness-75"
+                />
+                <span className="absolute inset-0 flex items-center justify-center opacity-0 transition group-hover:opacity-100">
+                  <ZoomIn size={20} className="text-white drop-shadow" />
+                </span>
+              </button>
             ) : (
               <div className="grid h-40 w-28 place-items-center rounded-lg bg-slate-100 text-slate-300">
                 <BookOpen size={28} />
@@ -110,10 +125,14 @@ export default function BookDetailModal({ books, initialIndex = 0, onClose, onEd
               </span>
               <span
                 className={`inline-block rounded-full px-2.5 py-1 text-xs font-semibold ${
-                  book.status === 'dipinjam' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'
+                  book.status === 'dipinjam'
+                    ? 'bg-amber-100 text-amber-700'
+                    : book.status === 'hilang'
+                      ? 'bg-rose-100 text-rose-700'
+                      : 'bg-emerald-100 text-emerald-700'
                 }`}
               >
-                {book.status === 'dipinjam' ? 'Dipinjam' : 'Tersedia'}
+                {book.status === 'dipinjam' ? 'Dipinjam' : book.status === 'hilang' ? 'Hilang' : 'Tersedia'}
               </span>
             </div>
           </div>
@@ -143,8 +162,24 @@ export default function BookDetailModal({ books, initialIndex = 0, onClose, onEd
           </div>
         </div>
 
-        {(onEdit || onDelete) && (
-          <div className="flex items-center justify-end gap-3 border-t border-slate-100 px-5 py-4">
+        {(onEdit || onDelete || onMarkLost || onMarkFound) && (
+          <div className="flex flex-wrap items-center justify-end gap-3 border-t border-slate-100 px-5 py-4">
+            {onMarkLost && book.status === 'tersedia' && (
+              <button
+                onClick={() => onMarkLost(book)}
+                className="flex items-center gap-2 rounded-lg border border-amber-200 px-4 py-2 text-sm font-semibold text-amber-700 hover:bg-amber-50"
+              >
+                <PackageX size={16} /> Tandai Hilang
+              </button>
+            )}
+            {onMarkFound && book.status === 'hilang' && (
+              <button
+                onClick={() => onMarkFound(book)}
+                className="flex items-center gap-2 rounded-lg border border-emerald-200 px-4 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-50"
+              >
+                <PackageCheck size={16} /> Tandai Ditemukan
+              </button>
+            )}
             {onEdit && (
               <button
                 onClick={() => onEdit(book)}
@@ -164,6 +199,15 @@ export default function BookDetailModal({ books, initialIndex = 0, onClose, onEd
           </div>
         )}
       </div>
+
+      {previewOpen && book.cover_url && (
+        <CoverPreviewModal
+          coverUrl={book.cover_url}
+          title={book.judul}
+          subtitle={book.penulis}
+          onClose={() => setPreviewOpen(false)}
+        />
+      )}
     </div>
   )
 }

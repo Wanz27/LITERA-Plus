@@ -8,6 +8,7 @@ function borrowerLabel(name, nis) {
 }
 
 const DEFAULT_LOAN_DAYS = 7
+const MAX_ACTIVE_LOANS_PER_BORROWER = 2
 
 function defaultDueDate() {
   const due = new Date()
@@ -18,6 +19,11 @@ function defaultDueDate() {
 export const list = async (libraryId, status) => {
   if (!libraryId) throw new Error('library_id wajib diisi')
   return circulationsRepo.listCirculations(libraryId, status)
+}
+
+export const searchBorrowers = async (libraryId, query) => {
+  if (!libraryId) throw new Error('library_id wajib diisi')
+  return circulationsRepo.searchBorrowers(libraryId, (query || '').trim())
 }
 
 export const borrow = async (payload, actor) => {
@@ -40,12 +46,26 @@ export const borrow = async (payload, actor) => {
   const book = await booksRepo.findBookByNomorInventaris(library_id, nomor_inventaris.trim())
   if (!book) throw new Error(`Buku dengan nomor inventaris "${nomor_inventaris.trim()}" tidak ditemukan di perpustakaan ini.`)
   if (book.status === 'dipinjam') throw new Error(`Buku "${book.judul}" sedang dipinjam dan belum dikembalikan.`)
+  if (book.status === 'hilang') throw new Error(`Buku "${book.judul}" berstatus hilang dan tidak bisa dipinjamkan.`)
+  if (book.kondisi === 'Rusak') throw new Error(`Buku "${book.judul}" dalam kondisi rusak dan tidak bisa dipinjamkan.`)
+
+  const trimmedName = borrower_name.trim()
+  const trimmedNis = borrower_nis?.trim() || null
+  const activeLoanCount = await circulationsRepo.countActiveLoansForBorrower(library_id, {
+    borrowerName: trimmedName,
+    borrowerNis: trimmedNis,
+  })
+  if (activeLoanCount >= MAX_ACTIVE_LOANS_PER_BORROWER) {
+    throw new Error(
+      `${borrowerLabel(trimmedName, trimmedNis)} sudah meminjam ${activeLoanCount} buku dan belum mengembalikannya. Maksimal peminjaman adalah ${MAX_ACTIVE_LOANS_PER_BORROWER} buku per orang.`,
+    )
+  }
 
   const circulation = await circulationsRepo.createCirculation({
     book_id: book.id,
     library_id,
-    borrower_name: borrower_name.trim(),
-    borrower_nis: borrower_nis?.trim() || null,
+    borrower_name: trimmedName,
+    borrower_nis: trimmedNis,
     due_date: dueDateValue,
   })
 

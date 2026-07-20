@@ -14,6 +14,7 @@ router.post('/', authenticate, requireStaff, booksController.create)
 router.post('/import', authenticate, requireStaff, booksController.bulkImport)
 router.post('/cover', authenticate, requireStaff, upload.single('file'), booksController.uploadCover)
 router.put('/:id', authenticate, requireStaff, booksController.update)
+router.patch('/:id/status', authenticate, requireStaff, booksController.updateStatus)
 router.delete('/:id', authenticate, requireStaff, booksController.remove)
 
 export default router

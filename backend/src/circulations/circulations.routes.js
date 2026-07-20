@@ -7,6 +7,7 @@ const router = express.Router()
 const requireStaff = requireRole('admin', 'petugas')
 
 router.get('/', authenticate, requireStaff, circulationsController.list)
+router.get('/borrowers', authenticate, requireStaff, circulationsController.searchBorrowers)
 router.post('/borrow', authenticate, requireStaff, circulationsController.borrow)
 router.post('/return', authenticate, requireStaff, circulationsController.returnBook)
 

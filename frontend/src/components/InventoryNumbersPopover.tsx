@@ -11,9 +11,21 @@ interface Props {
 
 export default function InventoryNumbersPopover({ judul, penulis, books, onSelect }: Props) {
   const [open, setOpen] = React.useState(false)
+  const [entered, setEntered] = React.useState(false)
   const buttonRef = React.useRef<HTMLButtonElement>(null)
   const popoverRef = React.useRef<HTMLDivElement>(null)
   const [style, setStyle] = React.useState<React.CSSProperties>({})
+
+  // Baru tampilkan state "entered" satu frame setelah mount, supaya browser sempat menerapkan
+  // state awal (opacity-0 + scale kecil) dulu sebelum transisi ke state akhir dijalankan.
+  React.useEffect(() => {
+    if (!open) {
+      setEntered(false)
+      return
+    }
+    const raf = requestAnimationFrame(() => setEntered(true))
+    return () => cancelAnimationFrame(raf)
+  }, [open])
 
   React.useEffect(() => {
     if (!open) return
@@ -71,8 +83,10 @@ export default function InventoryNumbersPopover({ judul, penulis, books, onSelec
         createPortal(
           <div
             ref={popoverRef}
-            style={style}
-            className="z-50 w-52 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg"
+            style={{ ...style, transformOrigin: 'top' }}
+            className={`z-50 w-52 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg transition duration-150 ease-out ${
+              entered ? 'scale-100 opacity-100' : 'scale-95 opacity-0'
+            }`}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="border-b border-slate-100 px-3 py-2">

@@ -37,6 +37,15 @@ export const update = async (req, res) => {
   }
 }
 
+export const updateStatus = async (req, res) => {
+  try {
+    const data = await booksService.updateStatus(req.params.id, req.body.status, req.user)
+    return res.status(200).json({ success: true, data })
+  } catch (error) {
+    return res.status(400).json({ success: false, message: error.message })
+  }
+}
+
 export const remove = async (req, res) => {
   try {
     const data = await booksService.remove(req.params.id, req.user)

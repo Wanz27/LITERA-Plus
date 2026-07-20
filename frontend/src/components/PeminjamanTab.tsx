@@ -1,12 +1,13 @@
 import * as React from 'react'
-import { BookOpen, Undo2, CheckCircle2, XCircle, ScanLine, Loader2, CalendarClock } from 'lucide-react'
+import { BookOpen, Undo2, CheckCircle2, XCircle, ScanLine, Loader2, CalendarClock, User } from 'lucide-react'
 import * as api from '../lib/api'
-import type { Book, Circulation } from '../lib/api'
+import type { Book, BorrowerSuggestion, Circulation } from '../lib/api'
 
 type Mode = 'pinjam' | 'kembali'
 type Feedback = { type: 'success' | 'error'; message: string } | null
 
 const DEFAULT_LOAN_DAYS = 7
+const MAX_ACTIVE_LOANS_PER_BORROWER = 2
 
 function defaultDueDateInput() {
   const d = new Date()
@@ -28,6 +29,12 @@ function daysUntil(dueDate: string) {
   return Math.round((dueMidnight.getTime() - nowMidnight.getTime()) / 86400000)
 }
 
+const ROLE_LABELS: Record<string, string> = {
+  admin: 'Admin',
+  petugas: 'Petugas',
+  visitor: 'Pengunjung',
+}
+
 function loanTimeStatus(dueDate: string | null): { label: string; className: string } {
   if (!dueDate) return { label: 'Tanpa batas waktu', className: 'bg-slate-100 text-slate-500' }
   const diff = daysUntil(dueDate)
@@ -47,6 +54,8 @@ export default function PeminjamanTab({ libraryId, books, onChanged }: Peminjama
   const [mode, setMode] = React.useState<Mode>('pinjam')
   const [borrowerName, setBorrowerName] = React.useState('')
   const [borrowerNis, setBorrowerNis] = React.useState('')
+  const [borrowerSuggestions, setBorrowerSuggestions] = React.useState<BorrowerSuggestion[]>([])
+  const [showBorrowerSuggestions, setShowBorrowerSuggestions] = React.useState(false)
   const [borrowIsbn, setBorrowIsbn] = React.useState('')
   const [dueDate, setDueDate] = React.useState(defaultDueDateInput())
   const [selectedInventaris, setSelectedInventaris] = React.useState('')
@@ -58,10 +67,25 @@ export default function PeminjamanTab({ libraryId, books, onChanged }: Peminjama
   const isbnInputRef = React.useRef<HTMLInputElement>(null)
   const selectRef = React.useRef<HTMLSelectElement>(null)
   const inputRef = React.useRef<HTMLInputElement>(null)
+  const nameInputRef = React.useRef<HTMLInputElement>(null)
 
   const isbnTrimmed = borrowIsbn.trim()
   const matchedByIsbn = isbnTrimmed ? books.filter((b) => b.isbn === isbnTrimmed) : []
-  const availableCopies = matchedByIsbn.filter((b) => b.status === 'tersedia')
+  const availableCopies = matchedByIsbn.filter((b) => b.status === 'tersedia' && b.kondisi !== 'Rusak')
+
+  // Batasi peminjaman aktif per orang berdasarkan data yang sudah dimuat di tabel "Sedang
+  // Dipinjam", supaya form langsung memberi peringatan tanpa perlu request tambahan. Prioritas
+  // pencocokan pakai NIS bila ada (lebih akurat), kalau tidak baru cocokkan nama (case-insensitive).
+  const trimmedBorrowerName = borrowerName.trim()
+  const trimmedBorrowerNis = borrowerNis.trim()
+  const currentBorrowerLoanCount = trimmedBorrowerName
+    ? loans.filter((loan) =>
+        trimmedBorrowerNis
+          ? loan.borrower_nis === trimmedBorrowerNis
+          : !loan.borrower_nis && loan.borrower_name.trim().toLowerCase() === trimmedBorrowerName.toLowerCase(),
+      ).length
+    : 0
+  const borrowerAtLimit = currentBorrowerLoanCount >= MAX_ACTIVE_LOANS_PER_BORROWER
 
   async function loadLoans() {
     setLoansLoading(true)
@@ -84,11 +108,36 @@ export default function PeminjamanTab({ libraryId, books, onChanged }: Peminjama
     else inputRef.current?.focus()
   }, [mode])
 
+  // Cari usulan nama peminjam dari riwayat peminjaman di perpustakaan ini, didebounce supaya
+  // tidak mengirim request di setiap ketikan.
+  React.useEffect(() => {
+    const name = borrowerName.trim()
+    if (mode !== 'pinjam' || name.length < 2) {
+      setBorrowerSuggestions([])
+      return
+    }
+    let cancelled = false
+    const timer = setTimeout(async () => {
+      try {
+        const results = await api.searchBorrowers(libraryId, name)
+        if (!cancelled) setBorrowerSuggestions(results)
+      } catch {
+        if (!cancelled) setBorrowerSuggestions([])
+      }
+    }, 250)
+    return () => {
+      cancelled = true
+      clearTimeout(timer)
+    }
+  }, [borrowerName, libraryId, mode])
+
   // Begitu ISBN cocok dengan eksemplar yang tersedia, pilih otomatis eksemplar pertama supaya
   // kasus umum (hanya 1 eksemplar) tinggal sekali klik "Pinjamkan Buku".
   React.useEffect(() => {
     const trimmed = borrowIsbn.trim()
-    const available = trimmed ? books.filter((b) => b.isbn === trimmed && b.status === 'tersedia') : []
+    const available = trimmed
+      ? books.filter((b) => b.isbn === trimmed && b.status === 'tersedia' && b.kondisi !== 'Rusak')
+      : []
     setSelectedInventaris(available[0]?.nomor_inventaris ?? '')
   }, [borrowIsbn, books])
 
@@ -99,11 +148,19 @@ export default function PeminjamanTab({ libraryId, books, onChanged }: Peminjama
   function resetForNextPerson() {
     setBorrowerName('')
     setBorrowerNis('')
+    setBorrowerSuggestions([])
+    setShowBorrowerSuggestions(false)
     setBorrowIsbn('')
     setSelectedInventaris('')
     setDueDate(defaultDueDateInput())
     setFeedback(null)
     isbnInputRef.current?.focus()
+  }
+
+  function selectBorrowerSuggestion(suggestion: BorrowerSuggestion) {
+    setBorrowerName(suggestion.borrower_name)
+    setBorrowerNis(suggestion.borrower_nis || '')
+    setShowBorrowerSuggestions(false)
   }
 
   function handleIsbnKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
@@ -115,7 +172,7 @@ export default function PeminjamanTab({ libraryId, books, onChanged }: Peminjama
 
   async function handleBorrowSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (submitting || !selectedInventaris) return
+    if (submitting || !selectedInventaris || borrowerAtLimit) return
     setSubmitting(true)
     setFeedback(null)
     try {
@@ -203,13 +260,50 @@ export default function PeminjamanTab({ libraryId, books, onChanged }: Peminjama
             </div>
             <div>
               <label className="mb-1.5 block text-sm font-semibold text-slate-700">Nama Peminjam</label>
-              <input
-                value={borrowerName}
-                onChange={(e) => setBorrowerName(e.target.value)}
-                required
-                placeholder="Nama lengkap siswa"
-                className="h-12 w-full rounded-lg border border-slate-300 px-4 text-base focus:border-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-700/20"
-              />
+              <div className="relative">
+                <User size={18} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  ref={nameInputRef}
+                  value={borrowerName}
+                  onChange={(e) => {
+                    setBorrowerName(e.target.value)
+                    setShowBorrowerSuggestions(true)
+                  }}
+                  onFocus={() => setShowBorrowerSuggestions(true)}
+                  onBlur={() => setShowBorrowerSuggestions(false)}
+                  required
+                  autoComplete="off"
+                  placeholder="Nama lengkap siswa"
+                  className="h-12 w-full rounded-lg border border-slate-300 pl-11 pr-4 text-base focus:border-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-700/20"
+                />
+                {showBorrowerSuggestions && borrowerSuggestions.length > 0 && (
+                  <ul className="absolute z-10 mt-1 w-full overflow-hidden rounded-lg border border-slate-200 bg-white py-1 shadow-lg">
+                    {borrowerSuggestions.map((s) => (
+                      <li key={`${s.borrower_nis || ''}-${s.borrower_name}`}>
+                        <button
+                          type="button"
+                          onMouseDown={(e) => {
+                            e.preventDefault()
+                            selectBorrowerSuggestion(s)
+                          }}
+                          className="flex w-full items-center justify-between gap-2 px-4 py-2 text-left text-sm hover:bg-slate-50"
+                        >
+                          <span className="flex min-w-0 items-center gap-2">
+                            <span className="truncate font-medium text-slate-800">{s.borrower_name}</span>
+                            {s.source === 'akun' && s.role && (
+                              <span className="shrink-0 rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-semibold uppercase text-sky-700">
+                                {ROLE_LABELS[s.role] ?? s.role}
+                              </span>
+                            )}
+                          </span>
+                          {s.borrower_nis && <span className="shrink-0 text-xs text-slate-400">NIS {s.borrower_nis}</span>}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+              <p className="mt-1 text-xs text-slate-400">Ketik minimal 2 huruf untuk melihat usulan dari riwayat peminjam maupun akun terdaftar.</p>
             </div>
             <div>
               <label className="mb-1.5 block text-sm font-semibold text-slate-700">NIS (opsional)</label>
@@ -219,6 +313,13 @@ export default function PeminjamanTab({ libraryId, books, onChanged }: Peminjama
                 placeholder="Nomor Induk Siswa"
                 className="h-12 w-full rounded-lg border border-slate-300 px-4 text-base focus:border-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-700/20"
               />
+              {trimmedBorrowerName && currentBorrowerLoanCount > 0 && (
+                <p className={`mt-1.5 text-xs font-semibold ${borrowerAtLimit ? 'text-rose-600' : 'text-amber-600'}`}>
+                  {borrowerAtLimit
+                    ? `${trimmedBorrowerName} sudah meminjam ${currentBorrowerLoanCount} buku dan belum mengembalikannya. Batas maksimal ${MAX_ACTIVE_LOANS_PER_BORROWER} buku tercapai.`
+                    : `Sedang meminjam ${currentBorrowerLoanCount}/${MAX_ACTIVE_LOANS_PER_BORROWER} buku.`}
+                </p>
+              )}
             </div>
             <div>
               <label className="mb-1.5 block text-sm font-semibold text-slate-700">Nomor ISBN Buku</label>
@@ -243,7 +344,8 @@ export default function PeminjamanTab({ libraryId, books, onChanged }: Peminjama
 
             {isbnTrimmed && matchedByIsbn.length > 0 && availableCopies.length === 0 && (
               <p className="text-sm font-medium text-rose-600">
-                Semua eksemplar "{matchedByIsbn[0].judul}" sedang dipinjam.
+                Semua eksemplar "{matchedByIsbn[0].judul}" tidak ada yang bisa
+                dipinjamkan untuk saat ini.
               </p>
             )}
 
@@ -309,11 +411,11 @@ export default function PeminjamanTab({ libraryId, books, onChanged }: Peminjama
 
             <button
               type="submit"
-              disabled={submitting || !selectedInventaris}
+              disabled={submitting || !selectedInventaris || borrowerAtLimit}
               className="flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-sky-800 text-base font-bold text-white shadow-sm hover:bg-sky-900 disabled:cursor-not-allowed disabled:bg-slate-300"
             >
               {submitting ? <Loader2 size={18} className="animate-spin" /> : <BookOpen size={18} />}
-              Pinjamkan Buku
+              {borrowerAtLimit ? 'Batas Peminjaman Tercapai' : 'Pinjamkan Buku'}
             </button>
           </form>
         ) : (
