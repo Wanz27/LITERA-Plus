@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { X, BookOpen, Pencil, Trash2, ChevronLeft, ChevronRight, ZoomIn, PackageX, PackageCheck } from 'lucide-react'
+import { X, BookOpen, Pencil, Trash2, ChevronLeft, ChevronRight, ZoomIn, PackageX, PackageCheck, CopyPlus } from 'lucide-react'
 import type { Book } from '../lib/api'
 import { klasifikasiLabel, generateCallNumber } from '../lib/bookUi'
 import CoverPreviewModal from './CoverPreviewModal'
@@ -12,6 +12,7 @@ interface Props {
   onDelete?: (book: Book) => void
   onMarkLost?: (book: Book) => void
   onMarkFound?: (book: Book) => void
+  onAddCopies?: (book: Book) => void
 }
 
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
@@ -23,7 +24,16 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
   )
 }
 
-export default function BookDetailModal({ books, initialIndex = 0, onClose, onEdit, onDelete, onMarkLost, onMarkFound }: Props) {
+export default function BookDetailModal({
+  books,
+  initialIndex = 0,
+  onClose,
+  onEdit,
+  onDelete,
+  onMarkLost,
+  onMarkFound,
+  onAddCopies,
+}: Props) {
   const [index, setIndex] = React.useState(() => Math.min(Math.max(initialIndex, 0), books.length - 1))
   const [previewOpen, setPreviewOpen] = React.useState(false)
   const hasMultiple = books.length > 1
@@ -162,8 +172,16 @@ export default function BookDetailModal({ books, initialIndex = 0, onClose, onEd
           </div>
         </div>
 
-        {(onEdit || onDelete || onMarkLost || onMarkFound) && (
+        {(onEdit || onDelete || onMarkLost || onMarkFound || onAddCopies) && (
           <div className="flex flex-wrap items-center justify-end gap-3 border-t border-slate-100 px-5 py-4">
+            {onAddCopies && (
+              <button
+                onClick={() => onAddCopies(book)}
+                className="flex items-center gap-2 rounded-lg border border-sky-200 px-4 py-2 text-sm font-semibold text-sky-700 hover:bg-sky-50"
+              >
+                <CopyPlus size={16} /> Tambah Eksemplar
+              </button>
+            )}
             {onMarkLost && book.status === 'tersedia' && (
               <button
                 onClick={() => onMarkLost(book)}

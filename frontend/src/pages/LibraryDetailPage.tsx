@@ -141,6 +141,7 @@ export default function LibraryDetailPage() {
   const [modalOpen, setModalOpen] = React.useState(false)
   const [bookModalOpen, setBookModalOpen] = React.useState(false)
   const [editingBook, setEditingBook] = React.useState<Book | null>(null)
+  const [prefillBook, setPrefillBook] = React.useState<Book | null>(null)
   const [booksError, setBooksError] = React.useState<string | null>(null)
   const [tab, setTab] = React.useState<TabKey>('dashboard')
   const [riwayatPeriod, setRiwayatPeriod] = React.useState<RiwayatPeriod>('Semua')
@@ -263,6 +264,7 @@ export default function LibraryDetailPage() {
     }
     setBookModalOpen(false)
     setEditingBook(null)
+    setPrefillBook(null)
     await load()
   }
 
@@ -1103,6 +1105,7 @@ export default function LibraryDetailPage() {
       {bookModalOpen && (
         <BookFormModal
           initial={editingBook}
+          prefillFrom={prefillBook}
           existingNumbers={books.map((b) => b.nomor_inventaris)}
           existingPenulis={distinctValues(books.map((b) => b.penulis))}
           existingPenerbit={distinctValues(books.map((b) => b.penerbit))}
@@ -1112,6 +1115,7 @@ export default function LibraryDetailPage() {
           onClose={() => {
             setBookModalOpen(false)
             setEditingBook(null)
+            setPrefillBook(null)
           }}
           onSubmit={handleSaveBook}
         />
@@ -1148,6 +1152,11 @@ export default function LibraryDetailPage() {
           onMarkFound={(book) => {
             setDetailGroup(null)
             handleMarkBookFound(book)
+          }}
+          onAddCopies={(book) => {
+            setDetailGroup(null)
+            setPrefillBook(book)
+            setBookModalOpen(true)
           }}
         />
       )}

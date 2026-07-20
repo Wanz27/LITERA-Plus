@@ -184,7 +184,7 @@ function normalizeIdentityValue(value: string): string {
 }
 
 /** Identifies copies of the same book: matched by ISBN when filled in, otherwise by judul+penulis. */
-function bookIdentityKey(book: Book): string {
+export function bookIdentityKey(book: Book): string {
   const isbn = normalizeIdentityValue(book.isbn)
   if (isbn) return `isbn:${isbn}`
   return `judul-penulis:${normalizeIdentityValue(book.judul)}|${normalizeIdentityValue(book.penulis)}`

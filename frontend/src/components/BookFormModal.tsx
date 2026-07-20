@@ -13,10 +13,15 @@ import {
   generateInventoryRange,
   suggestNextInventoryNumber,
   nextInventoryNumberInSequence,
+  bookIdentityKey,
 } from '../lib/bookUi'
 
 interface Props {
   initial?: Book | null
+  /** Buku sumber untuk mode "Tambah Eksemplar": mengisi semua field otomatis dari buku yang
+   * sudah ada, tapi tetap submit sebagai buku baru (bukan edit) supaya eksemplar tambahan
+   * tersimpan sebagai baris tersendiri. */
+  prefillFrom?: Book | null
   existingNumbers?: string[]
   existingPenulis?: string[]
   existingPenerbit?: string[]
@@ -69,6 +74,7 @@ function initialKlasifikasiState(kode?: string) {
 
 export default function BookFormModal({
   initial,
+  prefillFrom,
   existingNumbers = [],
   existingPenulis = [],
   existingPenerbit = [],
@@ -78,35 +84,50 @@ export default function BookFormModal({
   onClose,
   onSubmit,
 }: Props) {
-  const [judul, setJudul] = React.useState(initial?.judul ?? '')
-  const [penulis, setPenulis] = React.useState(initial?.penulis ?? '')
-  const [penerbit, setPenerbit] = React.useState(initial?.penerbit ?? '')
-  const [tahunTerbit, setTahunTerbit] = React.useState(initial?.tahun_terbit?.toString() ?? '')
-  const [isbn, setIsbn] = React.useState(initial?.isbn ?? '')
+  // `source` mengisi field deskriptif (judul, penulis, dst.) baik saat edit maupun saat "Tambah
+  // Eksemplar" dari buku yang sudah ada. `jumlah` & nomor inventaris sengaja tidak ikut sumber
+  // ini — keduanya dihitung terpisah di bawah karena beda logika untuk tiap mode.
+  const source = initial ?? prefillFrom ?? null
 
-  const klasifikasiInit = initialKlasifikasiState(initial?.kode_klasifikasi)
+  const [judul, setJudul] = React.useState(source?.judul ?? '')
+  const [penulis, setPenulis] = React.useState(source?.penulis ?? '')
+  const [penerbit, setPenerbit] = React.useState(source?.penerbit ?? '')
+  const [tahunTerbit, setTahunTerbit] = React.useState(source?.tahun_terbit?.toString() ?? '')
+  const [isbn, setIsbn] = React.useState(source?.isbn ?? '')
+
+  const klasifikasiInit = initialKlasifikasiState(source?.kode_klasifikasi)
   const [klasifikasiPreset, setKlasifikasiPreset] = React.useState(
     klasifikasiInit.isCustom ? CUSTOM_KLASIFIKASI_VALUE : klasifikasiInit.preset,
   )
   const [klasifikasiCustomNumber, setKlasifikasiCustomNumber] = React.useState(klasifikasiInit.customNumber)
   const [klasifikasiCustomText, setKlasifikasiCustomText] = React.useState(klasifikasiInit.customText)
 
-  const [kondisi, setKondisi] = React.useState<BookKondisi>(initial?.kondisi ?? 'Bagus')
-  const [subjek, setSubjek] = React.useState(initial?.subjek ?? '')
-  const [bahasa, setBahasa] = React.useState(initial?.bahasa ?? '')
+  const [kondisi, setKondisi] = React.useState<BookKondisi>(source?.kondisi ?? 'Bagus')
+  const [subjek, setSubjek] = React.useState(source?.subjek ?? '')
+  const [bahasa, setBahasa] = React.useState(source?.bahasa ?? '')
   const [jumlah, setJumlah] = React.useState(initial?.jumlah?.toString() ?? '1')
-  const [nomorInventarisAwal, setNomorInventarisAwal] = React.useState(initial?.nomor_inventaris ?? '')
-  const [jumlahHalaman, setJumlahHalaman] = React.useState(initial?.jumlah_halaman?.toString() ?? '')
-  const [ukuranBuku, setUkuranBuku] = React.useState(initial?.ukuran_buku ?? '')
+  const [nomorInventarisAwal, setNomorInventarisAwal] = React.useState(() => {
+    if (initial) return initial.nomor_inventaris
+    if (prefillFrom) {
+      const siblings = existingBooks.filter((b) => bookIdentityKey(b) === bookIdentityKey(prefillFrom))
+      return nextInventoryNumberInSequence(siblings.map((b) => b.nomor_inventaris)) ?? ''
+    }
+    return ''
+  })
+  const [jumlahHalaman, setJumlahHalaman] = React.useState(source?.jumlah_halaman?.toString() ?? '')
+  const [ukuranBuku, setUkuranBuku] = React.useState(source?.ukuran_buku ?? '')
   const [ilustrasi, setIlustrasi] = React.useState(
-    initial?.ilustrasi === 'Ada' || initial?.ilustrasi === 'Tidak ada' ? initial.ilustrasi : 'Tidak ada',
+    source?.ilustrasi === 'Ada' || source?.ilustrasi === 'Tidak ada' ? source.ilustrasi : 'Tidak ada',
   )
   const [saving, setSaving] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
-  const [appliedIsbn, setAppliedIsbn] = React.useState<string | null>(null)
+  // Saat mode "Tambah Eksemplar" (prefillFrom), field ISBN sudah otomatis terisi dari buku
+  // sumber — tandai sebagai "sudah diterapkan" dari awal supaya banner saran ISBN (yang
+  // ditujukan untuk alur "Tambah Buku" biasa) tidak muncul lagi dan terkesan redundan.
+  const [appliedIsbn, setAppliedIsbn] = React.useState<string | null>(prefillFrom ? source?.isbn?.trim().toLowerCase() || null : null)
 
   const [coverMode, setCoverMode] = React.useState<'upload' | 'url'>('upload')
-  const [coverUrl, setCoverUrl] = React.useState(initial?.cover_url ?? '')
+  const [coverUrl, setCoverUrl] = React.useState(source?.cover_url ?? '')
   const [coverUploading, setCoverUploading] = React.useState(false)
   const [coverError, setCoverError] = React.useState<string | null>(null)
   const [coverImgError, setCoverImgError] = React.useState(false)
@@ -275,9 +296,18 @@ export default function BookFormModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm">
       <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl bg-white p-5 shadow-xl sm:p-6">
-        <div className="mb-6 flex items-center justify-between">
-          <h3 className="text-lg font-bold text-slate-900">{initial ? 'Ubah Buku' : 'Tambah Buku Baru'}</h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
+        <div className="mb-6 flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h3 className="text-lg font-bold text-slate-900">
+              {initial ? 'Ubah Buku' : prefillFrom ? 'Tambah Eksemplar' : 'Tambah Buku Baru'}
+            </h3>
+            {prefillFrom && (
+              <p className="mt-0.5 truncate text-xs text-slate-500">
+                Menambahkan eksemplar baru untuk "{prefillFrom.judul}"
+              </p>
+            )}
+          </div>
+          <button onClick={onClose} className="shrink-0 text-slate-400 hover:text-slate-600">
             <X size={20} />
           </button>
         </div>
