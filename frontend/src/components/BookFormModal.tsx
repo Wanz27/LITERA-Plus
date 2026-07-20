@@ -1,8 +1,9 @@
 import * as React from 'react'
-import { X, Upload, Link2, ImageOff, Camera, Info } from 'lucide-react'
+import { X, Upload, Link2, ImageOff, Camera, Info, Crop } from 'lucide-react'
 import imageCompression from 'browser-image-compression'
 import type { Book, BookKondisi } from '../lib/api'
 import { uploadBookCover } from '../lib/api'
+import ImageCropModal from './ImageCropModal'
 import {
   kondisiOptions,
   klasifikasiOptions,
@@ -44,6 +45,8 @@ interface Props {
 
 const ACCEPTED_COVER_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 const MAX_COVER_SIZE = 5 * 1024 * 1024
+// Rasio pratinjau cover (h-28 w-20 → 5/7) supaya crop menampilkan bagian yang sama persis dengan yang tampil.
+const COVER_IMAGE_ASPECT = 5 / 7
 const COMPRESSION_OPTIONS = {
   maxSizeMB: 0.5,
   maxWidthOrHeight: 1200,
@@ -108,6 +111,11 @@ export default function BookFormModal({
   const [coverError, setCoverError] = React.useState<string | null>(null)
   const [coverImgError, setCoverImgError] = React.useState(false)
   const [dragActive, setDragActive] = React.useState(false)
+  const [cropSrc, setCropSrc] = React.useState<string | null>(null)
+  // Menyimpan gambar asli (sebelum di-crop) & posisi crop terakhir selama sesi form ini,
+  // supaya tombol "crop ulang" membuka gambar penuh tapi pada posisi crop terakhir.
+  const originalCoverSrcRef = React.useRef<string | null>(null)
+  const lastCropPositionRef = React.useRef<{ crop: { x: number; y: number }; zoom: number } | null>(null)
   const fileInputRef = React.useRef<HTMLInputElement>(null)
   const cameraInputRef = React.useRef<HTMLInputElement>(null)
   const nomorInventarisInputRef = React.useRef<HTMLInputElement>(null)
@@ -115,6 +123,12 @@ export default function BookFormModal({
   React.useEffect(() => {
     setCoverImgError(false)
   }, [coverUrl])
+
+  React.useEffect(() => {
+    return () => {
+      if (originalCoverSrcRef.current) URL.revokeObjectURL(originalCoverSrcRef.current)
+    }
+  }, [])
 
   const isEditing = !!initial
   const isCustomKlasifikasi = klasifikasiPreset === CUSTOM_KLASIFIKASI_VALUE
@@ -181,7 +195,7 @@ export default function BookFormModal({
     }
   }
 
-  async function handleCoverFile(file: File) {
+  function handleCoverFile(file: File) {
     setCoverError(null)
     if (!ACCEPTED_COVER_TYPES.includes(file.type)) {
       setCoverError('Format file harus JPG, PNG, atau WEBP.')
@@ -191,6 +205,20 @@ export default function BookFormModal({
       setCoverError('Ukuran file maksimal 5MB.')
       return
     }
+    if (originalCoverSrcRef.current) URL.revokeObjectURL(originalCoverSrcRef.current)
+    const src = URL.createObjectURL(file)
+    originalCoverSrcRef.current = src
+    lastCropPositionRef.current = null
+    setCropSrc(src)
+  }
+
+  function closeCropModal() {
+    setCropSrc(null)
+  }
+
+  async function handleCropped(file: File, position: { crop: { x: number; y: number }; zoom: number }) {
+    lastCropPositionRef.current = position
+    closeCropModal()
     setCoverUploading(true)
     try {
       const compressed = await imageCompression(file, COMPRESSION_OPTIONS)
@@ -556,69 +584,89 @@ export default function BookFormModal({
 
             {coverMode === 'upload' ? (
               <div className="space-y-2">
-                <div
-                  onClick={() => fileInputRef.current?.click()}
-                  onDragOver={(e) => {
-                    e.preventDefault()
-                    setDragActive(true)
-                  }}
-                  onDragLeave={() => setDragActive(false)}
-                  onDrop={(e) => {
-                    e.preventDefault()
-                    setDragActive(false)
-                    const file = e.dataTransfer.files?.[0]
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
                     if (file) handleCoverFile(file)
+                    e.target.value = ''
                   }}
-                  className={`cursor-pointer rounded-xl border-2 border-dashed p-6 text-center transition ${
-                    dragActive ? 'border-sky-500 bg-sky-50' : 'border-sky-200 bg-sky-50/40 hover:bg-sky-50'
-                  }`}
-                >
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0]
-                      if (file) handleCoverFile(file)
-                      e.target.value = ''
-                    }}
-                  />
-                  {coverUploading ? (
+                />
+
+                {coverUploading ? (
+                  <div className="rounded-xl border-2 border-dashed border-sky-200 bg-sky-50/40 p-6 text-center">
                     <p className="text-sm font-semibold text-slate-600">Mengompres &amp; mengunggah...</p>
-                  ) : coverUrl ? (
-                    <div className="flex flex-col items-center gap-2">
+                  </div>
+                ) : coverUrl ? (
+                  <div className="flex flex-col items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                    <div className="relative">
                       {coverImgError ? (
-                        <div className="flex h-28 w-20 items-center justify-center rounded-md bg-slate-100 text-slate-400">
-                          <ImageOff size={20} />
+                        <div className="flex h-56 w-40 items-center justify-center rounded-md bg-slate-100 text-slate-400">
+                          <ImageOff size={28} />
                         </div>
                       ) : (
                         <img
                           src={coverUrl}
                           alt="Cover buku"
                           onError={() => setCoverImgError(true)}
-                          className="h-28 w-20 rounded-md object-cover shadow-sm"
+                          className="aspect-[5/7] w-40 rounded-md object-cover shadow-sm"
                         />
                       )}
+                      {!coverImgError && (
+                        <button
+                          type="button"
+                          onClick={() => setCropSrc(originalCoverSrcRef.current ?? coverUrl)}
+                          className="absolute right-2 top-2 rounded-full bg-slate-900/60 p-1.5 text-white shadow-sm hover:bg-slate-900/80"
+                          aria-label="Sesuaikan crop gambar"
+                          title="Sesuaikan crop gambar"
+                        >
+                          <Crop size={14} />
+                        </button>
+                      )}
+                    </div>
+                    <div className="flex w-full gap-2">
                       <button
                         type="button"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setCoverUrl('')
-                        }}
-                        className="text-xs font-semibold text-rose-600 hover:underline"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
                       >
-                        Hapus gambar
+                        <Upload size={14} /> Ganti Gambar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setCoverUrl('')}
+                        className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-100"
+                      >
+                        <ImageOff size={14} /> Hapus Gambar
                       </button>
                     </div>
-                  ) : (
-                    <>
-                      <Upload className="mx-auto mb-2 text-slate-400" size={22} />
-                      <p className="text-sm font-semibold text-slate-700">Klik atau drag &amp; drop</p>
-                      <p className="text-xs text-slate-400">JPG, PNG, WEBP · Maks 5MB</p>
-                    </>
-                  )}
-                </div>
+                  </div>
+                ) : (
+                  <div
+                    onClick={() => fileInputRef.current?.click()}
+                    onDragOver={(e) => {
+                      e.preventDefault()
+                      setDragActive(true)
+                    }}
+                    onDragLeave={() => setDragActive(false)}
+                    onDrop={(e) => {
+                      e.preventDefault()
+                      setDragActive(false)
+                      const file = e.dataTransfer.files?.[0]
+                      if (file) handleCoverFile(file)
+                    }}
+                    className={`cursor-pointer rounded-xl border-2 border-dashed p-6 text-center transition ${
+                      dragActive ? 'border-sky-500 bg-sky-50' : 'border-sky-200 bg-sky-50/40 hover:bg-sky-50'
+                    }`}
+                  >
+                    <Upload className="mx-auto mb-2 text-slate-400" size={22} />
+                    <p className="text-sm font-semibold text-slate-700">Klik atau drag &amp; drop</p>
+                    <p className="text-xs text-slate-400">JPG, PNG, WEBP · Maks 5MB</p>
+                  </div>
+                )}
 
                 <input
                   ref={cameraInputRef}
@@ -691,6 +739,17 @@ export default function BookFormModal({
           </div>
         </form>
       </div>
+
+      {cropSrc && (
+        <ImageCropModal
+          imageSrc={cropSrc}
+          aspect={COVER_IMAGE_ASPECT}
+          fileName="cover-buku.jpg"
+          initialPosition={lastCropPositionRef.current}
+          onCancel={closeCropModal}
+          onCropped={handleCropped}
+        />
+      )}
     </div>
   )
 }

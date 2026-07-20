@@ -101,12 +101,22 @@ export default function LibraryFormModal({ initial, onClose, onSubmit }: Props) 
   const [dragActive, setDragActive] = React.useState(false)
   const [cropSrc, setCropSrc] = React.useState<string | null>(null)
   const fotoInputRef = React.useRef<HTMLInputElement>(null)
+  // Menyimpan gambar asli (sebelum di-crop) & posisi crop terakhir selama sesi form ini,
+  // supaya tombol "crop ulang" membuka gambar penuh tapi pada posisi crop terakhir.
+  const originalFotoSrcRef = React.useRef<string | null>(null)
+  const lastCropPositionRef = React.useRef<{ crop: { x: number; y: number }; zoom: number } | null>(null)
   const [saving, setSaving] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
 
   React.useEffect(() => {
     setFotoImgError(false)
   }, [fotoUrl])
+
+  React.useEffect(() => {
+    return () => {
+      if (originalFotoSrcRef.current) URL.revokeObjectURL(originalFotoSrcRef.current)
+    }
+  }, [])
 
   function handleFotoFileSelected(file: File) {
     setFotoError(null)
@@ -118,15 +128,19 @@ export default function LibraryFormModal({ initial, onClose, onSubmit }: Props) 
       setFotoError('Ukuran file maksimal 5MB.')
       return
     }
-    setCropSrc(URL.createObjectURL(file))
+    if (originalFotoSrcRef.current) URL.revokeObjectURL(originalFotoSrcRef.current)
+    const src = URL.createObjectURL(file)
+    originalFotoSrcRef.current = src
+    lastCropPositionRef.current = null
+    setCropSrc(src)
   }
 
   function closeCropModal() {
-    if (cropSrc) URL.revokeObjectURL(cropSrc)
     setCropSrc(null)
   }
 
-  async function handleCropped(file: File) {
+  async function handleCropped(file: File, position: { crop: { x: number; y: number }; zoom: number }) {
+    lastCropPositionRef.current = position
     closeCropModal()
     setFotoUploading(true)
     try {
@@ -345,7 +359,7 @@ export default function LibraryFormModal({ initial, onClose, onSubmit }: Props) 
                   {!fotoImgError && (
                     <button
                       type="button"
-                      onClick={() => setCropSrc(fotoUrl)}
+                      onClick={() => setCropSrc(originalFotoSrcRef.current ?? fotoUrl)}
                       className="absolute right-2 top-2 rounded-full bg-slate-900/60 p-1.5 text-white shadow-sm hover:bg-slate-900/80"
                       aria-label="Sesuaikan crop gambar"
                       title="Sesuaikan crop gambar"
@@ -438,6 +452,7 @@ export default function LibraryFormModal({ initial, onClose, onSubmit }: Props) 
         <ImageCropModal
           imageSrc={cropSrc}
           aspect={CARD_IMAGE_ASPECT}
+          initialPosition={lastCropPositionRef.current}
           onCancel={closeCropModal}
           onCropped={handleCropped}
         />

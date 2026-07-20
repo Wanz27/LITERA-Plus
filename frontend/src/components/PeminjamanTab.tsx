@@ -213,13 +213,34 @@ export default function PeminjamanTab({ libraryId, books, onChanged }: Peminjama
               </p>
             )}
 
+            {matchedByIsbn.length > 0 && availableCopies.length > 0 && (
+              <div className="flex gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                {matchedByIsbn[0].cover_url ? (
+                  <img
+                    src={matchedByIsbn[0].cover_url}
+                    alt={matchedByIsbn[0].judul}
+                    className="h-24 w-16 shrink-0 rounded object-cover shadow-sm"
+                  />
+                ) : (
+                  <div className="flex h-24 w-16 shrink-0 items-center justify-center rounded bg-slate-200 text-slate-400">
+                    <BookOpen size={22} />
+                  </div>
+                )}
+                <dl className="min-w-0 flex-1 space-y-0.5 text-sm">
+                  <dt className="sr-only">Judul</dt>
+                  <dd className="truncate font-bold text-slate-900">{matchedByIsbn[0].judul}</dd>
+                  <dd className="truncate text-slate-600">{matchedByIsbn[0].penulis}</dd>
+                  <dd className="truncate text-xs text-slate-500">
+                    {[matchedByIsbn[0].penerbit, matchedByIsbn[0].tahun_terbit].filter(Boolean).join(', ')}
+                  </dd>
+                  <dd className="truncate text-xs text-slate-400">ISBN {matchedByIsbn[0].isbn}</dd>
+                </dl>
+              </div>
+            )}
+
             {availableCopies.length > 0 && (
               <div>
                 <label className="mb-1.5 block text-sm font-semibold text-slate-700">Pilih Eksemplar (No. Inventaris)</label>
-                <p className="mb-1.5 text-xs text-slate-500">
-                  Ditemukan: <span className="font-semibold text-slate-700">{matchedByIsbn[0].judul}</span> —{' '}
-                  {matchedByIsbn[0].penulis}
-                </p>
                 <select
                   ref={selectRef}
                   value={selectedInventaris}
