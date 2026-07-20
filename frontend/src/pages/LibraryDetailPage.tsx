@@ -12,7 +12,6 @@ import {
   AlertTriangle,
   Clock,
   User,
-  Eye,
   ZoomIn,
   Search,
   Trash2,
@@ -223,6 +222,7 @@ export default function LibraryDetailPage() {
     tipe: LibraryType
     jam_operasional: string
     kepala_unit: string
+    foto_url: string
   }) {
     if (!library) return
     await api.updateLibrary(library.id, payload)
@@ -439,7 +439,7 @@ export default function LibraryDetailPage() {
               onClick={() => setModalOpen(true)}
               className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
             >
-              <Pencil size={16} /> Edit Detail
+              <Pencil size={16} /> Ubah Detail
             </button>
             <button
               onClick={() => {
@@ -511,7 +511,7 @@ export default function LibraryDetailPage() {
               </div>
             </div>
 
-            <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
+            <div className="mb-8 grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
               <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm lg:col-span-2">
                 <div className="mb-5 flex items-start justify-between">
                   <div>
@@ -549,7 +549,11 @@ export default function LibraryDetailPage() {
 
               <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
                 <div className="relative h-36 w-full">
-                  <img src={FACILITY_IMAGE} alt={buildingLabel} className="h-full w-full object-cover" />
+                  <img
+                    src={library.foto_url || FACILITY_IMAGE}
+                    alt={buildingLabel}
+                    className="h-full w-full object-cover"
+                  />
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-slate-900/10 to-transparent" />
                   <div className="absolute bottom-3 left-4 text-white">
                     <p className="text-xs font-semibold uppercase tracking-wide">Lokasi Perpustakaan</p>
@@ -557,41 +561,23 @@ export default function LibraryDetailPage() {
                   </div>
                 </div>
                 <div className="space-y-4 p-5">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-start gap-3">
-                      <Clock size={18} className="mt-0.5 shrink-0 text-slate-400" />
-                      <div>
-                        <p className="text-sm font-semibold text-slate-800">Jam Operasional</p>
-                        {library.jam_operasional.split('\n').map((line, i) => (
-                          <p key={i} className="text-sm text-slate-500">
-                            {line}
-                          </p>
-                        ))}
-                      </div>
+                  <div className="flex items-start gap-3">
+                    <Clock size={18} className="mt-0.5 shrink-0 text-slate-400" />
+                    <div>
+                      <p className="text-sm font-semibold text-slate-800">Jam Operasional</p>
+                      {library.jam_operasional.split('\n').map((line, i) => (
+                        <p key={i} className="text-sm text-slate-500">
+                          {line}
+                        </p>
+                      ))}
                     </div>
-                    <button
-                      onClick={() => setModalOpen(true)}
-                      className="shrink-0 text-slate-400 hover:text-sky-700"
-                      aria-label="Ubah jam operasional"
-                    >
-                      <Pencil size={14} />
-                    </button>
                   </div>
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-start gap-3">
-                      <User size={18} className="mt-0.5 shrink-0 text-slate-400" />
-                      <div>
-                        <p className="text-sm font-semibold text-slate-800">Kepala Unit</p>
-                        <p className="text-sm text-slate-500">{library.kepala_unit}</p>
-                      </div>
+                  <div className="flex items-start gap-3">
+                    <User size={18} className="mt-0.5 shrink-0 text-slate-400" />
+                    <div>
+                      <p className="text-sm font-semibold text-slate-800">Kepala Unit</p>
+                      <p className="text-sm text-slate-500">{library.kepala_unit}</p>
                     </div>
-                    <button
-                      onClick={() => setModalOpen(true)}
-                      className="shrink-0 text-slate-400 hover:text-sky-700"
-                      aria-label="Ubah kepala unit"
-                    >
-                      <Pencil size={14} />
-                    </button>
                   </div>
                   <ExportReportMenu library={library} books={books} />
                 </div>
@@ -813,7 +799,6 @@ export default function LibraryDetailPage() {
                     <th className="px-6 py-3">Stok</th>
                     <th className="px-6 py-3">No. Inventaris</th>
                     <th className="px-6 py-3">No. Panggil</th>
-                    <th className="px-6 py-3 text-right">Aksi</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -931,21 +916,6 @@ export default function LibraryDetailPage() {
                         </td>
                         <td className="px-6 py-3 text-sm font-mono text-slate-600">
                           {generateCallNumber(book.kode_klasifikasi, book.penulis, book.judul)}
-                        </td>
-                        <td className="px-6 py-3">
-                          <div className="flex items-center justify-end">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                setDetailGroup(group)
-                                setDetailIndex(0)
-                              }}
-                              className="text-slate-400 hover:text-sky-700"
-                              aria-label="Lihat detail buku"
-                            >
-                              <Eye size={16} />
-                            </button>
-                          </div>
                         </td>
                       </tr>
                     )

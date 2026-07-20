@@ -1,6 +1,9 @@
 import * as React from 'react'
-import { Plus, Trash2, X } from 'lucide-react'
+import { Crop, ImageOff, ImageUp, Plus, Trash2, Upload, X } from 'lucide-react'
+import imageCompression from 'browser-image-compression'
+import { uploadLibraryImage } from '../lib/api'
 import type { Library, LibraryStatus, LibraryType } from '../lib/api'
+import ImageCropModal from './ImageCropModal'
 
 interface Props {
   initial?: Library | null
@@ -12,7 +15,19 @@ interface Props {
     tipe: LibraryType
     jam_operasional: string
     kepala_unit: string
+    foto_url: string
   }) => Promise<void>
+}
+
+const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024
+// Rasio gambar banner "Lokasi Perpustakaan" di kartu detail perpustakaan (LibraryDetailPage),
+// supaya crop di form ini menampilkan bagian yang sama persis dengan yang tampil di kartu.
+const CARD_IMAGE_ASPECT = 5 / 2
+const COMPRESSION_OPTIONS = {
+  maxSizeMB: 0.8,
+  maxWidthOrHeight: 1600,
+  useWebWorker: true,
 }
 
 interface Schedule {
@@ -79,8 +94,51 @@ export default function LibraryFormModal({ initial, onClose, onSubmit }: Props) 
   const [tipe, setTipe] = React.useState<LibraryType>(initial?.tipe ?? 'utama')
   const [schedules, setSchedules] = React.useState<Schedule[]>(() => parseJamOperasional(initial?.jam_operasional))
   const [kepalaUnit, setKepalaUnit] = React.useState(initial?.kepala_unit ?? '')
+  const [fotoUrl, setFotoUrl] = React.useState(initial?.foto_url ?? '')
+  const [fotoUploading, setFotoUploading] = React.useState(false)
+  const [fotoError, setFotoError] = React.useState<string | null>(null)
+  const [fotoImgError, setFotoImgError] = React.useState(false)
+  const [dragActive, setDragActive] = React.useState(false)
+  const [cropSrc, setCropSrc] = React.useState<string | null>(null)
+  const fotoInputRef = React.useRef<HTMLInputElement>(null)
   const [saving, setSaving] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
+
+  React.useEffect(() => {
+    setFotoImgError(false)
+  }, [fotoUrl])
+
+  function handleFotoFileSelected(file: File) {
+    setFotoError(null)
+    if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+      setFotoError('Format file harus JPG, PNG, atau WEBP.')
+      return
+    }
+    if (file.size > MAX_IMAGE_SIZE) {
+      setFotoError('Ukuran file maksimal 5MB.')
+      return
+    }
+    setCropSrc(URL.createObjectURL(file))
+  }
+
+  function closeCropModal() {
+    if (cropSrc) URL.revokeObjectURL(cropSrc)
+    setCropSrc(null)
+  }
+
+  async function handleCropped(file: File) {
+    closeCropModal()
+    setFotoUploading(true)
+    try {
+      const compressed = await imageCompression(file, COMPRESSION_OPTIONS)
+      const { url } = await uploadLibraryImage(compressed)
+      setFotoUrl(url)
+    } catch (err) {
+      setFotoError(err instanceof Error ? err.message : 'Gagal mengunggah gambar.')
+    } finally {
+      setFotoUploading(false)
+    }
+  }
 
   function updateSchedule(index: number, patch: Partial<Schedule>) {
     setSchedules((prev) => prev.map((s, i) => (i === index ? { ...s, ...patch } : s)))
@@ -113,6 +171,7 @@ export default function LibraryFormModal({ initial, onClose, onSubmit }: Props) 
         tipe,
         jam_operasional: jamOperasional,
         kepala_unit: kepalaUnit.trim(),
+        foto_url: fotoUrl.trim(),
       })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Gagal menyimpan data.')
@@ -249,6 +308,97 @@ export default function LibraryFormModal({ initial, onClose, onSubmit }: Props) 
 
           <div>
             <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-slate-500">
+              Gambar Perpustakaan
+            </label>
+
+            <input
+              ref={fotoInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0]
+                if (file) handleFotoFileSelected(file)
+                e.target.value = ''
+              }}
+            />
+
+            {fotoUploading ? (
+              <div className="rounded-xl border-2 border-dashed border-sky-200 bg-sky-50/40 p-4 text-center">
+                <p className="text-sm font-semibold text-slate-600">Mengompres &amp; mengunggah...</p>
+              </div>
+            ) : fotoUrl ? (
+              <div className="space-y-2">
+                <div className="relative">
+                  {fotoImgError ? (
+                    <div className="flex aspect-[5/2] w-full items-center justify-center rounded-md bg-slate-100 text-slate-400">
+                      <ImageOff size={20} />
+                    </div>
+                  ) : (
+                    <img
+                      src={fotoUrl}
+                      alt="Gambar perpustakaan"
+                      onError={() => setFotoImgError(true)}
+                      className="aspect-[5/2] w-full rounded-md object-cover shadow-sm"
+                    />
+                  )}
+                  {!fotoImgError && (
+                    <button
+                      type="button"
+                      onClick={() => setCropSrc(fotoUrl)}
+                      className="absolute right-2 top-2 rounded-full bg-slate-900/60 p-1.5 text-white shadow-sm hover:bg-slate-900/80"
+                      aria-label="Sesuaikan crop gambar"
+                      title="Sesuaikan crop gambar"
+                    >
+                      <Crop size={14} />
+                    </button>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => fotoInputRef.current?.click()}
+                    className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                  >
+                    <ImageUp size={14} /> Ganti Gambar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFotoUrl('')}
+                    className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-100"
+                  >
+                    <Trash2 size={14} /> Hapus Gambar
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div
+                onClick={() => fotoInputRef.current?.click()}
+                onDragOver={(e) => {
+                  e.preventDefault()
+                  setDragActive(true)
+                }}
+                onDragLeave={() => setDragActive(false)}
+                onDrop={(e) => {
+                  e.preventDefault()
+                  setDragActive(false)
+                  const file = e.dataTransfer.files?.[0]
+                  if (file) handleFotoFileSelected(file)
+                }}
+                className={`cursor-pointer rounded-xl border-2 border-dashed p-4 text-center transition ${
+                  dragActive ? 'border-sky-500 bg-sky-50' : 'border-sky-200 bg-sky-50/40 hover:bg-sky-50'
+                }`}
+              >
+                <Upload className="mx-auto mb-2 text-slate-400" size={20} />
+                <p className="text-sm font-semibold text-slate-700">Klik atau drag &amp; drop</p>
+                <p className="text-xs text-slate-400">JPG, PNG, WEBP · Maks 5MB</p>
+              </div>
+            )}
+            {fotoError && <p className="mt-1 text-xs text-rose-600">{fotoError}</p>}
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-slate-500">
               Kepala Unit
             </label>
             <input
@@ -275,7 +425,7 @@ export default function LibraryFormModal({ initial, onClose, onSubmit }: Props) 
             </button>
             <button
               type="submit"
-              disabled={saving}
+              disabled={saving || fotoUploading}
               className="rounded-lg bg-sky-800 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-sky-900 disabled:bg-slate-300"
             >
               {saving ? 'Menyimpan...' : 'Simpan'}
@@ -283,6 +433,15 @@ export default function LibraryFormModal({ initial, onClose, onSubmit }: Props) 
           </div>
         </form>
       </div>
+
+      {cropSrc && (
+        <ImageCropModal
+          imageSrc={cropSrc}
+          aspect={CARD_IMAGE_ASPECT}
+          onCancel={closeCropModal}
+          onCropped={handleCropped}
+        />
+      )}
     </div>
   )
 }

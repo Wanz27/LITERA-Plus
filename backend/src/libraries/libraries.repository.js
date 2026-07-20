@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase.js'
 export const listLibraries = async () => {
   const { data, error } = await supabase
     .from('libraries')
-    .select('id, nama, lokasi, status, tipe, total_koleksi, jam_operasional, kepala_unit, created_at')
+    .select('id, nama, lokasi, status, tipe, total_koleksi, jam_operasional, kepala_unit, foto_url, created_at')
     .order('created_at', { ascending: true })
 
   if (error) throw error

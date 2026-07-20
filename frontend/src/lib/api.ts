@@ -29,6 +29,7 @@ export interface Library {
   total_koleksi: number
   jam_operasional: string
   kepala_unit: string
+  foto_url?: string | null
   created_at: string
 }
 
@@ -181,6 +182,24 @@ export const updateLibrary = (id: string, payload: Partial<Library>) =>
 
 export const deleteLibrary = (id: string) =>
   request<{ id: string }>(`/libraries/${id}`, { method: 'DELETE' })
+
+export async function uploadLibraryImage(file: File): Promise<{ url: string }> {
+  const token = getToken()
+  const formData = new FormData()
+  formData.append('file', file)
+
+  const res = await fetch(`${API_URL}/libraries/image`, {
+    method: 'POST',
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    body: formData,
+  })
+
+  const body = await res.json().catch(() => ({}))
+  if (!res.ok || body.success === false) {
+    throw new ApiError(body.message || 'Gagal mengunggah gambar', res.status)
+  }
+  return body.data as { url: string }
+}
 
 export interface BookInput {
   library_id?: string

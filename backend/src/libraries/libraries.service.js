@@ -24,6 +24,7 @@ export const create = async (payload, actor) => {
     tipe: payload.tipe || 'utama',
     jam_operasional: payload.jam_operasional?.trim() || DEFAULT_JAM_OPERASIONAL,
     kepala_unit: payload.kepala_unit?.trim() || DEFAULT_KEPALA_UNIT,
+    foto_url: payload.foto_url?.trim() || null,
   })
 
   await activityRepo.createActivity({
@@ -47,6 +48,7 @@ export const update = async (id, payload, actor) => {
     ...(payload.tipe ? { tipe: payload.tipe } : {}),
     ...(payload.jam_operasional !== undefined ? { jam_operasional: payload.jam_operasional.trim() || DEFAULT_JAM_OPERASIONAL } : {}),
     ...(payload.kepala_unit !== undefined ? { kepala_unit: payload.kepala_unit.trim() || DEFAULT_KEPALA_UNIT } : {}),
+    ...(payload.foto_url !== undefined ? { foto_url: payload.foto_url.trim() || null } : {}),
   })
 
   await activityRepo.createActivity({

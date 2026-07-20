@@ -28,12 +28,14 @@ create table if not exists libraries (
   total_koleksi integer not null default 0,
   jam_operasional text not null default E'Senin - Jumat: 08.00 - 18.00\nSabtu: 09.00 - 15.00',
   kepala_unit text not null default 'Belum ditentukan',
+  foto_url text,
   created_at timestamptz not null default now()
 );
 
 -- Migrasi untuk database yang sudah ada sebelum kolom ini ditambahkan
 alter table libraries add column if not exists jam_operasional text not null default E'Senin - Jumat: 08.00 - 18.00\nSabtu: 09.00 - 15.00';
 alter table libraries add column if not exists kepala_unit text not null default 'Belum ditentukan';
+alter table libraries add column if not exists foto_url text;
 
 -- Tabel buku (koleksi buku per perpustakaan)
 create table if not exists books (

@@ -49,6 +49,7 @@ export default function DashboardPage() {
     tipe: LibraryType
     jam_operasional: string
     kepala_unit: string
+    foto_url: string
   }) {
     if (editing) {
       await api.updateLibrary(editing.id, payload)
