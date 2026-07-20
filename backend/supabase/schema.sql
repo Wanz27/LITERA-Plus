@@ -175,9 +175,13 @@ create table if not exists circulations (
   borrower_nis text,
   status text not null default 'dipinjam' check (status in ('dipinjam', 'kembali')),
   borrow_date timestamptz not null default now(),
+  due_date timestamptz,
   return_date timestamptz,
   created_at timestamptz not null default now()
 );
+
+-- Migrasi untuk database yang sudah ada sebelum kolom batas waktu pengembalian ditambahkan
+alter table circulations add column if not exists due_date timestamptz;
 
 create index if not exists circulations_library_id_idx on circulations (library_id);
 create index if not exists circulations_book_id_idx on circulations (book_id);

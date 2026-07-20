@@ -1,6 +1,6 @@
 import { supabase } from '../lib/supabase.js'
 
-const COLUMNS = 'id, book_id, library_id, borrower_name, borrower_nis, status, borrow_date, return_date, created_at'
+const COLUMNS = 'id, book_id, library_id, borrower_name, borrower_nis, status, borrow_date, due_date, return_date, created_at'
 
 export const listCirculations = async (libraryId, status) => {
   let query = supabase

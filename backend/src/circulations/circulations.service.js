@@ -7,17 +7,32 @@ function borrowerLabel(name, nis) {
   return nis ? `${name} (NIS ${nis})` : name
 }
 
+const DEFAULT_LOAN_DAYS = 7
+
+function defaultDueDate() {
+  const due = new Date()
+  due.setDate(due.getDate() + DEFAULT_LOAN_DAYS)
+  return due.toISOString()
+}
+
 export const list = async (libraryId, status) => {
   if (!libraryId) throw new Error('library_id wajib diisi')
   return circulationsRepo.listCirculations(libraryId, status)
 }
 
 export const borrow = async (payload, actor) => {
-  const { library_id, nomor_inventaris, borrower_name, borrower_nis } = payload
+  const { library_id, nomor_inventaris, borrower_name, borrower_nis, due_date } = payload
 
   if (!library_id) throw new Error('library_id wajib diisi')
   if (!nomor_inventaris || !nomor_inventaris.trim()) throw new Error('Nomor inventaris wajib discan atau diisi')
   if (!borrower_name || !borrower_name.trim()) throw new Error('Nama peminjam wajib diisi')
+
+  let dueDateValue = defaultDueDate()
+  if (due_date) {
+    const parsed = new Date(due_date)
+    if (Number.isNaN(parsed.getTime())) throw new Error('Batas waktu pengembalian tidak valid')
+    dueDateValue = parsed.toISOString()
+  }
 
   const library = await librariesRepo.findLibraryById(library_id)
   if (!library) throw new Error('Perpustakaan tidak ditemukan')
@@ -31,6 +46,7 @@ export const borrow = async (payload, actor) => {
     library_id,
     borrower_name: borrower_name.trim(),
     borrower_nis: borrower_nis?.trim() || null,
+    due_date: dueDateValue,
   })
 
   const updatedBook = await booksRepo.updateBookStatus(book.id, 'dipinjam')

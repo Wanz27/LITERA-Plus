@@ -1,10 +1,41 @@
 import * as React from 'react'
-import { BookOpen, Undo2, CheckCircle2, XCircle, ScanLine, Loader2 } from 'lucide-react'
+import { BookOpen, Undo2, CheckCircle2, XCircle, ScanLine, Loader2, CalendarClock } from 'lucide-react'
 import * as api from '../lib/api'
 import type { Book, Circulation } from '../lib/api'
 
 type Mode = 'pinjam' | 'kembali'
 type Feedback = { type: 'success' | 'error'; message: string } | null
+
+const DEFAULT_LOAN_DAYS = 7
+
+function defaultDueDateInput() {
+  const d = new Date()
+  d.setDate(d.getDate() + DEFAULT_LOAN_DAYS)
+  return d.toISOString().slice(0, 10)
+}
+
+function todayInput() {
+  return new Date().toISOString().slice(0, 10)
+}
+
+// Selisih dihitung berbasis tanggal (bukan jam) supaya "hari ini" tidak dianggap terlambat
+// hanya karena jam saat ini sudah lewat dari jam saat buku dipinjamkan.
+function daysUntil(dueDate: string) {
+  const due = new Date(dueDate)
+  const dueMidnight = new Date(due.getFullYear(), due.getMonth(), due.getDate())
+  const now = new Date()
+  const nowMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  return Math.round((dueMidnight.getTime() - nowMidnight.getTime()) / 86400000)
+}
+
+function loanTimeStatus(dueDate: string | null): { label: string; className: string } {
+  if (!dueDate) return { label: 'Tanpa batas waktu', className: 'bg-slate-100 text-slate-500' }
+  const diff = daysUntil(dueDate)
+  if (diff < 0) return { label: `Terlambat ${Math.abs(diff)} hari`, className: 'bg-rose-100 text-rose-700' }
+  if (diff === 0) return { label: 'Jatuh tempo hari ini', className: 'bg-amber-100 text-amber-700' }
+  if (diff <= 2) return { label: `${diff} hari lagi`, className: 'bg-amber-100 text-amber-700' }
+  return { label: `${diff} hari lagi`, className: 'bg-emerald-100 text-emerald-700' }
+}
 
 interface PeminjamanTabProps {
   libraryId: string
@@ -17,6 +48,7 @@ export default function PeminjamanTab({ libraryId, books, onChanged }: Peminjama
   const [borrowerName, setBorrowerName] = React.useState('')
   const [borrowerNis, setBorrowerNis] = React.useState('')
   const [borrowIsbn, setBorrowIsbn] = React.useState('')
+  const [dueDate, setDueDate] = React.useState(defaultDueDateInput())
   const [selectedInventaris, setSelectedInventaris] = React.useState('')
   const [nomorInventaris, setNomorInventaris] = React.useState('')
   const [submitting, setSubmitting] = React.useState(false)
@@ -69,6 +101,7 @@ export default function PeminjamanTab({ libraryId, books, onChanged }: Peminjama
     setBorrowerNis('')
     setBorrowIsbn('')
     setSelectedInventaris('')
+    setDueDate(defaultDueDateInput())
     setFeedback(null)
     isbnInputRef.current?.focus()
   }
@@ -91,6 +124,7 @@ export default function PeminjamanTab({ libraryId, books, onChanged }: Peminjama
         nomor_inventaris: selectedInventaris,
         borrower_name: borrowerName,
         borrower_nis: borrowerNis || undefined,
+        due_date: dueDate ? new Date(`${dueDate}T23:59:59`).toISOString() : undefined,
       })
       setFeedback({
         type: 'success',
@@ -257,6 +291,22 @@ export default function PeminjamanTab({ libraryId, books, onChanged }: Peminjama
               </div>
             )}
 
+            <div>
+              <label className="mb-1.5 block text-sm font-semibold text-slate-700">Batas Waktu Pengembalian</label>
+              <div className="relative">
+                <CalendarClock size={20} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="date"
+                  value={dueDate}
+                  onChange={(e) => setDueDate(e.target.value)}
+                  min={todayInput()}
+                  required
+                  className="h-12 w-full rounded-lg border border-slate-300 pl-12 pr-4 text-base focus:border-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-700/20"
+                />
+              </div>
+              <p className="mt-1 text-xs text-slate-400">Default {DEFAULT_LOAN_DAYS} hari dari sekarang, bisa diubah sesuai kebutuhan.</p>
+            </div>
+
             <button
               type="submit"
               disabled={submitting || !selectedInventaris}
@@ -279,11 +329,11 @@ export default function PeminjamanTab({ libraryId, books, onChanged }: Peminjama
                 <input
                   ref={inputRef}
                   value={nomorInventaris}
-                  onChange={(e) => setNomorInventaris(e.target.value)}
+                  onChange={(e) => setNomorInventaris(e.target.value.toUpperCase())}
                   required
                   autoFocus
                   placeholder="Scan barcode atau ketik nomor inventaris"
-                  className="h-14 w-full rounded-lg border border-slate-300 pl-12 pr-4 text-lg font-semibold tracking-wide focus:border-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-700/20"
+                  className="h-14 w-full rounded-lg border border-slate-300 pl-12 pr-4 text-lg font-semibold uppercase tracking-wide placeholder:normal-case focus:border-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-700/20"
                 />
               </div>
             </div>
@@ -340,20 +390,22 @@ export default function PeminjamanTab({ libraryId, books, onChanged }: Peminjama
                 <th className="px-6 py-3">Peminjam</th>
                 <th className="px-6 py-3">NIS</th>
                 <th className="px-6 py-3">Tanggal Pinjam</th>
+                <th className="px-6 py-3">Batas Waktu</th>
+                <th className="px-6 py-3">Waktu Pinjam</th>
                 <th className="px-6 py-3 text-right">Aksi</th>
               </tr>
             </thead>
             <tbody>
               {loansLoading && (
                 <tr>
-                  <td colSpan={6} className="px-6 py-10 text-center text-sm text-slate-400">
+                  <td colSpan={8} className="px-6 py-10 text-center text-sm text-slate-400">
                     Memuat data...
                   </td>
                 </tr>
               )}
               {!loansLoading && loans.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-6 py-10 text-center text-sm text-slate-400">
+                  <td colSpan={8} className="px-6 py-10 text-center text-sm text-slate-400">
                     Belum ada buku yang sedang dipinjam.
                   </td>
                 </tr>
@@ -361,6 +413,7 @@ export default function PeminjamanTab({ libraryId, books, onChanged }: Peminjama
               {!loansLoading &&
                 loans.map((loan) => {
                   const book = bookFor(loan.book_id)
+                  const status = loanTimeStatus(loan.due_date)
                   return (
                     <tr key={loan.id} className="border-b border-slate-100 last:border-b-0 hover:bg-slate-50">
                       <td className="px-6 py-3 text-sm font-medium text-slate-800">{book?.judul ?? '-'}</td>
@@ -369,6 +422,16 @@ export default function PeminjamanTab({ libraryId, books, onChanged }: Peminjama
                       <td className="px-6 py-3 text-sm text-slate-600">{loan.borrower_nis || '-'}</td>
                       <td className="px-6 py-3 text-sm text-slate-600">
                         {new Date(loan.borrow_date).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })}
+                      </td>
+                      <td className="px-6 py-3 text-sm text-slate-600">
+                        {loan.due_date
+                          ? new Date(loan.due_date).toLocaleDateString('id-ID', { dateStyle: 'medium' })
+                          : '-'}
+                      </td>
+                      <td className="px-6 py-3">
+                        <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${status.className}`}>
+                          {status.label}
+                        </span>
                       </td>
                       <td className="px-6 py-3 text-right">
                         <button

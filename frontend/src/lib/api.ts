@@ -69,6 +69,7 @@ export interface Circulation {
   borrower_nis: string | null
   status: CirculationStatus
   borrow_date: string
+  due_date: string | null
   return_date: string | null
   created_at: string
 }
@@ -274,6 +275,7 @@ export const borrowBook = (payload: {
   nomor_inventaris: string
   borrower_name: string
   borrower_nis?: string
+  due_date?: string
 }) =>
   request<{ book: Book; circulation: Circulation }>('/circulations/borrow', {
     method: 'POST',
