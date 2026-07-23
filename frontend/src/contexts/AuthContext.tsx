@@ -33,6 +33,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(nextUser)
   }
 
+  React.useEffect(() => {
+    if (!localStorage.getItem(TOKEN_KEY)) return
+
+    api
+      .getMe()
+      .then((freshUser) => {
+        localStorage.setItem(USER_KEY, JSON.stringify(freshUser))
+        setUser(freshUser)
+      })
+      .catch(() => {
+        localStorage.removeItem(TOKEN_KEY)
+        localStorage.removeItem(USER_KEY)
+        setUser(null)
+      })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const signIn: AuthContextValue['signIn'] = async (identifier, password) => {
     setAuthError(null)
     try {

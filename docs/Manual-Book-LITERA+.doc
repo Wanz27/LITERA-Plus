@@ -1,0 +1,392 @@
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+<meta charset="utf-8">
+<title>Manual Book LITERA+</title>
+<!--[if gte mso 9]>
+<xml>
+<w:WordDocument>
+<w:View>Print</w:View>
+<w:Zoom>100</w:Zoom>
+<w:DoNotOptimizeForBrowser/>
+</w:WordDocument>
+</xml>
+<![endif]-->
+<style>
+@page {
+  size: 21cm 29.7cm;
+  margin: 2.5cm 2.5cm 2.5cm 2.5cm;
+  mso-header-margin: 1.25cm;
+  mso-footer-margin: 1.25cm;
+  mso-page-numbers: 1;
+}
+body {
+  font-family: Calibri, Arial, sans-serif;
+  font-size: 11pt;
+  line-height: 1.4;
+  color: #1a1a1a;
+}
+h1 {
+  font-size: 20pt;
+  color: #1f4e79;
+  page-break-before: always;
+  border-bottom: 2px solid #1f4e79;
+  padding-bottom: 4px;
+  margin-top: 0;
+}
+h1.no-break { page-break-before: auto; }
+h2 {
+  font-size: 14pt;
+  color: #2e75b6;
+  margin-top: 18pt;
+}
+h3 {
+  font-size: 12pt;
+  color: #333333;
+  margin-top: 12pt;
+}
+p { margin: 6pt 0; text-align: justify; }
+ol, ul { margin: 6pt 0; }
+li { margin-bottom: 4pt; }
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 10pt 0;
+}
+th, td {
+  border: 1px solid #999999;
+  padding: 6pt 8pt;
+  font-size: 10.5pt;
+  text-align: left;
+  vertical-align: top;
+}
+th { background-color: #1f4e79; color: #ffffff; }
+tr:nth-child(even) td { background-color: #f2f2f2; }
+.note {
+  background-color: #fff4d6;
+  border-left: 4px solid #e0a800;
+  padding: 8pt 10pt;
+  margin: 10pt 0;
+}
+.screenshot {
+  background-color: #eef3f8;
+  border: 1px dashed #7fa8c9;
+  padding: 10pt;
+  margin: 8pt 0;
+  font-style: italic;
+  color: #555555;
+  text-align: center;
+}
+.cover {
+  text-align: center;
+  margin-top: 120pt;
+}
+.cover h1 {
+  border: none;
+  page-break-before: auto;
+  font-size: 30pt;
+  color: #1f4e79;
+}
+.cover p { text-align: center; }
+.toc-item { margin: 4pt 0; }
+.step-table td:first-child { width: 5%; text-align: center; font-weight: bold; }
+</style>
+</head>
+<body>
+
+<!-- ================= COVER ================= -->
+<div class="cover">
+<h1>MANUAL BOOK</h1>
+<h2 style="color:#2e75b6; border:none;">Sistem Informasi Manajemen Perpustakaan Sekolah</h2>
+<h1 style="font-size:40pt; page-break-before:auto; border:none; margin-top:40pt;">LITERA+</h1>
+<p style="margin-top:60pt; font-size:13pt;"><b>Panduan Penggunaan untuk Admin dan Petugas Perpustakaan</b></p>
+<p style="font-size:11pt; color:#555555;">Sekolah Dasar (SD)</p>
+<p style="margin-top:100pt; font-size:10pt; color:#777777;">Versi Dokumen: 1.0<br>Tanggal: 21 Juli 2026</p>
+</div>
+
+<!-- ================= KATA PENGANTAR ================= -->
+<h1>Kata Pengantar</h1>
+<p>Manual book ini disusun sebagai panduan resmi penggunaan Sistem Informasi Manajemen Perpustakaan Sekolah "LITERA+" yang ditujukan bagi Admin dan Petugas Perpustakaan di lingkungan Sekolah Dasar (SD). Dokumen ini menjelaskan langkah demi langkah penggunaan setiap fitur yang tersedia dalam sistem, mulai dari pengelolaan data buku, proses peminjaman dan pengembalian, hingga pengelolaan akun pengguna.</p>
+<p>Dengan adanya panduan ini, diharapkan seluruh petugas perpustakaan dapat mengoperasikan sistem secara mandiri, konsisten, dan sesuai dengan standar operasional yang telah ditetapkan sekolah.</p>
+<p><i>[Catatan: bagian ini dapat disesuaikan dengan nama sekolah, kepala sekolah, atau kepala perpustakaan yang mengesahkan dokumen ini.]</i></p>
+
+<!-- ================= DAFTAR ISI ================= -->
+<h1>Daftar Isi</h1>
+<div class="toc-item">BAB 1 &ndash; Pengenalan Sistem</div>
+<div class="toc-item">BAB 2 &ndash; Memulai Penggunaan (Getting Started)</div>
+<div class="toc-item">BAB 3 &ndash; Manajemen Perpustakaan (Unit)</div>
+<div class="toc-item">BAB 4 &ndash; Manajemen Data Buku</div>
+<div class="toc-item">BAB 5 &ndash; Peminjaman dan Pengembalian Buku</div>
+<div class="toc-item">BAB 6 &ndash; Riwayat Aktivitas</div>
+<div class="toc-item">BAB 7 &ndash; Manajemen Akun Pengguna (Khusus Admin)</div>
+<div class="toc-item">BAB 8 &ndash; Katalog Buku (Akses Publik)</div>
+<div class="toc-item">BAB 9 &ndash; Pertanyaan Umum (FAQ) dan Troubleshooting</div>
+<div class="toc-item">Lampiran A &ndash; Glosarium Istilah</div>
+<div class="toc-item">Lampiran B &ndash; Kontak Bantuan Teknis</div>
+<p class="note"><b>Catatan:</b> Setelah dokumen ini dibuka di Microsoft Word, nomor halaman dapat diperbarui otomatis melalui menu <i>References &gt; Table of Contents</i> apabila Anda ingin membuat daftar isi otomatis menggantikan daftar manual di atas.</p>
+
+<!-- ================= BAB 1 ================= -->
+<h1>BAB 1 &ndash; Pengenalan Sistem</h1>
+
+<h2>1.1 Tentang LITERA+</h2>
+<p>LITERA+ adalah sistem informasi berbasis web yang digunakan untuk mengelola kegiatan perpustakaan sekolah, meliputi pendataan buku, transaksi peminjaman dan pengembalian, pencatatan riwayat aktivitas, serta pengelolaan akun pengguna. Sistem ini dapat diakses melalui peramban (browser) di komputer maupun perangkat lain yang terhubung ke internet.</p>
+
+<h2>1.2 Kebutuhan Perangkat dan Akses</h2>
+<ul>
+<li>Komputer/laptop atau tablet dengan koneksi internet.</li>
+<li>Peramban (browser) seperti Google Chrome, Microsoft Edge, atau Mozilla Firefox versi terbaru.</li>
+<li>Alamat (URL) akses sistem LITERA+ yang diberikan oleh operator sekolah. <i>[isi dengan URL sistem]</i></li>
+<li>Akun pengguna (username/email dan password) yang telah didaftarkan oleh Admin.</li>
+<li>(Opsional) Alat pemindai (scanner) barcode untuk mempercepat input ISBN dan nomor inventaris.</li>
+</ul>
+
+<h2>1.3 Peran Pengguna dalam Sistem</h2>
+<p>LITERA+ memiliki tiga jenis peran (role) pengguna dengan hak akses yang berbeda:</p>
+<table>
+<tr><th>Peran</th><th>Deskripsi</th><th>Hak Akses</th></tr>
+<tr>
+<td><b>Admin</b></td>
+<td>Pengelola tertinggi sistem, biasanya kepala perpustakaan atau operator sekolah.</td>
+<td>Akses penuh: Manajemen Perpustakaan, Riwayat, Manajemen Akun, Katalog, Profil.</td>
+</tr>
+<tr>
+<td><b>Petugas</b></td>
+<td>Staf/pustakawan yang menjalankan operasional harian perpustakaan.</td>
+<td>Manajemen Perpustakaan (unit, buku, peminjaman/pengembalian), Riwayat, Katalog, Profil. <i>Tidak</i> dapat mengakses Manajemen Akun.</td>
+</tr>
+<tr>
+<td><b>Visitor</b></td>
+<td>Pengguna umum (misalnya siswa/orang tua) yang mendaftar akun secara mandiri.</td>
+<td>Hanya dapat melihat Katalog Buku (tanpa tombol tambah/ubah/hapus) dan mengelola Profil sendiri.</td>
+</tr>
+</table>
+<p class="note"><b>Catatan:</b> Pastikan setiap petugas menggunakan akun dengan peran yang sesuai tanggung jawabnya. Jangan membagikan akun Admin kepada pihak yang tidak berwenang.</p>
+
+<!-- ================= BAB 2 ================= -->
+<h1>BAB 2 &ndash; Memulai Penggunaan (Getting Started)</h1>
+
+<h2>2.1 Masuk (Login) ke Sistem</h2>
+<table class="step-table">
+<tr><th>No</th><th>Langkah</th></tr>
+<tr><td>1</td><td>Buka peramban, lalu masukkan alamat (URL) sistem LITERA+.</td></tr>
+<tr><td>2</td><td>Masukkan email dan password akun Anda pada halaman login.</td></tr>
+<tr><td>3</td><td>Klik tombol <b>Masuk/Login</b>.</td></tr>
+<tr><td>4</td><td>Sistem akan mengarahkan Anda ke halaman Dashboard sesuai peran (Admin/Petugas/Visitor).</td></tr>
+</table>
+<div class="screenshot">[Sisipkan tangkapan layar halaman Login di sini]</div>
+
+<h2>2.2 Lupa Password</h2>
+<p><i>[Isi bagian ini sesuai alur reset password yang tersedia di sistem &ndash; misalnya melalui tautan "Lupa Password" pada halaman login, atau menghubungi Admin untuk direset secara manual melalui menu Manajemen Akun.]</i></p>
+
+<h2>2.3 Mengenal Tampilan Utama</h2>
+<p>Setelah login, pengguna akan melihat tata letak utama (dashboard layout) yang terdiri dari:</p>
+<ul>
+<li><b>Menu navigasi</b> di sisi kiri/atas: Manajemen Perpustakaan, Riwayat, Manajemen Akun (khusus Admin), Katalog Buku.</li>
+<li><b>Panel notifikasi/pembaruan (changelog)</b> berupa ikon lonceng di header, menampilkan informasi pembaruan versi aplikasi.</li>
+<li><b>Menu Profil</b> di pojok kanan atas untuk mengakses data akun sendiri.</li>
+</ul>
+<div class="screenshot">[Sisipkan tangkapan layar tampilan Dashboard utama di sini]</div>
+
+<h2>2.4 Mengedit Profil dan Mengganti Password</h2>
+<table class="step-table">
+<tr><th>No</th><th>Langkah</th></tr>
+<tr><td>1</td><td>Klik menu <b>Profil</b> di pojok kanan atas.</td></tr>
+<tr><td>2</td><td>Untuk mengubah nama/email, klik tombol <b>Edit</b>, ubah data, lalu simpan.</td></tr>
+<tr><td>3</td><td>Untuk mengganti password, klik tombol <b>Ganti Password</b>, isi password lama dan password baru, lalu simpan.</td></tr>
+</table>
+
+<!-- ================= BAB 3 ================= -->
+<h1>BAB 3 &ndash; Manajemen Perpustakaan (Unit)</h1>
+<p>Menu ini digunakan untuk mengelola data unit perpustakaan (misalnya jika sekolah memiliki lebih dari satu ruang/pojok baca). Menu ini dapat diakses oleh Admin dan Petugas.</p>
+
+<h2>3.1 Melihat Daftar Unit Perpustakaan</h2>
+<p>Halaman utama Manajemen Perpustakaan menampilkan daftar seluruh unit perpustakaan dalam bentuk tabel, lengkap dengan navigasi halaman (pagination).</p>
+
+<h2>3.2 Menambah Unit Perpustakaan Baru</h2>
+<table class="step-table">
+<tr><th>No</th><th>Langkah</th></tr>
+<tr><td>1</td><td>Klik tombol <b>Tambah Perpustakaan</b>.</td></tr>
+<tr><td>2</td><td>Isi data unit: nama perpustakaan, lokasi, status, tipe, jam operasional, dan nama kepala unit.</td></tr>
+<tr><td>3</td><td>Unggah foto unit perpustakaan (opsional). Sistem menyediakan fitur <b>pemotongan gambar (crop)</b> sebelum foto disimpan.</td></tr>
+<tr><td>4</td><td>Klik <b>Simpan</b>.</td></tr>
+</table>
+<div class="screenshot">[Sisipkan tangkapan layar form Tambah Perpustakaan, termasuk fitur crop foto]</div>
+
+<h2>3.3 Mengubah Data Unit</h2>
+<p>Klik tombol <b>Ubah/Edit</b> pada baris unit yang dituju, perbarui data yang diperlukan, lalu simpan.</p>
+
+<h2>3.4 Menghapus Unit</h2>
+<p>Klik tombol <b>Hapus</b> pada baris unit yang dituju, lalu konfirmasi penghapusan. <i>[Tambahkan peringatan bila penghapusan unit turut menghapus seluruh data buku di dalamnya, sesuai perilaku sistem yang sebenarnya.]</i></p>
+
+<h2>3.5 Melihat Dashboard Statistik Unit</h2>
+<p>Klik salah satu unit untuk membuka halaman detail, yang menampilkan tab <b>Dashboard</b> berisi:</p>
+<ul>
+<li>Total buku, jumlah buku dipinjam, rusak, dan hilang beserta persentasenya.</li>
+<li>Distribusi buku berdasarkan kode klasifikasi.</li>
+<li>Informasi fasilitas unit perpustakaan.</li>
+<li>Tombol <b>Generate Laporan</b> untuk membuat laporan ringkas unit tersebut.</li>
+</ul>
+
+<!-- ================= BAB 4 ================= -->
+<h1>BAB 4 &ndash; Manajemen Data Buku</h1>
+<p>Fitur pengelolaan buku berada pada tab <b>List Buku</b> di dalam halaman detail unit perpustakaan.</p>
+
+<h2>4.1 Melihat Daftar Buku</h2>
+<p>Menampilkan seluruh koleksi buku pada unit tersebut dengan opsi jumlah data per halaman (page size) dan navigasi halaman.</p>
+
+<h2>4.2 Menambah Buku Baru</h2>
+<table class="step-table">
+<tr><th>No</th><th>Langkah</th></tr>
+<tr><td>1</td><td>Klik tombol <b>Tambah Buku</b>.</td></tr>
+<tr><td>2</td><td>Masukkan ISBN &ndash; sistem akan mencoba mengisi otomatis (autocomplete) data buku bila tersedia.</td></tr>
+<tr><td>3</td><td>Lengkapi data buku: judul, penulis, penerbit, kode klasifikasi, subjek, bahasa, kondisi, dan foto sampul.</td></tr>
+<tr><td>4</td><td>Nomor panggil (call number) dan nomor inventaris akan dibuat otomatis oleh sistem.</td></tr>
+<tr><td>5</td><td>Klik <b>Simpan</b>.</td></tr>
+</table>
+<div class="screenshot">[Sisipkan tangkapan layar form Tambah Buku]</div>
+
+<h2>4.3 Menambah Eksemplar/Kopi Buku</h2>
+<p>Jika sekolah memiliki lebih dari satu kopi (eksemplar) untuk judul buku yang sama, gunakan fitur <b>Tambah Eksemplar</b> pada buku yang sudah ada. Data buku akan terisi otomatis (prefill) sehingga petugas hanya perlu mengonfirmasi jumlah eksemplar tambahan.</p>
+
+<h2>4.4 Mengubah Data Buku</h2>
+<p>Klik tombol <b>Edit</b> pada baris buku yang dituju, perbarui data, lalu simpan.</p>
+
+<h2>4.5 Menghapus Buku</h2>
+<ul>
+<li><b>Hapus satuan:</b> klik tombol Hapus pada baris buku tertentu.</li>
+<li><b>Hapus massal (bulk delete):</b> centang beberapa buku sekaligus, lalu klik tombol Hapus Terpilih.</li>
+</ul>
+
+<h2>4.6 Menandai Buku Hilang / Ditemukan Kembali</h2>
+<p>Gunakan opsi status buku untuk menandai buku sebagai <b>Hilang</b> apabila tidak ditemukan saat pendataan/stock opname, atau mengembalikan status menjadi <b>Tersedia</b> apabila buku ditemukan kembali.</p>
+
+<h2>4.7 Menandai Kondisi Buku</h2>
+<p>Ubah status kondisi buku (baik/rusak) melalui form edit buku. <b>Buku dengan kondisi "Rusak" atau berstatus "Hilang" atau "Sedang Dipinjam" secara otomatis tidak dapat dipinjamkan</b> oleh sistem sampai statusnya diperbarui.</p>
+
+<h2>4.8 Mencari dan Memfilter Buku</h2>
+<p>Gunakan kolom pencarian serta filter berdasarkan kondisi, kode klasifikasi, subjek, dan bahasa. Data dapat diurutkan (sort) sesuai kebutuhan. Untuk judul dengan lebih dari dua eksemplar, nomor inventaris ditampilkan dalam bentuk popover ringkas.</p>
+
+<h2>4.9 Import Data Buku dari Excel</h2>
+<table class="step-table">
+<tr><th>No</th><th>Langkah</th></tr>
+<tr><td>1</td><td>Klik tombol <b>Import Excel</b>.</td></tr>
+<tr><td>2</td><td>Unduh <b>template</b> yang disediakan agar format kolom sesuai.</td></tr>
+<tr><td>3</td><td>Isi data buku pada template sesuai kolom yang diminta (judul, penulis, ISBN, dsb).</td></tr>
+<tr><td>4</td><td>Unggah kembali file Excel yang telah diisi.</td></tr>
+<tr><td>5</td><td>Periksa pesan validasi &ndash; perbaiki baris data yang ditandai error, lalu unggah ulang bila diperlukan.</td></tr>
+</table>
+<div class="screenshot">[Sisipkan tangkapan layar modal Import Excel dan contoh template]</div>
+
+<h2>4.10 Export Laporan (Excel dan PDF)</h2>
+<p>Klik tombol <b>Export Laporan</b>, pilih format (Excel/.xlsx atau PDF), lihat pratinjau (preview) laporan, lalu unduh.</p>
+
+<!-- ================= BAB 5 ================= -->
+<h1>BAB 5 &ndash; Peminjaman dan Pengembalian Buku</h1>
+<p>Fitur ini berada pada tab <b>Peminjaman</b> di halaman detail unit perpustakaan.</p>
+
+<h2>5.1 Alur Peminjaman Buku</h2>
+<table class="step-table">
+<tr><th>No</th><th>Langkah</th></tr>
+<tr><td>1</td><td>Buka tab <b>Peminjaman</b>, pilih formulir <b>Pinjam Buku</b>.</td></tr>
+<tr><td>2</td><td>Pindai (scan) atau ketik ISBN buku yang akan dipinjam.</td></tr>
+<tr><td>3</td><td>Masukkan nama peminjam &ndash; sistem menyediakan autocomplete berdasarkan riwayat peminjam sebelumnya. NIS bersifat opsional.</td></tr>
+<tr><td>4</td><td>Pilih eksemplar buku yang tersedia.</td></tr>
+<tr><td>5</td><td>Batas waktu peminjaman otomatis diatur 7 hari (dapat disesuaikan bila sistem mengizinkan).</td></tr>
+<tr><td>6</td><td>Klik <b>Simpan/Pinjamkan</b>.</td></tr>
+</table>
+<div class="screenshot">[Sisipkan tangkapan layar form Pinjam Buku]</div>
+
+<h2>5.2 Alur Pengembalian Buku</h2>
+<table class="step-table">
+<tr><th>No</th><th>Langkah</th></tr>
+<tr><td>1</td><td>Buka formulir <b>Kembalikan Buku</b>.</td></tr>
+<tr><td>2</td><td>Pindai (scan) atau ketik nomor inventaris buku yang dikembalikan.</td></tr>
+<tr><td>3</td><td>Konfirmasi pengembalian. Status buku otomatis berubah menjadi <b>Tersedia</b>.</td></tr>
+</table>
+
+<h2>5.3 Aturan dan Batasan Sistem</h2>
+<ul>
+<li>Setiap peminjam <b>maksimal memiliki 2 peminjaman aktif</b> pada waktu bersamaan. Sistem akan menolak peminjaman baru bila batas ini terlampaui.</li>
+<li>Buku dengan status rusak, hilang, atau sedang dipinjam tidak akan muncul/tidak dapat dipilih sebagai buku yang bisa dipinjamkan.</li>
+</ul>
+<p class="note"><b>Penting:</b> Sistem LITERA+ <u>tidak</u> memiliki fitur perhitungan denda keterlambatan secara otomatis. Sistem hanya menampilkan status "Terlambat X hari" atau "Jatuh tempo hari ini" sebagai penanda. Apabila sekolah menerapkan kebijakan denda, proses tersebut dilakukan secara manual oleh petugas di luar sistem &ndash; sertakan prosedur manual sekolah di bagian ini bila ada.</p>
+
+<h2>5.4 Membaca Status Peminjaman</h2>
+<p>Tabel <b>Sedang Dipinjam</b> menampilkan status setiap transaksi dengan penanda warna, misalnya untuk kondisi mendekati jatuh tempo dan yang sudah terlambat, sehingga petugas dapat memantau buku yang perlu ditagih pengembaliannya.</p>
+
+<!-- ================= BAB 6 ================= -->
+<h1>BAB 6 &ndash; Riwayat Aktivitas</h1>
+
+<h2>6.1 Riwayat per Unit</h2>
+<p>Pada tab <b>Riwayat</b> di halaman detail unit, petugas dapat melihat log aktivitas khusus unit tersebut (tambah/ubah/hapus buku, impor data, transaksi pinjam/kembali), dengan filter periode (hari ini, minggu ini, bulan ini, tahun ini, atau lebih lama) dan filter jenis aktivitas, serta pengurutan data terbaru/terlama.</p>
+
+<h2>6.2 Riwayat Global</h2>
+<p>Menu <b>Riwayat</b> pada navigasi utama menampilkan log aktivitas dari <i>seluruh</i> unit perpustakaan dalam sistem, mencatat jenis aktivitas, pelaku (siapa yang melakukan), dan waktu kejadian. Berguna bagi Admin untuk melakukan pengawasan menyeluruh.</p>
+<div class="screenshot">[Sisipkan tangkapan layar halaman Riwayat]</div>
+
+<!-- ================= BAB 7 ================= -->
+<h1>BAB 7 &ndash; Manajemen Akun Pengguna (Khusus Admin)</h1>
+<p>Menu ini hanya dapat diakses oleh pengguna dengan peran <b>Admin</b>.</p>
+
+<h2>7.1 Melihat Daftar Akun</h2>
+<p>Menampilkan seluruh akun pengguna yang terdaftar beserta perannya (admin/petugas/visitor).</p>
+
+<h2>7.2 Menambah Akun Petugas Baru</h2>
+<table class="step-table">
+<tr><th>No</th><th>Langkah</th></tr>
+<tr><td>1</td><td>Klik tombol <b>Tambah Akun</b>.</td></tr>
+<tr><td>2</td><td>Isi nama, email, dan tentukan peran (role) pengguna.</td></tr>
+<tr><td>3</td><td>Klik <b>Simpan</b>.</td></tr>
+</table>
+
+<h2>7.3 Mengubah Data Akun</h2>
+<p>Klik tombol <b>Edit</b> pada akun yang dituju untuk memperbarui nama, email, atau peran.</p>
+
+<h2>7.4 Mereset Password Akun Petugas</h2>
+<p>Admin dapat mereset password akun petugas lain melalui tombol <b>Reset Password</b> pada baris akun yang bersangkutan &ndash; berguna saat petugas lupa password dan tidak dapat login sendiri.</p>
+
+<h2>7.5 Menghapus Akun</h2>
+<p>Klik tombol <b>Hapus</b> pada akun yang dituju, lalu konfirmasi. <b>Catatan:</b> Admin tidak dapat menghapus akunnya sendiri melalui menu ini sebagai bentuk perlindungan sistem.</p>
+
+<!-- ================= BAB 8 ================= -->
+<h1>BAB 8 &ndash; Katalog Buku (Akses Publik)</h1>
+<p>Menu <b>Katalog Buku</b> dapat diakses oleh seluruh peran pengguna yang sudah login, termasuk Visitor. Halaman ini menampilkan daftar unit perpustakaan beserta koleksi bukunya secara <i>read-only</i> (tanpa tombol tambah/ubah/hapus) bagi Visitor.</p>
+<p><i>[Jika sekolah mengizinkan siswa atau orang tua mendaftar akun Visitor secara mandiri untuk melihat katalog, jelaskan prosedur pendaftarannya di bagian ini.]</i></p>
+
+<!-- ================= BAB 9 ================= -->
+<h1>BAB 9 &ndash; Pertanyaan Umum (FAQ) dan Troubleshooting</h1>
+<table>
+<tr><th>Masalah</th><th>Solusi</th></tr>
+<tr><td>Tidak bisa login / lupa password</td><td>Hubungi Admin perpustakaan untuk mereset password melalui menu Manajemen Akun.</td></tr>
+<tr><td>Buku tidak muncul saat proses peminjaman</td><td>Periksa status buku &ndash; kemungkinan berstatus rusak, hilang, atau sedang dipinjam pengguna lain.</td></tr>
+<tr><td>Peminjaman ditolak sistem padahal buku tersedia</td><td>Periksa apakah peminjam sudah memiliki 2 peminjaman aktif; sistem membatasi maksimal 2 peminjaman aktif per peminjam.</td></tr>
+<tr><td>Gagal mengunggah/import Excel</td><td>Pastikan file menggunakan template resmi yang diunduh dari sistem dan seluruh kolom wajib telah terisi sesuai format.</td></tr>
+<tr><td>Foto unit/buku gagal diunggah</td><td>Periksa ukuran dan format file gambar, lalu gunakan fitur crop yang tersedia sebelum menyimpan.</td></tr>
+<tr><td>Menu Manajemen Akun tidak muncul</td><td>Menu ini hanya tersedia untuk akun berperan Admin, bukan Petugas atau Visitor.</td></tr>
+</table>
+<p><i>[Tambahkan pertanyaan lain yang sering ditemui di lapangan seiring penggunaan sistem oleh petugas sekolah.]</i></p>
+
+<!-- ================= LAMPIRAN A ================= -->
+<h1>Lampiran A &ndash; Glosarium Istilah</h1>
+<table>
+<tr><th>Istilah</th><th>Penjelasan</th></tr>
+<tr><td>ISBN</td><td>Kode identifikasi unik internasional untuk sebuah judul buku.</td></tr>
+<tr><td>Nomor Inventaris</td><td>Kode unik untuk setiap eksemplar (kopi fisik) buku dalam koleksi perpustakaan.</td></tr>
+<tr><td>Nomor Panggil (Call Number)</td><td>Kode yang menunjukkan lokasi buku di rak, dibuat otomatis dari kode klasifikasi, penulis, dan judul.</td></tr>
+<tr><td>Kode Klasifikasi</td><td>Kategori/penggolongan buku berdasarkan subjek atau bidang ilmu.</td></tr>
+<tr><td>Eksemplar</td><td>Satu kopi fisik dari sebuah judul buku; satu judul dapat memiliki beberapa eksemplar.</td></tr>
+<tr><td>Unit Perpustakaan</td><td>Satu lokasi/ruang perpustakaan yang dikelola dalam sistem (jika sekolah memiliki lebih dari satu).</td></tr>
+</table>
+
+<!-- ================= LAMPIRAN B ================= -->
+<h1>Lampiran B &ndash; Kontak Bantuan Teknis</h1>
+<p>Apabila mengalami kendala teknis yang tidak dapat diselesaikan melalui panduan ini, silakan hubungi:</p>
+<table>
+<tr><th>Kontak</th><th>Keterangan</th></tr>
+<tr><td><i>[Nama Penanggung Jawab/Admin Sistem]</i></td><td><i>[Nomor telepon/email/WhatsApp]</i></td></tr>
+<tr><td><i>[Nama Pengembang/Vendor Sistem]</i></td><td><i>[Kontak dukungan teknis]</i></td></tr>
+</table>
+
+<p style="margin-top:40pt; text-align:center; color:#888888; font-size:9pt;">&mdash; Akhir Dokumen &mdash;</p>
+
+</body>
+</html>
