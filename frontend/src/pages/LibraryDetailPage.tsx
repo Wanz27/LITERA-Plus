@@ -331,7 +331,7 @@ export default function LibraryDetailPage() {
     }
   }
 
-  if (loading) {
+  if (loading && !library) {
     return (
       <DashboardLayout>
         <div className="p-8 text-center text-sm text-slate-400">Memuat detail perpustakaan...</div>
