@@ -196,8 +196,8 @@ export default function LibraryFormModal({ initial, onClose, onSubmit }: Props) 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm">
-      <div className="max-h-[90vh] w-full max-w-md overflow-y-auto overflow-x-hidden rounded-xl bg-white p-4 shadow-xl sm:p-6">
-        <div className="mb-6 flex items-center justify-between">
+      <div className="max-h-[90vh] w-full max-w-md overflow-y-auto overflow-x-hidden rounded-xl bg-white shadow-xl">
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 bg-white px-4 py-4 sm:px-6 sm:py-5">
           <h3 className="text-lg font-bold text-slate-900">
             {initial ? 'Ubah Perpustakaan' : 'Tambah Perpustakaan Baru'}
           </h3>
@@ -206,7 +206,7 @@ export default function LibraryFormModal({ initial, onClose, onSubmit }: Props) 
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 p-4 sm:p-6">
           <div>
             <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-slate-500">
               Nama Perpustakaan

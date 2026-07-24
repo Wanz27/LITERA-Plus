@@ -295,8 +295,8 @@ export default function BookFormModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm">
-      <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl bg-white p-5 shadow-xl sm:p-6">
-        <div className="mb-6 flex items-start justify-between gap-3">
+      <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl bg-white shadow-xl">
+        <div className="sticky top-0 z-10 flex items-start justify-between gap-3 border-b border-slate-100 bg-white px-5 py-4 sm:px-6 sm:py-5">
           <div className="min-w-0">
             <h3 className="text-lg font-bold text-slate-900">
               {initial ? 'Ubah Buku' : prefillFrom ? 'Tambah Eksemplar' : 'Tambah Buku Baru'}
@@ -312,7 +312,7 @@ export default function BookFormModal({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 p-5 sm:p-6">
           <div>
             <label className={labelClass}>Judul Buku</label>
             <input
