@@ -97,10 +97,10 @@ export default function DashboardPage() {
           <table className="w-full table-fixed text-left sm:table-auto">
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                <th className="w-[50%] px-2 py-4 text-[11px] sm:w-auto sm:px-6 sm:text-xs">Nama Perpustakaan</th>
+                <th className="w-[48%] px-3 py-4 text-[11px] sm:w-auto sm:px-6 sm:text-xs">Nama Perpustakaan</th>
                 <th className="hidden px-4 py-4 sm:table-cell sm:w-auto sm:px-6">Lokasi</th>
                 <th className="w-[32%] px-2 py-4 text-[11px] sm:w-auto sm:px-6 sm:text-xs">Status</th>
-                <th className="w-[18%] px-1.5 py-4 text-right text-[11px] sm:w-auto sm:px-6 sm:text-xs">Aksi</th>
+                <th className="w-[20%] px-2.5 py-4 text-right text-[11px] sm:w-auto sm:px-6 sm:text-xs">Aksi</th>
               </tr>
             </thead>
             <tbody>
@@ -136,7 +136,7 @@ export default function DashboardPage() {
                     onClick={() => navigate(`/dashboard/${item.id}`)}
                     className="cursor-pointer border-b border-slate-100 last:border-b-0 hover:bg-slate-50/60"
                   >
-                    <td className="px-2 py-4 sm:px-6">
+                    <td className="px-3 py-4 sm:px-6">
                       <div className="flex items-center gap-1.5 sm:gap-3">
                         <div className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-sky-100 text-sky-800 sm:h-10 sm:w-10">
                           <Icon size={14} className="sm:hidden" />
@@ -152,7 +152,7 @@ export default function DashboardPage() {
                     <td className="px-2 py-4 sm:px-6">
                       <StatusBadge status={item.status} />
                     </td>
-                    <td className="px-1.5 py-4 sm:px-6">
+                    <td className="px-2.5 py-4 sm:px-6">
                       <div className="flex items-center justify-end gap-1.5 sm:gap-3">
                         <button
                           onClick={(e) => {
