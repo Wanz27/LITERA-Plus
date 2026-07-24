@@ -649,8 +649,8 @@ export default function LibraryDetailPage() {
                   <tr className="border-b border-slate-200 bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
                     <th className="hidden px-6 py-3 sm:table-cell sm:w-auto">Waktu</th>
                     <th className="w-[62%] px-3 py-3 text-[11px] sm:w-auto sm:px-6 sm:text-xs">Aktivitas</th>
-                    <th className="hidden px-6 py-3 sm:table-cell sm:w-auto">Pengguna</th>
-                    <th className="w-[38%] px-3 py-3 text-[11px] sm:w-auto sm:px-6 sm:text-xs">Status</th>
+                    <th className="w-[38%] px-3 py-3 text-[11px] sm:w-auto sm:px-6 sm:text-xs">Pengguna</th>
+                    <th className="hidden px-6 py-3 sm:table-cell sm:w-auto">Status</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -685,24 +685,24 @@ export default function LibraryDetailPage() {
                               </p>
                               <p
                                 className="mt-0.5 truncate text-[10px] text-slate-400 sm:hidden"
-                                title={`${log.pelaku} · ${formatDateTime(log.created_at)}`}
+                                title={formatDateTime(log.created_at)}
                               >
-                                {timeAgo(log.created_at)} · {log.pelaku}
+                                {timeAgo(log.created_at)}
                               </p>
                             </div>
                           </div>
                         </td>
-                        <td className="hidden px-6 py-3 sm:table-cell">
-                          <div className="flex items-center gap-2">
-                            <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-slate-100 text-xs font-semibold text-slate-600">
+                        <td className="px-3 py-3 sm:px-6">
+                          <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
+                            <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-slate-100 text-[10px] font-semibold text-slate-600 sm:h-7 sm:w-7 sm:text-xs">
                               {initials(log.pelaku)}
                             </span>
-                            <span className="whitespace-nowrap text-sm text-slate-600">{log.pelaku}</span>
+                            <span className="truncate text-[11px] text-slate-600 sm:whitespace-nowrap sm:text-sm">{log.pelaku}</span>
                           </div>
                         </td>
-                        <td className="px-3 py-3 sm:px-6">
-                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700 sm:gap-1.5 sm:px-2.5 sm:py-1 sm:text-xs">
-                            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" /> Berhasil
+                        <td className="hidden px-6 py-3 sm:table-cell">
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">
+                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Berhasil
                           </span>
                         </td>
                       </tr>
