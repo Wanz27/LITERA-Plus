@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import {
   ChevronLeft,
   ChevronRight,
@@ -74,6 +74,7 @@ function groupKey(group: Book[]): string {
 export default function LibraryDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const [library, setLibrary] = React.useState<Library | null>(null)
   const [activity, setActivity] = React.useState<ActivityLog[]>([])
   const [books, setBooks] = React.useState<Book[]>([])
@@ -84,7 +85,10 @@ export default function LibraryDetailPage() {
   const [editingBook, setEditingBook] = React.useState<Book | null>(null)
   const [prefillBook, setPrefillBook] = React.useState<Book | null>(null)
   const [booksError, setBooksError] = React.useState<string | null>(null)
-  const [tab, setTab] = React.useState<TabKey>('dashboard')
+  const [tab, setTab] = React.useState<TabKey>(() => {
+    const requested = searchParams.get('tab')
+    return (ALL_TABS.some((t) => t.key === requested) ? requested : 'dashboard') as TabKey
+  })
   const [riwayatPeriod, setRiwayatPeriod] = React.useState<RiwayatPeriod>('Semua')
   const [riwayatAksiFilter, setRiwayatAksiFilter] = React.useState('Semua')
   const [riwayatSort, setRiwayatSort] = React.useState<RiwayatSort>('terbaru')
@@ -168,6 +172,12 @@ export default function LibraryDetailPage() {
       setTab('dashboard')
     }
   }, [tab, library])
+
+  React.useEffect(() => {
+    const requested = searchParams.get('tab')
+    if (requested && ALL_TABS.some((t) => t.key === requested)) setTab(requested as TabKey)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams])
 
   async function handleUpdate(payload: {
     nama: string

@@ -1,6 +1,7 @@
 import { supabase } from '../lib/supabase.js'
 
-const COLUMNS = 'id, book_id, library_id, borrower_name, borrower_nis, status, borrow_date, due_date, return_date, created_at'
+const COLUMNS =
+  'id, book_id, library_id, borrower_name, borrower_nis, status, borrow_date, due_date, return_date, created_at, requester_user_id'
 
 export const listCirculations = async (libraryId, status) => {
   let query = supabase
@@ -37,6 +38,22 @@ export const findBlockingCirculationByBookId = async (bookId) => {
     .eq('book_id', bookId)
     .in('status', ['dipinjam', 'menunggu'])
     .maybeSingle()
+
+  if (error) throw error
+  return data
+}
+
+// Peminjaman milik satu pengguna (visitor) lintas semua perpustakaan, dipakai untuk tab
+// "Peminjaman" di sisi visitor. Disertai data buku & perpustakaan lewat foreign key embed
+// Supabase supaya frontend tidak perlu request tambahan per baris.
+export const listMyCirculations = async (borrowerName) => {
+  const { data, error } = await supabase
+    .from('circulations')
+    .select(
+      `${COLUMNS}, books(judul, penulis, isbn, cover_url, nomor_inventaris), libraries(nama)`,
+    )
+    .ilike('borrower_name', borrowerName)
+    .order('borrow_date', { ascending: false })
 
   if (error) throw error
   return data

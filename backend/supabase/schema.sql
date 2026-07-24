@@ -207,6 +207,29 @@ drop index if exists circulations_active_book_unique;
 create unique index if not exists circulations_active_book_unique
   on circulations (book_id) where status in ('dipinjam', 'menunggu');
 
+-- requester_user_id mencatat akun visitor yang mengajukan peminjaman mandiri (lewat
+-- requestBorrow), supaya saat pengajuan disetujui/ditolak sistem tahu persis akun mana yang
+-- harus dikirimi notifikasi. Null untuk peminjaman yang diinput langsung oleh petugas (borrow).
+alter table circulations add column if not exists requester_user_id uuid references users(user_id) on delete set null;
+
+-- Tabel notifikasi in-app. recipient_user_id menargetkan satu akun; circulation_id dipakai
+-- untuk konteks (opsional, boleh null jika sumbernya bukan transaksi peminjaman).
+create table if not exists notifications (
+  id uuid primary key default gen_random_uuid(),
+  recipient_user_id uuid not null references users(user_id) on delete cascade,
+  type text not null check (type in ('peminjaman_diajukan', 'peminjaman_disetujui', 'peminjaman_ditolak')),
+  message text not null,
+  circulation_id uuid references circulations(id) on delete cascade,
+  library_id uuid references libraries(id) on delete cascade,
+  is_read boolean not null default false,
+  created_at timestamptz not null default now()
+);
+
+-- Migrasi untuk database yang sudah ada sebelum kolom ini ditambahkan
+alter table notifications add column if not exists library_id uuid references libraries(id) on delete cascade;
+
+create index if not exists notifications_recipient_idx on notifications (recipient_user_id, created_at desc);
+
 -- Seed: akun admin default (email: admin@litera.id / password: admin123)
 insert into users (full_name, email, password_hash, role)
 values (

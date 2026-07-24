@@ -12,6 +12,7 @@ import ProfilePage from './pages/ProfilePage'
 import UserManagementPage from './pages/UserManagementPage'
 import CatalogPage from './pages/CatalogPage'
 import CatalogDetailPage from './pages/CatalogDetailPage'
+import PeminjamanSayaPage from './pages/PeminjamanSayaPage'
 
 export default function App() {
   return (
@@ -24,6 +25,7 @@ export default function App() {
         <Route element={<ProtectedRoute />}>
           <Route path="/katalog" element={<CatalogPage />} />
           <Route path="/katalog/:id" element={<CatalogDetailPage />} />
+          <Route path="/peminjaman-saya" element={<PeminjamanSayaPage />} />
           <Route path="/profile" element={<ProfilePage />} />
 
           <Route element={<RoleRoute allow={['admin', 'petugas']} />}>

@@ -10,6 +10,13 @@ export const listUsers = async () => {
   return data
 }
 
+export const listUsersByRoles = async (roles) => {
+  const { data, error } = await supabase.from('users').select('user_id, full_name, email, role').in('role', roles)
+
+  if (error) throw error
+  return data
+}
+
 export const findUserById = async (user_id) => {
   const { data, error } = await supabase
     .from('users')

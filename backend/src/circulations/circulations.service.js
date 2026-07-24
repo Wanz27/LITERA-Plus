@@ -2,6 +2,8 @@ import * as circulationsRepo from './circulations.repository.js'
 import * as booksRepo from '../books/books.repository.js'
 import * as librariesRepo from '../libraries/libraries.repository.js'
 import * as activityRepo from '../activity/activity.repository.js'
+import * as usersRepo from '../users/users.repository.js'
+import * as notificationsRepo from '../notifications/notifications.repository.js'
 
 function borrowerLabel(name, nis) {
   return nis ? `${name} (NIS ${nis})` : name
@@ -24,6 +26,11 @@ export const list = async (libraryId, status) => {
 export const searchBorrowers = async (libraryId, query) => {
   if (!libraryId) throw new Error('library_id wajib diisi')
   return circulationsRepo.searchBorrowers(libraryId, (query || '').trim())
+}
+
+export const listMine = async (actor) => {
+  if (!actor?.full_name) throw new Error('Sesi tidak valid, silakan masuk kembali.')
+  return circulationsRepo.listMyCirculations(actor.full_name)
 }
 
 export const borrow = async (payload, actor) => {
@@ -159,6 +166,7 @@ export const requestBorrow = async (payload, actor) => {
     borrower_nis: null,
     status: 'menunggu',
     due_date: null,
+    requester_user_id: actor.user_id,
   })
 
   await activityRepo.createActivity({
@@ -166,6 +174,17 @@ export const requestBorrow = async (payload, actor) => {
     detail: `"${book.judul}" (No. Inv ${book.nomor_inventaris}) diajukan untuk dipinjam oleh ${actor.full_name} di ${library.nama}.`,
     pelaku: actor.full_name,
   })
+
+  const staff = await usersRepo.listUsersByRoles(['admin', 'petugas'])
+  await notificationsRepo.createNotificationsForUsers(
+    staff.map((u) => u.user_id),
+    {
+      type: 'peminjaman_diajukan',
+      message: `${actor.full_name} mengajukan peminjaman "${book.judul}" di ${library.nama}.`,
+      circulation_id: circulation.id,
+      library_id: library.id,
+    },
+  )
 
   return { circulation }
 }
@@ -200,6 +219,16 @@ export const approveRequest = async (id, payload, actor) => {
     pelaku: actor?.full_name || 'Admin',
   })
 
+  if (circulation.requester_user_id) {
+    await notificationsRepo.createNotification({
+      recipient_user_id: circulation.requester_user_id,
+      type: 'peminjaman_disetujui',
+      message: `Pengajuan peminjaman "${book.judul}" di ${library.nama} disetujui. Batas waktu pengembalian: ${new Date(dueDateValue).toLocaleDateString('id-ID', { dateStyle: 'medium' })}.`,
+      circulation_id: updatedCirculation.id,
+      library_id: library.id,
+    })
+  }
+
   return { book: updatedBook, circulation: updatedCirculation }
 }
 
@@ -218,6 +247,16 @@ export const rejectRequest = async (id, actor) => {
     detail: `Pengajuan peminjaman "${book?.judul ?? 'buku'}"${book ? ` (No. Inv ${book.nomor_inventaris})` : ''} oleh ${borrowerLabel(circulation.borrower_name, circulation.borrower_nis)}${library ? ` di ${library.nama}` : ''} ditolak.`,
     pelaku: actor?.full_name || 'Admin',
   })
+
+  if (circulation.requester_user_id) {
+    await notificationsRepo.createNotification({
+      recipient_user_id: circulation.requester_user_id,
+      type: 'peminjaman_ditolak',
+      message: `Pengajuan peminjaman "${book?.judul ?? 'buku'}"${library ? ` di ${library.nama}` : ''} ditolak.`,
+      circulation_id: updatedCirculation.id,
+      library_id: library?.id,
+    })
+  }
 
   return { circulation: updatedCirculation }
 }

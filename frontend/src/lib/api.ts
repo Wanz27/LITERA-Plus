@@ -76,11 +76,37 @@ export interface Circulation {
   created_at: string
 }
 
+export interface MyCirculation extends Circulation {
+  books: {
+    judul: string
+    penulis: string
+    isbn: string
+    cover_url: string
+    nomor_inventaris: string
+  } | null
+  libraries: {
+    nama: string
+  } | null
+}
+
 export interface BorrowerSuggestion {
   borrower_name: string
   borrower_nis: string | null
   source?: 'riwayat' | 'akun'
   role?: 'admin' | 'petugas' | 'visitor'
+}
+
+export type NotificationType = 'peminjaman_diajukan' | 'peminjaman_disetujui' | 'peminjaman_ditolak'
+
+export interface AppNotification {
+  id: string
+  recipient_user_id: string
+  type: NotificationType
+  message: string
+  circulation_id: string | null
+  library_id: string | null
+  is_read: boolean
+  created_at: string
 }
 
 export interface ActivityLog {
@@ -280,10 +306,21 @@ export async function uploadBookCover(file: File): Promise<{ url: string }> {
 
 export const getActivityLog = () => request<ActivityLog[]>('/activity-log')
 
+export const getNotifications = () =>
+  request<{ notifications: AppNotification[]; unread_count: number }>('/notifications')
+
+export const markNotificationAsRead = (id: string) =>
+  request<AppNotification>(`/notifications/${id}/read`, { method: 'PUT' })
+
+export const markAllNotificationsAsRead = () =>
+  request<null>('/notifications/read-all', { method: 'PUT' })
+
 export const getCirculations = (libraryId: string, status?: CirculationStatus) =>
   request<Circulation[]>(
     `/circulations?library_id=${encodeURIComponent(libraryId)}${status ? `&status=${status}` : ''}`,
   )
+
+export const getMyCirculations = () => request<MyCirculation[]>('/circulations/mine')
 
 export const searchBorrowers = (libraryId: string, query: string) =>
   request<BorrowerSuggestion[]>(
