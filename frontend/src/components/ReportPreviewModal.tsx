@@ -45,11 +45,13 @@ export default function ReportPreviewModal({ library, books, onClose }: Props) {
         </div>
 
         <div className="flex-1 overflow-auto p-5">
-          <div className="mb-4 grid grid-cols-1 gap-x-8 gap-y-1.5 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm sm:grid-cols-2">
+          <div className="mb-4 grid grid-cols-1 gap-y-3 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm sm:grid-cols-2 sm:gap-x-8 sm:gap-y-1.5">
             {fields.map(([label, value]) => (
-              <div key={label} className="flex justify-between gap-3 sm:justify-start">
-                <span className="text-slate-500">{label}</span>
-                <span className="font-medium text-slate-800">{value}</span>
+              <div key={label} className="flex flex-col gap-0.5 sm:flex-row sm:items-baseline sm:justify-start sm:gap-3">
+                <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 sm:text-sm sm:font-normal sm:normal-case sm:tracking-normal">
+                  {label}
+                </span>
+                <span className="text-sm font-semibold text-slate-800 sm:font-medium">{value}</span>
               </div>
             ))}
           </div>
@@ -87,18 +89,18 @@ export default function ReportPreviewModal({ library, books, onClose }: Props) {
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center justify-end gap-3 border-t border-slate-200 px-5 py-3.5">
+        <div className="flex flex-col gap-3 border-t border-slate-200 px-5 py-3.5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
           <button
             type="button"
             onClick={() => exportBooksToExcel(library, books)}
-            className="flex items-center gap-2 rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+            className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 sm:w-auto sm:justify-start"
           >
             <FileSpreadsheet size={16} className="text-emerald-600" /> Download Excel (.xlsx)
           </button>
           <button
             type="button"
             onClick={() => exportBooksToPdf(library, books)}
-            className="flex items-center gap-2 rounded-lg bg-sky-800 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-sky-900"
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-sky-800 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-sky-900 sm:w-auto sm:justify-start"
           >
             <FileText size={16} /> Download PDF (.pdf)
           </button>
