@@ -54,11 +54,15 @@ export default function BookFilterSortMenu({
       const margin = 8
       const width = Math.min(280, window.innerWidth - margin * 2)
       const left = Math.min(Math.max(rect.right - width, margin), window.innerWidth - width - margin)
+      const spaceBelow = window.innerHeight - rect.bottom - margin
+      const spaceAbove = rect.top - margin
+      const openUpward = spaceBelow < 200 && spaceAbove > spaceBelow
       setPanelStyle({
         position: 'fixed',
-        top: rect.bottom + 8,
         left,
         width,
+        maxHeight: Math.max(160, openUpward ? spaceAbove : spaceBelow),
+        ...(openUpward ? { bottom: window.innerHeight - rect.top + 8 } : { top: rect.bottom + 8 }),
       })
     }
     updatePosition()
@@ -110,7 +114,7 @@ export default function BookFilterSortMenu({
           <div
             ref={panelRef}
             style={panelStyle}
-            className="z-50 max-h-[80vh] overflow-y-auto rounded-xl border border-slate-200 bg-white p-4 shadow-lg"
+            className="z-50 overflow-y-auto rounded-xl border border-slate-200 bg-white p-4 shadow-lg"
           >
             <div className="mb-4">
               <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Kondisi</p>
