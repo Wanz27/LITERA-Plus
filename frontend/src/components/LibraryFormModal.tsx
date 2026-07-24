@@ -276,15 +276,15 @@ export default function LibraryFormModal({ initial, onClose, onSubmit }: Props) 
                 <Plus size={14} /> Tambah Jadwal
               </button>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-3">
               {schedules.map((s, i) => {
                 const dayOptions = DAY_OPTIONS.includes(s.day) ? DAY_OPTIONS : [s.day, ...DAY_OPTIONS]
                 return (
-                  <div key={i} className="flex flex-nowrap items-center gap-1 sm:gap-2">
+                  <div key={i} className="flex flex-nowrap items-center gap-1.5 sm:gap-2">
                     <select
                       value={s.day}
                       onChange={(e) => updateSchedule(i, { day: e.target.value })}
-                      className="h-9 w-[30%] min-w-0 rounded-lg border border-slate-200 bg-slate-50 px-1 text-[11px] focus:border-sky-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-700/20 sm:h-11 sm:w-[38%] sm:px-2 sm:text-sm"
+                      className="h-9 w-[32%] min-w-0 rounded-lg border border-slate-200 bg-slate-50 px-1.5 text-xs focus:border-sky-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-700/20 sm:h-11 sm:w-[38%] sm:px-2 sm:text-sm"
                     >
                       {dayOptions.map((d) => (
                         <option key={d} value={d}>{d}</option>
@@ -294,14 +294,14 @@ export default function LibraryFormModal({ initial, onClose, onSubmit }: Props) 
                       type="time"
                       value={s.open}
                       onChange={(e) => updateSchedule(i, { open: e.target.value })}
-                      className="h-9 min-w-0 flex-1 rounded-lg border border-slate-200 bg-slate-50 px-0.5 text-[11px] focus:border-sky-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-700/20 sm:h-11 sm:px-2 sm:text-sm"
+                      className="h-9 min-w-0 flex-1 rounded-lg border border-slate-200 bg-slate-50 px-1 text-xs focus:border-sky-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-700/20 sm:h-11 sm:px-2 sm:text-sm"
                     />
                     <span className="shrink-0 text-xs text-slate-400 sm:text-base">–</span>
                     <input
                       type="time"
                       value={s.close}
                       onChange={(e) => updateSchedule(i, { close: e.target.value })}
-                      className="h-9 min-w-0 flex-1 rounded-lg border border-slate-200 bg-slate-50 px-0.5 text-[11px] focus:border-sky-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-700/20 sm:h-11 sm:px-2 sm:text-sm"
+                      className="h-9 min-w-0 flex-1 rounded-lg border border-slate-200 bg-slate-50 px-1 text-xs focus:border-sky-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-700/20 sm:h-11 sm:px-2 sm:text-sm"
                     />
                     <button
                       type="button"
@@ -310,7 +310,7 @@ export default function LibraryFormModal({ initial, onClose, onSubmit }: Props) 
                       className="shrink-0 text-slate-400 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-30"
                       aria-label="Hapus jadwal"
                     >
-                      <Trash2 size={14} />
+                      <Trash2 size={15} />
                     </button>
                   </div>
                 )
