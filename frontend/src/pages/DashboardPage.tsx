@@ -97,10 +97,10 @@ export default function DashboardPage() {
           <table className="w-full table-fixed text-left sm:table-auto">
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                <th className="w-[38%] px-3 py-4 sm:w-auto sm:px-6">Nama Perpustakaan</th>
+                <th className="w-[44%] px-2 py-4 text-[11px] sm:w-auto sm:px-6 sm:text-xs">Nama Perpustakaan</th>
                 <th className="hidden px-4 py-4 sm:table-cell sm:w-auto sm:px-6">Lokasi</th>
-                <th className="w-[34%] px-3 py-4 sm:w-auto sm:px-6">Status</th>
-                <th className="w-[28%] px-3 py-4 text-right sm:w-auto sm:px-6">Aksi</th>
+                <th className="w-[32%] px-2 py-4 text-[11px] sm:w-auto sm:px-6 sm:text-xs">Status</th>
+                <th className="w-[24%] px-2 py-4 text-right text-[11px] sm:w-auto sm:px-6 sm:text-xs">Aksi</th>
               </tr>
             </thead>
             <tbody>
@@ -136,23 +136,24 @@ export default function DashboardPage() {
                     onClick={() => navigate(`/dashboard/${item.id}`)}
                     className="cursor-pointer border-b border-slate-100 last:border-b-0 hover:bg-slate-50/60"
                   >
-                    <td className="px-3 py-4 sm:px-6">
-                      <div className="flex items-center gap-2 sm:gap-3">
-                        <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-sky-100 text-sky-800 sm:h-10 sm:w-10">
-                          <Icon size={18} />
+                    <td className="px-2 py-4 sm:px-6">
+                      <div className="flex items-center gap-1.5 sm:gap-3">
+                        <div className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-sky-100 text-sky-800 sm:h-10 sm:w-10">
+                          <Icon size={14} className="sm:hidden" />
+                          <Icon size={18} className="hidden sm:block" />
                         </div>
                         <div className="min-w-0">
-                          <span className="break-words font-semibold text-slate-800">{item.nama}</span>
-                          <p className="truncate text-xs text-slate-500 sm:hidden">{item.lokasi}</p>
+                          <span className="text-xs font-semibold text-slate-800 sm:text-sm">{item.nama}</span>
+                          <p className="truncate text-[10px] text-slate-500 sm:hidden">{item.lokasi}</p>
                         </div>
                       </div>
                     </td>
                     <td className="hidden px-4 py-4 text-slate-500 sm:table-cell sm:px-6">{item.lokasi}</td>
-                    <td className="px-3 py-4 sm:px-6">
+                    <td className="px-2 py-4 sm:px-6">
                       <StatusBadge status={item.status} />
                     </td>
-                    <td className="px-3 py-4 sm:px-6">
-                      <div className="flex items-center justify-end gap-2 sm:gap-3">
+                    <td className="px-2 py-4 sm:px-6">
+                      <div className="flex items-center justify-end gap-1.5 sm:gap-3">
                         <button
                           onClick={(e) => {
                             e.stopPropagation()
@@ -162,7 +163,8 @@ export default function DashboardPage() {
                           className="text-slate-400 hover:text-sky-700"
                           aria-label={`Ubah ${item.nama}`}
                         >
-                          <Pencil size={18} />
+                          <Pencil size={15} className="sm:hidden" />
+                          <Pencil size={18} className="hidden sm:block" />
                         </button>
                         <button
                           onClick={(e) => {
@@ -172,7 +174,8 @@ export default function DashboardPage() {
                           className="text-slate-400 hover:text-rose-600"
                           aria-label={`Hapus ${item.nama}`}
                         >
-                          <Trash2 size={18} />
+                          <Trash2 size={15} className="sm:hidden" />
+                          <Trash2 size={18} className="hidden sm:block" />
                         </button>
                       </div>
                     </td>

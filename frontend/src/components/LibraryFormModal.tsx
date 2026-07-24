@@ -196,7 +196,7 @@ export default function LibraryFormModal({ initial, onClose, onSubmit }: Props) 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm">
-      <div className="max-h-[90vh] w-full max-w-md overflow-y-auto overflow-x-hidden rounded-xl bg-white p-5 shadow-xl sm:p-6">
+      <div className="max-h-[90vh] w-full max-w-md overflow-y-auto overflow-x-hidden rounded-xl bg-white p-4 shadow-xl sm:p-6">
         <div className="mb-6 flex items-center justify-between">
           <h3 className="text-lg font-bold text-slate-900">
             {initial ? 'Ubah Perpustakaan' : 'Tambah Perpustakaan Baru'}
@@ -280,40 +280,38 @@ export default function LibraryFormModal({ initial, onClose, onSubmit }: Props) 
               {schedules.map((s, i) => {
                 const dayOptions = DAY_OPTIONS.includes(s.day) ? DAY_OPTIONS : [s.day, ...DAY_OPTIONS]
                 return (
-                  <div key={i} className="flex flex-col gap-2 sm:flex-row sm:flex-nowrap sm:items-center">
+                  <div key={i} className="flex flex-nowrap items-center gap-1 sm:gap-2">
                     <select
                       value={s.day}
                       onChange={(e) => updateSchedule(i, { day: e.target.value })}
-                      className="h-11 w-full min-w-0 rounded-lg border border-slate-200 bg-slate-50 px-2 text-sm focus:border-sky-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-700/20 sm:w-[38%]"
+                      className="h-9 w-[30%] min-w-0 rounded-lg border border-slate-200 bg-slate-50 px-1 text-[11px] focus:border-sky-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-700/20 sm:h-11 sm:w-[38%] sm:px-2 sm:text-sm"
                     >
                       {dayOptions.map((d) => (
                         <option key={d} value={d}>{d}</option>
                       ))}
                     </select>
-                    <div className="flex min-w-0 flex-1 items-center gap-2">
-                      <input
-                        type="time"
-                        value={s.open}
-                        onChange={(e) => updateSchedule(i, { open: e.target.value })}
-                        className="h-11 min-w-0 flex-1 rounded-lg border border-slate-200 bg-slate-50 px-2 text-sm focus:border-sky-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-700/20"
-                      />
-                      <span className="shrink-0 text-slate-400">–</span>
-                      <input
-                        type="time"
-                        value={s.close}
-                        onChange={(e) => updateSchedule(i, { close: e.target.value })}
-                        className="h-11 min-w-0 flex-1 rounded-lg border border-slate-200 bg-slate-50 px-2 text-sm focus:border-sky-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-700/20"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeSchedule(i)}
-                        disabled={schedules.length <= 1}
-                        className="shrink-0 text-slate-400 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-30"
-                        aria-label="Hapus jadwal"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
+                    <input
+                      type="time"
+                      value={s.open}
+                      onChange={(e) => updateSchedule(i, { open: e.target.value })}
+                      className="h-9 min-w-0 flex-1 rounded-lg border border-slate-200 bg-slate-50 px-0.5 text-[11px] focus:border-sky-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-700/20 sm:h-11 sm:px-2 sm:text-sm"
+                    />
+                    <span className="shrink-0 text-xs text-slate-400 sm:text-base">–</span>
+                    <input
+                      type="time"
+                      value={s.close}
+                      onChange={(e) => updateSchedule(i, { close: e.target.value })}
+                      className="h-9 min-w-0 flex-1 rounded-lg border border-slate-200 bg-slate-50 px-0.5 text-[11px] focus:border-sky-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-700/20 sm:h-11 sm:px-2 sm:text-sm"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeSchedule(i)}
+                      disabled={schedules.length <= 1}
+                      className="shrink-0 text-slate-400 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-30"
+                      aria-label="Hapus jadwal"
+                    >
+                      <Trash2 size={14} />
+                    </button>
                   </div>
                 )
               })}
