@@ -452,10 +452,10 @@ export default function LibraryDetailPage() {
               <StatusBadge status={library.status} />
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:items-center">
             <button
               onClick={() => setModalOpen(true)}
-              className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
+              className="flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 sm:justify-start"
             >
               <Pencil size={16} /> Ubah Detail
             </button>
@@ -464,7 +464,7 @@ export default function LibraryDetailPage() {
                 setTab('list-buku')
                 setImportModalOpen(true)
               }}
-              className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
+              className="flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 sm:justify-start"
             >
               <Upload size={16} /> Import Excel
             </button>
@@ -474,9 +474,11 @@ export default function LibraryDetailPage() {
                 setEditingBook(null)
                 setBookModalOpen(true)
               }}
-              className="flex items-center gap-2 rounded-lg bg-sky-800 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-sky-900"
+              className="flex items-center justify-center gap-2 rounded-lg bg-sky-800 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-sky-900 sm:justify-start sm:font-bold"
             >
-              <Plus size={18} /> Tambah Buku
+              <Plus size={16} className="sm:hidden" />
+              <Plus size={18} className="hidden sm:block" />
+              Tambah Buku
             </button>
           </div>
         </div>
@@ -557,14 +559,14 @@ export default function LibraryDetailPage() {
 
             <div className="mb-8 grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
               <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm lg:col-span-2">
-                <div className="mb-5 flex items-start justify-between">
-                  <div>
+                <div className="mb-5 flex items-start justify-between gap-3">
+                  <div className="min-w-0">
                     <h3 className="font-bold text-slate-900">Distribusi Kode Klasifikasi</h3>
                     <p className="text-sm text-slate-500">Persentase koleksi buku berdasarkan kode klasifikasi</p>
                   </div>
                   <button
                     onClick={() => setTab('list-buku')}
-                    className="text-sm font-semibold text-sky-700 hover:text-sky-900"
+                    className="shrink-0 whitespace-nowrap text-xs font-semibold text-sky-700 hover:text-sky-900 sm:text-sm"
                   >
                     Lihat List Buku
                   </button>
@@ -629,26 +631,26 @@ export default function LibraryDetailPage() {
             </div>
 
             <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-              <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
-                <div>
+              <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-4 sm:px-6">
+                <div className="min-w-0">
                   <h3 className="font-bold text-slate-900">Aktivitas Terkini</h3>
                   <p className="text-xs text-slate-400">Perubahan koleksi buku terbaru di unit ini</p>
                 </div>
                 <button
                   onClick={() => setTab('riwayat')}
-                  className="flex items-center gap-1 text-xs font-semibold text-sky-700 hover:text-sky-900"
+                  className="flex shrink-0 items-center gap-1 whitespace-nowrap text-xs font-semibold text-sky-700 hover:text-sky-900"
                 >
                   Lihat Semua <ChevronRight size={14} />
                 </button>
               </div>
               <div className="overflow-x-auto">
-              <table className="w-full text-left">
+              <table className="w-full table-fixed text-left sm:table-auto">
                 <thead>
                   <tr className="border-b border-slate-200 bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    <th className="px-6 py-3">Waktu</th>
-                    <th className="px-6 py-3">Aktivitas</th>
-                    <th className="px-6 py-3">Pengguna</th>
-                    <th className="px-6 py-3">Status</th>
+                    <th className="hidden px-6 py-3 sm:table-cell sm:w-auto">Waktu</th>
+                    <th className="w-[62%] px-3 py-3 text-[11px] sm:w-auto sm:px-6 sm:text-xs">Aktivitas</th>
+                    <th className="hidden px-6 py-3 sm:table-cell sm:w-auto">Pengguna</th>
+                    <th className="w-[38%] px-3 py-3 text-[11px] sm:w-auto sm:px-6 sm:text-xs">Status</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -665,25 +667,32 @@ export default function LibraryDetailPage() {
                     return (
                       <tr key={log.id} className="border-b border-slate-100 last:border-b-0 hover:bg-slate-50">
                         <td
-                          className="whitespace-nowrap px-6 py-3 text-sm text-slate-500"
+                          className="hidden whitespace-nowrap px-6 py-3 text-sm text-slate-500 sm:table-cell"
                           title={formatDateTime(log.created_at)}
                         >
                           {timeAgo(log.created_at)}
                         </td>
-                        <td className="px-6 py-3">
-                          <div className="flex items-start gap-2.5">
-                            <div className={`mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-lg ${meta.badge}`}>
-                              <Icon size={14} />
+                        <td className="px-3 py-3 sm:px-6">
+                          <div className="flex items-start gap-1.5 sm:gap-2.5">
+                            <div className={`mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-lg sm:h-8 sm:w-8 ${meta.badge}`}>
+                              <Icon size={12} className="sm:hidden" />
+                              <Icon size={14} className="hidden sm:block" />
                             </div>
                             <div className="min-w-0">
-                              <p className="text-sm font-medium text-slate-800">{log.aksi}</p>
-                              <p className="max-w-xs truncate text-xs text-slate-400" title={log.detail}>
+                              <p className="text-xs font-medium text-slate-800 sm:text-sm">{log.aksi}</p>
+                              <p className="truncate text-[10px] text-slate-400 sm:max-w-xs sm:text-xs" title={log.detail}>
                                 {log.detail}
+                              </p>
+                              <p
+                                className="mt-0.5 truncate text-[10px] text-slate-400 sm:hidden"
+                                title={`${log.pelaku} · ${formatDateTime(log.created_at)}`}
+                              >
+                                {timeAgo(log.created_at)} · {log.pelaku}
                               </p>
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-3">
+                        <td className="hidden px-6 py-3 sm:table-cell">
                           <div className="flex items-center gap-2">
                             <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-slate-100 text-xs font-semibold text-slate-600">
                               {initials(log.pelaku)}
@@ -691,9 +700,9 @@ export default function LibraryDetailPage() {
                             <span className="whitespace-nowrap text-sm text-slate-600">{log.pelaku}</span>
                           </div>
                         </td>
-                        <td className="px-6 py-3">
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">
-                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Berhasil
+                        <td className="px-3 py-3 sm:px-6">
+                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700 sm:gap-1.5 sm:px-2.5 sm:py-1 sm:text-xs">
+                            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" /> Berhasil
                           </span>
                         </td>
                       </tr>
