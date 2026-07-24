@@ -35,3 +35,30 @@ export const returnBook = async (req, res) => {
     return res.status(400).json({ success: false, message: error.message })
   }
 }
+
+export const requestBorrow = async (req, res) => {
+  try {
+    const data = await circulationsService.requestBorrow(req.body, req.user)
+    return res.status(201).json({ success: true, data })
+  } catch (error) {
+    return res.status(400).json({ success: false, message: error.message })
+  }
+}
+
+export const approveRequest = async (req, res) => {
+  try {
+    const data = await circulationsService.approveRequest(req.params.id, req.body, req.user)
+    return res.status(200).json({ success: true, data })
+  } catch (error) {
+    return res.status(400).json({ success: false, message: error.message })
+  }
+}
+
+export const rejectRequest = async (req, res) => {
+  try {
+    const data = await circulationsService.rejectRequest(req.params.id, req.user)
+    return res.status(200).json({ success: true, data })
+  } catch (error) {
+    return res.status(400).json({ success: false, message: error.message })
+  }
+}

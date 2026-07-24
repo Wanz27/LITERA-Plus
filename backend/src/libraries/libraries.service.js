@@ -49,11 +49,29 @@ export const update = async (id, payload, actor) => {
     ...(payload.jam_operasional !== undefined ? { jam_operasional: payload.jam_operasional.trim() || DEFAULT_JAM_OPERASIONAL } : {}),
     ...(payload.kepala_unit !== undefined ? { kepala_unit: payload.kepala_unit.trim() || DEFAULT_KEPALA_UNIT } : {}),
     ...(payload.foto_url !== undefined ? { foto_url: payload.foto_url.trim() || null } : {}),
+    ...(payload.peminjaman_aktif !== undefined ? { peminjaman_aktif: !!payload.peminjaman_aktif } : {}),
+    ...(payload.peminjaman_mandiri_aktif !== undefined
+      ? { peminjaman_mandiri_aktif: !!payload.peminjaman_mandiri_aktif }
+      : {}),
   })
 
+  const toggledKeys = Object.keys(payload)
+  const isPeminjamanToggleOnly = toggledKeys.length === 1 && toggledKeys[0] === 'peminjaman_aktif'
+  const isMandiriToggleOnly = toggledKeys.length === 1 && toggledKeys[0] === 'peminjaman_mandiri_aktif'
+
+  let aksi = 'Mengubah Perpustakaan'
+  let detail = `${library.nama} (${library.lokasi}) diperbarui.`
+  if (isPeminjamanToggleOnly) {
+    aksi = 'Mengubah Pengaturan Peminjaman'
+    detail = `Fitur peminjaman & pengembalian di ${library.nama} ${library.peminjaman_aktif ? 'diaktifkan' : 'dinonaktifkan'}.`
+  } else if (isMandiriToggleOnly) {
+    aksi = 'Mengubah Pengaturan Peminjaman Mandiri'
+    detail = `Peminjaman mandiri oleh pengunjung di ${library.nama} ${library.peminjaman_mandiri_aktif ? 'diaktifkan' : 'dinonaktifkan'}.`
+  }
+
   await activityRepo.createActivity({
-    aksi: 'Mengubah Perpustakaan',
-    detail: `${library.nama} (${library.lokasi}) diperbarui.`,
+    aksi,
+    detail,
     pelaku: actor?.full_name || 'Admin',
   })
 

@@ -29,6 +29,8 @@ create table if not exists libraries (
   jam_operasional text not null default E'Senin - Jumat: 08.00 - 18.00\nSabtu: 09.00 - 15.00',
   kepala_unit text not null default 'Belum ditentukan',
   foto_url text,
+  peminjaman_aktif boolean not null default true,
+  peminjaman_mandiri_aktif boolean not null default false,
   created_at timestamptz not null default now()
 );
 
@@ -36,6 +38,8 @@ create table if not exists libraries (
 alter table libraries add column if not exists jam_operasional text not null default E'Senin - Jumat: 08.00 - 18.00\nSabtu: 09.00 - 15.00';
 alter table libraries add column if not exists kepala_unit text not null default 'Belum ditentukan';
 alter table libraries add column if not exists foto_url text;
+alter table libraries add column if not exists peminjaman_aktif boolean not null default true;
+alter table libraries add column if not exists peminjaman_mandiri_aktif boolean not null default false;
 
 -- Tabel buku (koleksi buku per perpustakaan)
 create table if not exists books (
@@ -187,13 +191,21 @@ create table if not exists circulations (
 -- Migrasi untuk database yang sudah ada sebelum kolom batas waktu pengembalian ditambahkan
 alter table circulations add column if not exists due_date timestamptz;
 
+-- Migrasi untuk database yang sudah ada sebelum status 'menunggu' (pengajuan mandiri oleh
+-- pengunjung) dan 'ditolak' ditambahkan
+alter table circulations drop constraint if exists circulations_status_check;
+alter table circulations add constraint circulations_status_check
+  check (status in ('menunggu', 'dipinjam', 'kembali', 'ditolak'));
+
 create index if not exists circulations_library_id_idx on circulations (library_id);
 create index if not exists circulations_book_id_idx on circulations (book_id);
 
--- Satu eksemplar buku hanya boleh punya satu transaksi peminjaman aktif pada satu waktu
--- (jaring pengaman DB; service juga mengecek ini lebih dulu untuk pesan error yang ramah).
+-- Satu eksemplar buku hanya boleh punya satu transaksi aktif (dipinjam) ATAU pengajuan yang
+-- masih menunggu persetujuan pada satu waktu (jaring pengaman DB; service juga mengecek ini
+-- lebih dulu untuk pesan error yang ramah).
+drop index if exists circulations_active_book_unique;
 create unique index if not exists circulations_active_book_unique
-  on circulations (book_id) where status = 'dipinjam';
+  on circulations (book_id) where status in ('dipinjam', 'menunggu');
 
 -- Seed: akun admin default (email: admin@litera.id / password: admin123)
 insert into users (full_name, email, password_hash, role)

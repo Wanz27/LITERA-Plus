@@ -5,11 +5,11 @@ import {
   ChevronRight,
   MapPin,
   BookOpen,
-  Eye,
   ZoomIn,
   Search,
 } from 'lucide-react'
 import DashboardLayout from '../layout/DashboardLayout'
+import { useAuth } from '../contexts/AuthContext'
 import CoverPreviewModal from '../components/CoverPreviewModal'
 import InventoryNumbersPopover from '../components/InventoryNumbersPopover'
 import BookDetailModal from '../components/BookDetailModal'
@@ -29,6 +29,7 @@ import {
 export default function CatalogDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const { role } = useAuth()
   const [library, setLibrary] = React.useState<Library | null>(null)
   const [books, setBooks] = React.useState<Book[]>([])
   const [loading, setLoading] = React.useState(true)
@@ -66,6 +67,11 @@ export default function CatalogDetailPage() {
   React.useEffect(() => {
     setPage(1)
   }, [search, kondisiFilter, klasifikasiFilter, subjekFilter, bahasaFilter, sort, pageSize])
+
+  async function handleRequestBorrow(book: Book) {
+    if (!library) return
+    await api.requestBorrow({ library_id: library.id, book_id: book.id })
+  }
 
   if (loading) {
     return (
@@ -239,9 +245,9 @@ export default function CatalogDetailPage() {
                       <th className="px-6 py-3">Subjek</th>
                       <th className="px-6 py-3">Bahasa</th>
                       <th className="px-6 py-3">Jumlah</th>
+                      <th className="px-6 py-3">Stok</th>
                       <th className="px-6 py-3">No. Inventaris</th>
                       <th className="px-6 py-3">No. Panggil</th>
-                      <th className="px-6 py-3 text-right">Aksi</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -252,6 +258,7 @@ export default function CatalogDetailPage() {
                         return acc
                       }, {})
                       const kondisiKeys = Object.keys(kondisiCounts)
+                      const stokTersedia = group.filter((b) => b.status === 'tersedia').length
                       return (
                         <tr
                           key={book.batch_id || book.id}
@@ -322,6 +329,12 @@ export default function CatalogDetailPage() {
                           <td className="px-6 py-3 text-sm text-slate-600">{book.subjek || '-'}</td>
                           <td className="px-6 py-3 text-sm text-slate-600">{book.bahasa || '-'}</td>
                           <td className="px-6 py-3 text-sm text-slate-600">{group.length}</td>
+                          <td className="px-6 py-3 text-sm">
+                            <span className={stokTersedia === 0 ? 'font-semibold text-rose-600' : 'font-semibold text-slate-700'}>
+                              {stokTersedia}
+                            </span>
+                            <span className="text-slate-400"> / {group.length}</span>
+                          </td>
                           <td className="px-6 py-3 text-sm text-slate-600">
                             {group.length <= 2 ? (
                               <div className="space-y-0.5">
@@ -343,21 +356,6 @@ export default function CatalogDetailPage() {
                           </td>
                           <td className="px-6 py-3 text-sm font-mono text-slate-600">
                             {generateCallNumber(book.kode_klasifikasi, book.penulis, book.judul)}
-                          </td>
-                          <td className="px-6 py-3">
-                            <div className="flex items-center justify-end">
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  setDetailGroup(group)
-                                  setDetailIndex(0)
-                                }}
-                                className="text-slate-400 hover:text-sky-700"
-                                aria-label="Lihat detail buku"
-                              >
-                                <Eye size={16} />
-                              </button>
-                            </div>
                           </td>
                         </tr>
                       )
@@ -434,6 +432,11 @@ export default function CatalogDetailPage() {
           books={detailGroup}
           initialIndex={detailIndex}
           onClose={() => setDetailGroup(null)}
+          onRequestBorrow={
+            role === 'visitor' && library.peminjaman_aktif && library.peminjaman_mandiri_aktif
+              ? handleRequestBorrow
+              : undefined
+          }
         />
       )}
     </DashboardLayout>

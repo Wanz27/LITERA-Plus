@@ -7,6 +7,7 @@ interface AuthContextValue {
   role: AuthUser['role'] | null
   fullName: string | null
   isAuthenticated: boolean
+  authReady: boolean
   authError: string | null
   signIn: (identifier: string, password: string) => Promise<{ error?: string }>
   signUp: (payload: { full_name: string; email: string; password: string }) => Promise<{ error?: string }>
@@ -26,6 +27,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return raw ? (JSON.parse(raw) as AuthUser) : null
   })
   const [authError, setAuthError] = React.useState<string | null>(null)
+  /**
+   * True once the cached `user` (read synchronously from localStorage, which may hold a stale
+   * role if it changed server-side since last login) has been confirmed or replaced by `getMe()`.
+   * Route guards must wait for this before deciding on role, otherwise a stale cached role can
+   * trigger a redirect (e.g. to /katalog) that never gets reversed once the fresh role arrives.
+   */
+  const [authReady, setAuthReady] = React.useState(() => !localStorage.getItem(TOKEN_KEY))
 
   const persist = (token: string, nextUser: AuthUser) => {
     localStorage.setItem(TOKEN_KEY, token)
@@ -47,6 +55,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         localStorage.removeItem(USER_KEY)
         setUser(null)
       })
+      .finally(() => setAuthReady(true))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -108,6 +117,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     role: user?.role ?? null,
     fullName: user?.full_name ?? null,
     isAuthenticated: !!user,
+    authReady,
     authError,
     signIn,
     signUp,

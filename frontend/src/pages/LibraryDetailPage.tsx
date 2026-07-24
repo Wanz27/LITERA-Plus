@@ -24,6 +24,7 @@ import BookFormModal from '../components/BookFormModal'
 import CoverPreviewModal from '../components/CoverPreviewModal'
 import InventoryNumbersPopover from '../components/InventoryNumbersPopover'
 import BookDetailModal from '../components/BookDetailModal'
+import BookStatListModal from '../components/BookStatListModal'
 import ConfirmDialog from '../components/ConfirmDialog'
 import ExportReportMenu from '../components/ExportReportMenu'
 import ImportBooksModal from '../components/ImportBooksModal'
@@ -57,13 +58,14 @@ import {
 const FACILITY_IMAGE =
   'https://images.unsplash.com/photo-1521587760476-6c12a4b040da?auto=format&fit=crop&w=1200&q=80'
 
-const tabs = [
+const ALL_TABS = [
   { key: 'dashboard', label: 'Dashboard' },
   { key: 'list-buku', label: 'List Buku' },
   { key: 'peminjaman', label: 'Peminjaman' },
   { key: 'riwayat', label: 'Riwayat' },
+  { key: 'pengaturan', label: 'Pengaturan' },
 ] as const
-type TabKey = (typeof tabs)[number]['key']
+type TabKey = (typeof ALL_TABS)[number]['key']
 
 function groupKey(group: Book[]): string {
   return group[0]?.batch_id || group[0]?.id
@@ -105,6 +107,9 @@ export default function LibraryDetailPage() {
   const [bulkDeleteOpen, setBulkDeleteOpen] = React.useState(false)
   const [bulkDeleting, setBulkDeleting] = React.useState(false)
   const [importModalOpen, setImportModalOpen] = React.useState(false)
+  const [togglingPeminjaman, setTogglingPeminjaman] = React.useState(false)
+  const [togglingMandiri, setTogglingMandiri] = React.useState(false)
+  const [statFilter, setStatFilter] = React.useState<'dipinjam' | 'rusak' | 'hilang' | null>(null)
 
   async function load() {
     setLoading(true)
@@ -157,6 +162,12 @@ export default function LibraryDetailPage() {
     setBookPage(1)
     setSelectedGroupKeys(new Set())
   }, [bookSearch, bookKondisiFilter, bookKlasifikasiFilter, bookSubjekFilter, bookBahasaFilter, bookSort, bookPageSize])
+
+  React.useEffect(() => {
+    if (tab === 'peminjaman' && library && !library.peminjaman_aktif) {
+      setTab('dashboard')
+    }
+  }, [tab, library])
 
   async function handleUpdate(payload: {
     nama: string
@@ -234,6 +245,32 @@ export default function LibraryDetailPage() {
   async function handleMarkBookFound(book: Book) {
     await api.updateBookStatus(book.id, 'tersedia')
     await load()
+  }
+
+  async function handleTogglePeminjaman() {
+    if (!library) return
+    setTogglingPeminjaman(true)
+    try {
+      const updated = await api.updateLibrary(library.id, { peminjaman_aktif: !library.peminjaman_aktif })
+      setLibrary(updated)
+      setActivity(await api.getActivityLog())
+    } finally {
+      setTogglingPeminjaman(false)
+    }
+  }
+
+  async function handleToggleMandiri() {
+    if (!library) return
+    setTogglingMandiri(true)
+    try {
+      const updated = await api.updateLibrary(library.id, {
+        peminjaman_mandiri_aktif: !library.peminjaman_mandiri_aktif,
+      })
+      setLibrary(updated)
+      setActivity(await api.getActivityLog())
+    } finally {
+      setTogglingMandiri(false)
+    }
   }
 
   function toggleGroupSelected(key: string) {
@@ -363,6 +400,15 @@ export default function LibraryDetailPage() {
   const allOnPageSelected =
     pagedBookRows.length > 0 && pagedBookRows.every((g) => selectedGroupKeys.has(groupKey(g)))
 
+  const visibleTabs = ALL_TABS.filter((t) => t.key !== 'peminjaman' || library.peminjaman_aktif)
+
+  const STAT_FILTER_META = {
+    dipinjam: { title: 'Buku Dipinjam', match: (b: Book) => b.status === 'dipinjam' },
+    rusak: { title: 'Buku Rusak', match: (b: Book) => b.kondisi === 'Rusak' },
+    hilang: { title: 'Buku Hilang', match: (b: Book) => b.status === 'hilang' },
+  } as const
+  const statBooks = statFilter ? books.filter(STAT_FILTER_META[statFilter].match) : []
+
   const libraryActivity = activity.filter((log) => belongsToLibrary(log, library.nama))
   const relatedActivity = libraryActivity.slice(0, 5)
   const activityRows = relatedActivity.length > 0 ? relatedActivity : activity.slice(0, 5)
@@ -425,7 +471,7 @@ export default function LibraryDetailPage() {
         </div>
 
         <div className="mb-8 flex items-center gap-6 overflow-x-auto border-b border-slate-200">
-          {tabs.map((t) => (
+          {visibleTabs.map((t) => (
             <button
               key={t.key}
               onClick={() => setTab(t.key)}
@@ -441,7 +487,11 @@ export default function LibraryDetailPage() {
         {tab === 'dashboard' && (
           <>
             <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+              <button
+                type="button"
+                onClick={() => setTab('list-buku')}
+                className="rounded-xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:border-sky-300 hover:shadow-md"
+              >
                 <div className="mb-4 flex items-center justify-between">
                   <div className="grid h-10 w-10 place-items-center rounded-lg bg-sky-100 text-sky-800">
                     <BookOpen size={18} />
@@ -449,8 +499,12 @@ export default function LibraryDetailPage() {
                 </div>
                 <p className="text-sm text-slate-500">Total Buku</p>
                 <p className="text-2xl font-bold text-slate-900">{totalBuku.toLocaleString('id-ID')}</p>
-              </div>
-              <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+              </button>
+              <button
+                type="button"
+                onClick={() => setStatFilter('dipinjam')}
+                className="rounded-xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:border-amber-300 hover:shadow-md"
+              >
                 <div className="mb-4 flex items-center justify-between">
                   <div className="grid h-10 w-10 place-items-center rounded-lg bg-amber-100 text-amber-600">
                     <BookMarked size={18} />
@@ -459,8 +513,12 @@ export default function LibraryDetailPage() {
                 </div>
                 <p className="text-sm text-slate-500">Buku Dipinjam</p>
                 <p className="text-2xl font-bold text-slate-900">{dipinjamCount.toLocaleString('id-ID')}</p>
-              </div>
-              <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+              </button>
+              <button
+                type="button"
+                onClick={() => setStatFilter('rusak')}
+                className="rounded-xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:border-rose-300 hover:shadow-md"
+              >
                 <div className="mb-4 flex items-center justify-between">
                   <div className="grid h-10 w-10 place-items-center rounded-lg bg-rose-100 text-rose-600">
                     <AlertTriangle size={18} />
@@ -469,8 +527,12 @@ export default function LibraryDetailPage() {
                 </div>
                 <p className="text-sm text-slate-500">Buku Rusak</p>
                 <p className="text-2xl font-bold text-slate-900">{damagedCount.toLocaleString('id-ID')}</p>
-              </div>
-              <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+              </button>
+              <button
+                type="button"
+                onClick={() => setStatFilter('hilang')}
+                className="rounded-xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:border-slate-300 hover:shadow-md"
+              >
                 <div className="mb-4 flex items-center justify-between">
                   <div className="grid h-10 w-10 place-items-center rounded-lg bg-slate-200 text-slate-600">
                     <PackageX size={18} />
@@ -479,7 +541,7 @@ export default function LibraryDetailPage() {
                 </div>
                 <p className="text-sm text-slate-500">Buku Hilang</p>
                 <p className="text-2xl font-bold text-slate-900">{lostCount.toLocaleString('id-ID')}</p>
-              </div>
+              </button>
             </div>
 
             <div className="mb-8 grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
@@ -1033,6 +1095,74 @@ export default function LibraryDetailPage() {
             )}
           </div>
         )}
+
+        {tab === 'pengaturan' && (
+          <div className="space-y-4">
+            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-sm font-semibold text-slate-800">Fitur Peminjaman & Pengembalian</p>
+                  <p className="mt-1 text-sm text-slate-500">
+                    Saat nonaktif, tab "Peminjaman" akan disembunyikan dan siswa/petugas tidak dapat meminjam atau
+                    mengembalikan buku di {library.nama}.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={library.peminjaman_aktif}
+                  aria-label="Aktifkan fitur peminjaman & pengembalian"
+                  disabled={togglingPeminjaman}
+                  onClick={handleTogglePeminjaman}
+                  className={`inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors disabled:opacity-60 ${
+                    library.peminjaman_aktif ? 'bg-sky-700' : 'bg-slate-300'
+                  }`}
+                >
+                  <span
+                    className={`h-5 w-5 rounded-full bg-white shadow transition-transform ${
+                      library.peminjaman_aktif ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-sm font-semibold text-slate-800">Peminjaman Mandiri oleh Pengunjung</p>
+                  <p className="mt-1 text-sm text-slate-500">
+                    Saat aktif, pengunjung dapat mengajukan peminjaman langsung dari halaman detail buku di katalog.
+                    Petugas/admin tetap perlu menyetujui pengajuan tersebut di tab "Peminjaman" sebelum buku
+                    benar-benar dipinjamkan.
+                  </p>
+                  {!library.peminjaman_aktif && (
+                    <p className="mt-1.5 text-xs font-semibold text-amber-600">
+                      Aktifkan "Fitur Peminjaman & Pengembalian" di atas terlebih dahulu.
+                    </p>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={library.peminjaman_mandiri_aktif}
+                  aria-label="Aktifkan peminjaman mandiri oleh pengunjung"
+                  disabled={togglingMandiri || !library.peminjaman_aktif}
+                  onClick={handleToggleMandiri}
+                  className={`inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors disabled:opacity-60 ${
+                    library.peminjaman_mandiri_aktif ? 'bg-sky-700' : 'bg-slate-300'
+                  }`}
+                >
+                  <span
+                    className={`h-5 w-5 rounded-full bg-white shadow transition-transform ${
+                      library.peminjaman_mandiri_aktif ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {modalOpen && (
@@ -1064,6 +1194,20 @@ export default function LibraryDetailPage() {
           title={previewBook.judul}
           subtitle={previewBook.penulis}
           onClose={() => setPreviewBook(null)}
+        />
+      )}
+
+      {statFilter && (
+        <BookStatListModal
+          title={STAT_FILTER_META[statFilter].title}
+          books={statBooks}
+          onClose={() => setStatFilter(null)}
+          onSelectBook={(book) => {
+            setStatFilter(null)
+            setDetailGroup([book])
+            setDetailIndex(0)
+          }}
+          onMarkFound={statFilter === 'hilang' ? handleMarkBookFound : undefined}
         />
       )}
 

@@ -30,6 +30,8 @@ export interface Library {
   jam_operasional: string
   kepala_unit: string
   foto_url?: string | null
+  peminjaman_aktif: boolean
+  peminjaman_mandiri_aktif: boolean
   created_at: string
 }
 
@@ -59,7 +61,7 @@ export interface Book {
   created_at: string
 }
 
-export type CirculationStatus = 'dipinjam' | 'kembali'
+export type CirculationStatus = 'menunggu' | 'dipinjam' | 'kembali' | 'ditolak'
 
 export interface Circulation {
   id: string
@@ -305,3 +307,18 @@ export const returnBook = (payload: { library_id: string; nomor_inventaris: stri
     method: 'POST',
     body: JSON.stringify(payload),
   })
+
+export const requestBorrow = (payload: { library_id: string; book_id: string }) =>
+  request<{ circulation: Circulation }>('/circulations/request', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+
+export const approveCirculationRequest = (id: string, due_date: string) =>
+  request<{ book: Book; circulation: Circulation }>(`/circulations/${id}/approve`, {
+    method: 'PUT',
+    body: JSON.stringify({ due_date }),
+  })
+
+export const rejectCirculationRequest = (id: string) =>
+  request<{ circulation: Circulation }>(`/circulations/${id}/reject`, { method: 'PUT' })

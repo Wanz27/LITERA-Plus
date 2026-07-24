@@ -10,5 +10,8 @@ router.get('/', authenticate, requireStaff, circulationsController.list)
 router.get('/borrowers', authenticate, requireStaff, circulationsController.searchBorrowers)
 router.post('/borrow', authenticate, requireStaff, circulationsController.borrow)
 router.post('/return', authenticate, requireStaff, circulationsController.returnBook)
+router.post('/request', authenticate, circulationsController.requestBorrow)
+router.put('/:id/approve', authenticate, requireStaff, circulationsController.approveRequest)
+router.put('/:id/reject', authenticate, requireStaff, circulationsController.rejectRequest)
 
 export default router

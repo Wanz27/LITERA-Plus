@@ -1,7 +1,9 @@
 import * as React from 'react'
-import { BookOpen, Undo2, CheckCircle2, XCircle, ScanLine, Loader2, CalendarClock, User } from 'lucide-react'
+import { BookOpen, Undo2, CheckCircle2, XCircle, ScanLine, Loader2, CalendarClock, User, Inbox } from 'lucide-react'
 import * as api from '../lib/api'
 import type { Book, BorrowerSuggestion, Circulation } from '../lib/api'
+import ApproveRequestModal from './ApproveRequestModal'
+import ConfirmDialog from './ConfirmDialog'
 
 type Mode = 'pinjam' | 'kembali'
 type Feedback = { type: 'success' | 'error'; message: string } | null
@@ -64,6 +66,11 @@ export default function PeminjamanTab({ libraryId, books, onChanged }: Peminjama
   const [feedback, setFeedback] = React.useState<Feedback>(null)
   const [loans, setLoans] = React.useState<Circulation[]>([])
   const [loansLoading, setLoansLoading] = React.useState(true)
+  const [requests, setRequests] = React.useState<Circulation[]>([])
+  const [requestsLoading, setRequestsLoading] = React.useState(true)
+  const [requestToApprove, setRequestToApprove] = React.useState<Circulation | null>(null)
+  const [requestToReject, setRequestToReject] = React.useState<Circulation | null>(null)
+  const [processingRequest, setProcessingRequest] = React.useState(false)
   const isbnInputRef = React.useRef<HTMLInputElement>(null)
   const selectRef = React.useRef<HTMLSelectElement>(null)
   const inputRef = React.useRef<HTMLInputElement>(null)
@@ -98,8 +105,20 @@ export default function PeminjamanTab({ libraryId, books, onChanged }: Peminjama
     }
   }
 
+  async function loadRequests() {
+    setRequestsLoading(true)
+    try {
+      setRequests(await api.getCirculations(libraryId, 'menunggu'))
+    } catch {
+      // Diamkan, tabel tetap menampilkan data lama dan bisa dicoba lagi lewat aksi berikutnya.
+    } finally {
+      setRequestsLoading(false)
+    }
+  }
+
   React.useEffect(() => {
     loadLoans()
+    loadRequests()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [libraryId])
 
@@ -220,6 +239,40 @@ export default function PeminjamanTab({ libraryId, books, onChanged }: Peminjama
   async function handleReturnSubmit(e: React.FormEvent) {
     e.preventDefault()
     await submitReturn(nomorInventaris)
+  }
+
+  async function handleApprove(dueDate: string) {
+    if (!requestToApprove) return
+    setProcessingRequest(true)
+    try {
+      const { book } = await api.approveCirculationRequest(requestToApprove.id, new Date(`${dueDate}T23:59:59`).toISOString())
+      setFeedback({
+        type: 'success',
+        message: `Pengajuan peminjaman "${book.judul}" oleh ${requestToApprove.borrower_name} disetujui.`,
+      })
+      setRequestToApprove(null)
+      onChanged()
+      await Promise.all([loadLoans(), loadRequests()])
+    } catch (err) {
+      setFeedback({ type: 'error', message: err instanceof Error ? err.message : 'Gagal menyetujui pengajuan.' })
+    } finally {
+      setProcessingRequest(false)
+    }
+  }
+
+  async function handleReject() {
+    if (!requestToReject) return
+    setProcessingRequest(true)
+    try {
+      await api.rejectCirculationRequest(requestToReject.id)
+      setFeedback({ type: 'success', message: `Pengajuan peminjaman oleh ${requestToReject.borrower_name} ditolak.` })
+      setRequestToReject(null)
+      await loadRequests()
+    } catch (err) {
+      setFeedback({ type: 'error', message: err instanceof Error ? err.message : 'Gagal menolak pengajuan.' })
+    } finally {
+      setProcessingRequest(false)
+    }
   }
 
   return (
@@ -478,6 +531,74 @@ export default function PeminjamanTab({ libraryId, books, onChanged }: Peminjama
         )}
       </div>
 
+      {(requestsLoading || requests.length > 0) && (
+        <div className="overflow-hidden rounded-xl border border-amber-200 bg-white shadow-sm">
+          <div className="flex items-center gap-2 border-b border-amber-200 bg-amber-50 px-6 py-4">
+            <Inbox size={18} className="text-amber-600" />
+            <div>
+              <h3 className="font-bold text-slate-900">Permintaan Peminjaman ({requests.length})</h3>
+              <p className="text-xs text-slate-500">Pengajuan peminjaman mandiri dari pengunjung, menunggu persetujuan</p>
+            </div>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="border-b border-slate-200 bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <th className="px-6 py-3">Judul Buku</th>
+                  <th className="px-6 py-3">No. Inventaris</th>
+                  <th className="px-6 py-3">Pemohon</th>
+                  <th className="px-6 py-3">Tanggal Pengajuan</th>
+                  <th className="px-6 py-3 text-right">Aksi</th>
+                </tr>
+              </thead>
+              <tbody>
+                {requestsLoading && (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-10 text-center text-sm text-slate-400">
+                      Memuat data...
+                    </td>
+                  </tr>
+                )}
+                {!requestsLoading &&
+                  requests.map((req) => {
+                    const book = bookFor(req.book_id)
+                    return (
+                      <tr key={req.id} className="border-b border-slate-100 last:border-b-0 hover:bg-slate-50">
+                        <td className="px-6 py-3 text-sm font-medium text-slate-800">{book?.judul ?? '-'}</td>
+                        <td className="px-6 py-3 text-sm text-slate-600">{book?.nomor_inventaris ?? '-'}</td>
+                        <td className="px-6 py-3 text-sm text-slate-600">{req.borrower_name}</td>
+                        <td className="px-6 py-3 text-sm text-slate-600">
+                          {new Date(req.borrow_date).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })}
+                        </td>
+                        <td className="px-6 py-3">
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              type="button"
+                              disabled={processingRequest}
+                              onClick={() => setRequestToReject(req)}
+                              className="rounded-lg border border-rose-200 bg-white px-3 py-1.5 text-xs font-semibold text-rose-600 shadow-sm hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              Tolak
+                            </button>
+                            <button
+                              type="button"
+                              disabled={processingRequest}
+                              onClick={() => setRequestToApprove(req)}
+                              className="rounded-lg bg-sky-800 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-sky-900 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              Setujui
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
         <div className="border-b border-slate-200 px-6 py-4">
           <h3 className="font-bold text-slate-900">Sedang Dipinjam ({loans.length})</h3>
@@ -552,6 +673,27 @@ export default function PeminjamanTab({ libraryId, books, onChanged }: Peminjama
           </table>
         </div>
       </div>
+
+      {requestToApprove && (
+        <ApproveRequestModal
+          bookTitle={bookFor(requestToApprove.book_id)?.judul ?? 'buku ini'}
+          borrowerName={requestToApprove.borrower_name}
+          loading={processingRequest}
+          onCancel={() => setRequestToApprove(null)}
+          onConfirm={handleApprove}
+        />
+      )}
+
+      {requestToReject && (
+        <ConfirmDialog
+          title="Tolak pengajuan peminjaman?"
+          message={`Pengajuan peminjaman "${bookFor(requestToReject.book_id)?.judul ?? 'buku ini'}" oleh ${requestToReject.borrower_name} akan ditolak.`}
+          confirmLabel="Ya, Tolak"
+          loading={processingRequest}
+          onConfirm={handleReject}
+          onCancel={() => setRequestToReject(null)}
+        />
+      )}
     </div>
   )
 }

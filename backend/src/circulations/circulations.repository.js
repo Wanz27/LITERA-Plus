@@ -28,11 +28,55 @@ export const findActiveCirculationByBookId = async (bookId) => {
   return data
 }
 
-const ALREADY_BORROWED_MESSAGE = 'Buku ini sedang dipinjam dan belum dikembalikan.'
+// Blok baik peminjaman aktif ('dipinjam') maupun pengajuan yang masih menunggu ('menunggu') —
+// keduanya sama-sama membuat satu eksemplar tidak bisa dipinjamkan/diajukan ulang.
+export const findBlockingCirculationByBookId = async (bookId) => {
+  const { data, error } = await supabase
+    .from('circulations')
+    .select(COLUMNS)
+    .eq('book_id', bookId)
+    .in('status', ['dipinjam', 'menunggu'])
+    .maybeSingle()
+
+  if (error) throw error
+  return data
+}
+
+export const findCirculationById = async (id) => {
+  const { data, error } = await supabase.from('circulations').select(COLUMNS).eq('id', id).maybeSingle()
+  if (error) throw error
+  return data
+}
+
+const ALREADY_BORROWED_MESSAGE = 'Buku ini sedang dipinjam atau sedang diajukan dan belum diproses.'
 
 export const createCirculation = async (payload) => {
   const { data, error } = await supabase.from('circulations').insert([payload]).select(COLUMNS).single()
   if (error) throw error.code === '23505' ? new Error(ALREADY_BORROWED_MESSAGE) : error
+  return data
+}
+
+export const approveCirculation = async (id, dueDate) => {
+  const { data, error } = await supabase
+    .from('circulations')
+    .update({ status: 'dipinjam', due_date: dueDate, borrow_date: new Date().toISOString() })
+    .eq('id', id)
+    .select(COLUMNS)
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+export const rejectCirculation = async (id) => {
+  const { data, error } = await supabase
+    .from('circulations')
+    .update({ status: 'ditolak' })
+    .eq('id', id)
+    .select(COLUMNS)
+    .single()
+
+  if (error) throw error
   return data
 }
 

@@ -1,5 +1,19 @@
 import * as React from 'react'
-import { X, BookOpen, Pencil, Trash2, ChevronLeft, ChevronRight, ZoomIn, PackageX, PackageCheck, CopyPlus } from 'lucide-react'
+import {
+  X,
+  BookOpen,
+  Pencil,
+  Trash2,
+  ChevronLeft,
+  ChevronRight,
+  ZoomIn,
+  PackageX,
+  PackageCheck,
+  CopyPlus,
+  Loader2,
+  CheckCircle2,
+  XCircle,
+} from 'lucide-react'
 import type { Book } from '../lib/api'
 import { klasifikasiLabel, generateCallNumber } from '../lib/bookUi'
 import CoverPreviewModal from './CoverPreviewModal'
@@ -13,7 +27,10 @@ interface Props {
   onMarkLost?: (book: Book) => void
   onMarkFound?: (book: Book) => void
   onAddCopies?: (book: Book) => void
+  onRequestBorrow?: (book: Book) => Promise<void>
 }
+
+type RequestState = 'loading' | 'success' | 'error'
 
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
   return (
@@ -33,11 +50,27 @@ export default function BookDetailModal({
   onMarkLost,
   onMarkFound,
   onAddCopies,
+  onRequestBorrow,
 }: Props) {
   const [index, setIndex] = React.useState(() => Math.min(Math.max(initialIndex, 0), books.length - 1))
   const [previewOpen, setPreviewOpen] = React.useState(false)
+  const [requestState, setRequestState] = React.useState<Record<string, RequestState>>({})
+  const [requestErrorMsg, setRequestErrorMsg] = React.useState<string | null>(null)
   const hasMultiple = books.length > 1
   const book = books[index]
+
+  async function handleRequestBorrow() {
+    if (!onRequestBorrow) return
+    setRequestState((s) => ({ ...s, [book.id]: 'loading' }))
+    setRequestErrorMsg(null)
+    try {
+      await onRequestBorrow(book)
+      setRequestState((s) => ({ ...s, [book.id]: 'success' }))
+    } catch (err) {
+      setRequestState((s) => ({ ...s, [book.id]: 'error' }))
+      setRequestErrorMsg(err instanceof Error ? err.message : 'Gagal mengajukan peminjaman.')
+    }
+  }
 
   const goPrev = React.useCallback(() => setIndex((i) => Math.max(0, i - 1)), [])
   const goNext = React.useCallback(() => setIndex((i) => Math.min(books.length - 1, i + 1)), [books.length])
@@ -171,6 +204,35 @@ export default function BookDetailModal({
             )}
           </div>
         </div>
+
+        {onRequestBorrow && (
+          <div className="border-t border-slate-100 px-5 py-4">
+            {book.status === 'tersedia' && requestState[book.id] !== 'success' && (
+              <button
+                onClick={handleRequestBorrow}
+                disabled={requestState[book.id] === 'loading'}
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-sky-800 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-sky-900 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {requestState[book.id] === 'loading' ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <BookOpen size={16} />
+                )}
+                Ajukan Peminjaman
+              </button>
+            )}
+            {requestState[book.id] === 'success' && (
+              <div className="flex items-center gap-2 rounded-lg bg-emerald-100 px-4 py-2.5 text-sm font-semibold text-emerald-800">
+                <CheckCircle2 size={16} className="shrink-0" /> Pengajuan terkirim, menunggu persetujuan petugas.
+              </div>
+            )}
+            {requestState[book.id] === 'error' && requestErrorMsg && (
+              <div className="mt-2 flex items-start gap-2 rounded-lg bg-rose-100 px-4 py-2.5 text-sm font-medium text-rose-800">
+                <XCircle size={16} className="mt-0.5 shrink-0" /> {requestErrorMsg}
+              </div>
+            )}
+          </div>
+        )}
 
         {(onEdit || onDelete || onMarkLost || onMarkFound || onAddCopies) && (
           <div className="flex flex-wrap items-center justify-end gap-3 border-t border-slate-100 px-5 py-4">
