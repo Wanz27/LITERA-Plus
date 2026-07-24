@@ -748,22 +748,31 @@ export default function LibraryDetailPage() {
                 {bookFiltersActive ? ` dari ${totalGroupCount}` : ''})
               </h3>
               {selectedGroups.length > 0 && (
-                <div className="flex items-center gap-3">
-                  <span className="text-sm font-semibold text-slate-600">
-                    {selectedGroups.length} judul ({selectedBookCount} eksemplar) dipilih
+                <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-start sm:gap-3">
+                  <span className="whitespace-nowrap text-xs font-semibold text-slate-600 sm:text-sm">
+                    <span className="sm:hidden">{selectedBookCount} dipilih</span>
+                    <span className="hidden sm:inline">
+                      {selectedGroups.length} judul ({selectedBookCount} eksemplar) dipilih
+                    </span>
                   </span>
-                  <button
-                    onClick={() => setBulkDeleteOpen(true)}
-                    className="flex items-center gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-600 hover:bg-rose-100"
-                  >
-                    <Trash2 size={16} /> Hapus Terpilih
-                  </button>
-                  <button
-                    onClick={() => setSelectedGroupKeys(new Set())}
-                    className="flex items-center gap-1.5 text-sm font-semibold text-slate-500 hover:text-slate-700"
-                  >
-                    <X size={16} /> Batal
-                  </button>
+                  <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+                    <button
+                      onClick={() => setBulkDeleteOpen(true)}
+                      className="flex items-center gap-1.5 whitespace-nowrap rounded-lg border border-rose-200 bg-rose-50 px-2.5 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-100 sm:gap-2 sm:px-3 sm:py-2 sm:text-sm"
+                    >
+                      <Trash2 size={14} className="sm:hidden" />
+                      <Trash2 size={16} className="hidden sm:block" />
+                      Hapus Terpilih
+                    </button>
+                    <button
+                      onClick={() => setSelectedGroupKeys(new Set())}
+                      className="flex items-center gap-1 whitespace-nowrap text-xs font-semibold text-slate-500 hover:text-slate-700 sm:gap-1.5 sm:text-sm"
+                    >
+                      <X size={14} className="sm:hidden" />
+                      <X size={16} className="hidden sm:block" />
+                      Batal
+                    </button>
+                  </div>
                 </div>
               )}
             </div>

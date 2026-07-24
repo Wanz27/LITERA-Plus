@@ -51,11 +51,14 @@ export default function BookFilterSortMenu({
     function updatePosition() {
       const rect = buttonRef.current?.getBoundingClientRect()
       if (!rect) return
+      const margin = 8
+      const width = Math.min(280, window.innerWidth - margin * 2)
+      const left = Math.min(Math.max(rect.right - width, margin), window.innerWidth - width - margin)
       setPanelStyle({
         position: 'fixed',
         top: rect.bottom + 8,
-        right: window.innerWidth - rect.right,
-        width: 280,
+        left,
+        width,
       })
     }
     updatePosition()
