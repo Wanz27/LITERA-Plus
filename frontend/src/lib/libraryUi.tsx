@@ -17,7 +17,7 @@ export const statusStyle: Record<LibraryStatus, string> = {
 export function StatusBadge({ status }: { status: LibraryStatus }) {
   return (
     <span
-      className={`before:content-[''] flex items-center gap-1.5 text-sm font-medium before:inline-block before:h-1.5 before:w-1.5 before:rounded-full ${statusStyle[status]}`}
+      className={`before:content-[''] flex items-center gap-1.5 text-xs font-medium before:inline-block before:h-1.5 before:w-1.5 before:shrink-0 before:rounded-full sm:text-sm ${statusStyle[status]}`}
     >
       {status}
     </span>

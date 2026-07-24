@@ -94,13 +94,13 @@ export default function DashboardPage() {
 
         <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
           <div className="overflow-x-auto">
-          <table className="w-full text-left">
+          <table className="w-full table-fixed text-left sm:table-auto">
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                <th className="px-4 py-4 sm:px-6">Nama Perpustakaan</th>
-                <th className="hidden px-4 py-4 sm:table-cell sm:px-6">Lokasi</th>
-                <th className="px-4 py-4 sm:px-6">Status</th>
-                <th className="px-4 py-4 text-right sm:px-6">Aksi</th>
+                <th className="w-[38%] px-3 py-4 sm:w-auto sm:px-6">Nama Perpustakaan</th>
+                <th className="hidden px-4 py-4 sm:table-cell sm:w-auto sm:px-6">Lokasi</th>
+                <th className="w-[34%] px-3 py-4 sm:w-auto sm:px-6">Status</th>
+                <th className="w-[28%] px-3 py-4 text-right sm:w-auto sm:px-6">Aksi</th>
               </tr>
             </thead>
             <tbody>
@@ -136,23 +136,23 @@ export default function DashboardPage() {
                     onClick={() => navigate(`/dashboard/${item.id}`)}
                     className="cursor-pointer border-b border-slate-100 last:border-b-0 hover:bg-slate-50/60"
                   >
-                    <td className="px-4 py-4 sm:px-6">
-                      <div className="flex items-center gap-3">
-                        <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-sky-100 text-sky-800">
+                    <td className="px-3 py-4 sm:px-6">
+                      <div className="flex items-center gap-2 sm:gap-3">
+                        <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-sky-100 text-sky-800 sm:h-10 sm:w-10">
                           <Icon size={18} />
                         </div>
-                        <div>
-                          <span className="font-semibold text-slate-800">{item.nama}</span>
-                          <p className="text-xs text-slate-500 sm:hidden">{item.lokasi}</p>
+                        <div className="min-w-0">
+                          <span className="break-words font-semibold text-slate-800">{item.nama}</span>
+                          <p className="truncate text-xs text-slate-500 sm:hidden">{item.lokasi}</p>
                         </div>
                       </div>
                     </td>
                     <td className="hidden px-4 py-4 text-slate-500 sm:table-cell sm:px-6">{item.lokasi}</td>
-                    <td className="px-4 py-4 sm:px-6">
+                    <td className="px-3 py-4 sm:px-6">
                       <StatusBadge status={item.status} />
                     </td>
-                    <td className="px-4 py-4 sm:px-6">
-                      <div className="flex items-center justify-end gap-3">
+                    <td className="px-3 py-4 sm:px-6">
+                      <div className="flex items-center justify-end gap-2 sm:gap-3">
                         <button
                           onClick={(e) => {
                             e.stopPropagation()
