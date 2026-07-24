@@ -6,7 +6,6 @@ import {
   MapPin,
   Pencil,
   Plus,
-  BookPlus,
   BookOpen,
   BookMarked,
   AlertTriangle,
@@ -43,6 +42,17 @@ import {
   DEFAULT_BOOK_SORT,
   type BookSort,
 } from '../lib/bookUi'
+import {
+  RIWAYAT_PERIOD_FILTERS,
+  isWithinPeriod,
+  formatDateTime,
+  timeAgo,
+  activityMeta,
+  initials,
+  belongsToLibrary,
+  type RiwayatPeriod,
+  type RiwayatSort,
+} from '../lib/riwayatUi'
 
 const FACILITY_IMAGE =
   'https://images.unsplash.com/photo-1521587760476-6c12a4b040da?auto=format&fit=crop&w=1200&q=80'
@@ -57,77 +67,6 @@ type TabKey = (typeof tabs)[number]['key']
 
 function groupKey(group: Book[]): string {
   return group[0]?.batch_id || group[0]?.id
-}
-
-function timeAgo(dateStr: string) {
-  const diffMs = Date.now() - new Date(dateStr).getTime()
-  const minutes = Math.max(1, Math.floor(diffMs / 60000))
-  if (minutes < 60) return `${minutes} Menit yang lalu`
-  const hours = Math.floor(minutes / 60)
-  if (hours < 24) return `${hours} Jam yang lalu`
-  const days = Math.floor(hours / 24)
-  return `${days} Hari yang lalu`
-}
-
-function formatDateTime(dateStr: string) {
-  return new Date(dateStr).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })
-}
-
-function activityMeta(aksi: string) {
-  if (aksi.includes('Impor')) return { icon: Upload, badge: 'bg-violet-100 text-violet-700' }
-  if (aksi.includes('Menghapus')) return { icon: Trash2, badge: 'bg-rose-100 text-rose-700' }
-  if (aksi.includes('Mengubah')) return { icon: Pencil, badge: 'bg-amber-100 text-amber-700' }
-  if (aksi.includes('Menambahkan')) return { icon: BookPlus, badge: 'bg-sky-100 text-sky-700' }
-  return { icon: BookOpen, badge: 'bg-slate-100 text-slate-600' }
-}
-
-function initials(name: string) {
-  const parts = name.trim().split(/\s+/)
-  return ((parts[0]?.[0] || '') + (parts[1]?.[0] || '')).toUpperCase()
-}
-
-type RiwayatPeriod = 'Semua' | 'Hari Ini' | 'Minggu Ini' | 'Bulan Ini' | 'Tahun Ini' | 'Lebih Lama'
-type RiwayatSort = 'terbaru' | 'terlama'
-
-const RIWAYAT_PERIOD_FILTERS: RiwayatPeriod[] = ['Semua', 'Hari Ini', 'Minggu Ini', 'Bulan Ini', 'Tahun Ini']
-
-function startOfDay(d: Date) {
-  const x = new Date(d)
-  x.setHours(0, 0, 0, 0)
-  return x
-}
-
-function startOfWeek(d: Date) {
-  const x = startOfDay(d)
-  const day = (x.getDay() + 6) % 7
-  x.setDate(x.getDate() - day)
-  return x
-}
-
-function startOfMonth(d: Date) {
-  return new Date(d.getFullYear(), d.getMonth(), 1)
-}
-
-function startOfYear(d: Date) {
-  return new Date(d.getFullYear(), 0, 1)
-}
-
-/** Inclusive range check for the period chips: "Bulan Ini" also matches items from today/this week. */
-function isWithinPeriod(dateStr: string, period: Exclude<RiwayatPeriod, 'Semua'>) {
-  const date = new Date(dateStr)
-  const now = new Date()
-  switch (period) {
-    case 'Hari Ini':
-      return date >= startOfDay(now)
-    case 'Minggu Ini':
-      return date >= startOfWeek(now)
-    case 'Bulan Ini':
-      return date >= startOfMonth(now)
-    case 'Tahun Ini':
-      return date >= startOfYear(now)
-    case 'Lebih Lama':
-      return date < startOfYear(now)
-  }
 }
 
 export default function LibraryDetailPage() {
@@ -424,9 +363,7 @@ export default function LibraryDetailPage() {
   const allOnPageSelected =
     pagedBookRows.length > 0 && pagedBookRows.every((g) => selectedGroupKeys.has(groupKey(g)))
 
-  const libraryActivity = activity.filter((log) =>
-    `${log.aksi} ${log.detail}`.toLowerCase().includes(library.nama.toLowerCase()),
-  )
+  const libraryActivity = activity.filter((log) => belongsToLibrary(log, library.nama))
   const relatedActivity = libraryActivity.slice(0, 5)
   const activityRows = relatedActivity.length > 0 ? relatedActivity : activity.slice(0, 5)
 
