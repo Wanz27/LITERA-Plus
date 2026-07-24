@@ -85,10 +85,7 @@ export default function LibraryDetailPage() {
   const [editingBook, setEditingBook] = React.useState<Book | null>(null)
   const [prefillBook, setPrefillBook] = React.useState<Book | null>(null)
   const [booksError, setBooksError] = React.useState<string | null>(null)
-  const [tab, setTab] = React.useState<TabKey>(() => {
-    const requested = searchParams.get('tab')
-    return (ALL_TABS.some((t) => t.key === requested) ? requested : 'dashboard') as TabKey
-  })
+  const [tab, setTab] = React.useState<TabKey>('dashboard')
   const [riwayatPeriod, setRiwayatPeriod] = React.useState<RiwayatPeriod>('Semua')
   const [riwayatAksiFilter, setRiwayatAksiFilter] = React.useState('Semua')
   const [riwayatSort, setRiwayatSort] = React.useState<RiwayatSort>('terbaru')
@@ -173,11 +170,15 @@ export default function LibraryDetailPage() {
     }
   }, [tab, library])
 
+  // Setiap kali perpustakaan yang dibuka berganti (id berubah), tab selalu direset ke "Dashboard"
+  // — kecuali ada query param ?tab= eksplisit (mis. dari klik notifikasi yang mengarah ke tab
+  // Peminjaman) — supaya tab yang tersisa dari perpustakaan sebelumnya (misal "Riwayat") tidak
+  // terbawa saat berpindah ke perpustakaan lain lewat sidebar.
   React.useEffect(() => {
     const requested = searchParams.get('tab')
-    if (requested && ALL_TABS.some((t) => t.key === requested)) setTab(requested as TabKey)
+    setTab(ALL_TABS.some((t) => t.key === requested) ? (requested as TabKey) : 'dashboard')
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams])
+  }, [id, searchParams])
 
   async function handleUpdate(payload: {
     nama: string

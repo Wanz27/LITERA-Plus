@@ -57,7 +57,7 @@ export default function DashboardLayout({ children }: LayoutProps) {
   }
 
   return (
-    <div className="flex h-screen bg-slate-50 font-sans">
+    <div className="flex h-dvh bg-slate-50 font-sans">
       {/* Mobile backdrop */}
       {sidebarOpen && (
         <div
