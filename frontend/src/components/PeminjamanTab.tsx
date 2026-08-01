@@ -80,6 +80,23 @@ export default function PeminjamanTab({ libraryId, books, onChanged }: Peminjama
   const matchedByIsbn = isbnTrimmed ? books.filter((b) => b.isbn === isbnTrimmed) : []
   const availableCopies = matchedByIsbn.filter((b) => b.status === 'tersedia' && b.kondisi !== 'Rusak')
 
+  // Pratinjau buku + peminjam berdasarkan nomor inventaris yang diketik/discan di form
+  // pengembalian, supaya petugas bisa memastikan datanya benar sebelum menekan tombol.
+  const nomorInventarisTrimmed = nomorInventaris.trim()
+  const matchedReturnBook = nomorInventarisTrimmed
+    ? books.find((b) => b.nomor_inventaris === nomorInventarisTrimmed)
+    : undefined
+  const matchedReturnLoan = matchedReturnBook ? loans.find((l) => l.book_id === matchedReturnBook.id) : undefined
+
+  // Kalau yang diketik bukan nomor inventaris eksemplar, coba cocokkan sebagai ISBN supaya
+  // petugas bisa memilih eksemplar mana yang dikembalikan dari daftar yang sedang dipinjam.
+  const isbnMatchedBooks = !matchedReturnBook && nomorInventarisTrimmed
+    ? books.filter((b) => b.isbn === nomorInventarisTrimmed)
+    : []
+  const isbnMatchedLoans = isbnMatchedBooks
+    .map((b) => ({ book: b, loan: loans.find((l) => l.book_id === b.id) }))
+    .filter((x): x is { book: Book; loan: Circulation } => !!x.loan)
+
   // Batasi peminjaman aktif per orang berdasarkan data yang sudah dimuat di tabel "Sedang
   // Dipinjam", supaya form langsung memberi peringatan tanpa perlu request tambahan. Prioritas
   // pencocokan pakai NIS bila ada (lebih akurat), kalau tidak baru cocokkan nama (case-insensitive).
@@ -492,9 +509,127 @@ export default function PeminjamanTab({ libraryId, books, onChanged }: Peminjama
                 />
               </div>
             </div>
+
+            {nomorInventarisTrimmed && !matchedReturnBook && isbnMatchedBooks.length === 0 && (
+              <p className="text-sm font-medium text-rose-600">Nomor inventaris atau ISBN tidak ditemukan di koleksi perpustakaan ini.</p>
+            )}
+
+            {!matchedReturnBook && isbnMatchedBooks.length > 0 && (
+              <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                <div className="flex gap-3">
+                  {isbnMatchedBooks[0].cover_url ? (
+                    <img
+                      src={isbnMatchedBooks[0].cover_url}
+                      alt={isbnMatchedBooks[0].judul}
+                      className="h-24 w-16 shrink-0 rounded object-cover shadow-sm"
+                    />
+                  ) : (
+                    <div className="flex h-24 w-16 shrink-0 items-center justify-center rounded bg-slate-200 text-slate-400">
+                      <BookOpen size={22} />
+                    </div>
+                  )}
+                  <dl className="min-w-0 flex-1 space-y-0.5 text-sm">
+                    <dt className="sr-only">Judul</dt>
+                    <dd className="truncate font-bold text-slate-900">{isbnMatchedBooks[0].judul}</dd>
+                    <dd className="truncate text-slate-600">{isbnMatchedBooks[0].penulis}</dd>
+                    <dd className="truncate text-xs text-slate-500">
+                      {[isbnMatchedBooks[0].penerbit, isbnMatchedBooks[0].tahun_terbit].filter(Boolean).join(', ')}
+                    </dd>
+                    <dd className="truncate text-xs text-slate-400">ISBN {isbnMatchedBooks[0].isbn}</dd>
+                  </dl>
+                </div>
+
+                {isbnMatchedLoans.length === 0 ? (
+                  <p className="border-t border-slate-200 pt-3 text-sm font-medium text-rose-600">
+                    Tidak ada eksemplar buku ini yang sedang dipinjam.
+                  </p>
+                ) : (
+                  <div className="space-y-2 border-t border-slate-200 pt-3">
+                    <p className="text-xs font-semibold text-slate-500">
+                      Pilih eksemplar yang dikembalikan ({isbnMatchedLoans.length}):
+                    </p>
+                    {isbnMatchedLoans.map(({ book, loan }) => {
+                      const status = loanTimeStatus(loan.due_date)
+                      return (
+                        <button
+                          key={book.id}
+                          type="button"
+                          onClick={() => setNomorInventaris(book.nomor_inventaris)}
+                          className="flex w-full items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-left text-sm hover:border-sky-400 hover:bg-sky-50"
+                        >
+                          <span className="min-w-0">
+                            <span className="block font-semibold text-slate-800">No. Inv {book.nomor_inventaris}</span>
+                            <span className="block truncate text-xs text-slate-500">
+                              {loan.borrower_name}
+                              {loan.borrower_nis ? ` · NIS ${loan.borrower_nis}` : ''}
+                            </span>
+                          </span>
+                          <span
+                            className={`shrink-0 inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${status.className}`}
+                          >
+                            {status.label}
+                          </span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {matchedReturnBook && !matchedReturnLoan && (
+              <p className="text-sm font-medium text-rose-600">
+                "{matchedReturnBook.judul}" (No. Inv {matchedReturnBook.nomor_inventaris}) sedang tidak dipinjam.
+              </p>
+            )}
+
+            {matchedReturnBook && matchedReturnLoan && (
+              <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                <div className="flex gap-3">
+                  {matchedReturnBook.cover_url ? (
+                    <img
+                      src={matchedReturnBook.cover_url}
+                      alt={matchedReturnBook.judul}
+                      className="h-24 w-16 shrink-0 rounded object-cover shadow-sm"
+                    />
+                  ) : (
+                    <div className="flex h-24 w-16 shrink-0 items-center justify-center rounded bg-slate-200 text-slate-400">
+                      <BookOpen size={22} />
+                    </div>
+                  )}
+                  <dl className="min-w-0 flex-1 space-y-0.5 text-sm">
+                    <dt className="sr-only">Judul</dt>
+                    <dd className="truncate font-bold text-slate-900">{matchedReturnBook.judul}</dd>
+                    <dd className="truncate text-slate-600">{matchedReturnBook.penulis}</dd>
+                    <dd className="truncate text-xs text-slate-500">
+                      {[matchedReturnBook.penerbit, matchedReturnBook.tahun_terbit].filter(Boolean).join(', ')}
+                    </dd>
+                    <dd className="truncate text-xs text-slate-400">No. Inv {matchedReturnBook.nomor_inventaris}</dd>
+                  </dl>
+                </div>
+                <div className="flex items-center justify-between gap-2 border-t border-slate-200 pt-3 text-sm">
+                  <div className="min-w-0">
+                    <p className="truncate font-semibold text-slate-800">{matchedReturnLoan.borrower_name}</p>
+                    <p className="text-xs text-slate-500">
+                      {matchedReturnLoan.borrower_nis ? `NIS ${matchedReturnLoan.borrower_nis} · ` : ''}
+                      Dipinjam {new Date(matchedReturnLoan.borrow_date).toLocaleDateString('id-ID', { dateStyle: 'medium' })}
+                    </p>
+                  </div>
+                  {(() => {
+                    const status = loanTimeStatus(matchedReturnLoan.due_date)
+                    return (
+                      <span className={`shrink-0 inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${status.className}`}>
+                        {status.label}
+                      </span>
+                    )
+                  })()}
+                </div>
+              </div>
+            )}
+
             <button
               type="submit"
-              disabled={submitting}
+              disabled={submitting || !matchedReturnLoan}
               className="flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-sky-800 text-base font-bold text-white shadow-sm hover:bg-sky-900 disabled:cursor-not-allowed disabled:bg-slate-300"
             >
               {submitting ? <Loader2 size={18} className="animate-spin" /> : <Undo2 size={18} />}
