@@ -4,7 +4,7 @@ export const listLibraries = async () => {
   const { data, error } = await supabase
     .from('libraries')
     .select(
-      'id, nama, lokasi, status, tipe, total_koleksi, jam_operasional, kepala_unit, foto_url, peminjaman_aktif, peminjaman_mandiri_aktif, created_at',
+      'id, nama, lokasi, status, tipe, total_koleksi, jam_operasional, kepala_unit, foto_url, peminjaman_aktif, peminjaman_mandiri_aktif, maks_pinjam_per_orang, created_at',
     )
     .order('created_at', { ascending: true })
 

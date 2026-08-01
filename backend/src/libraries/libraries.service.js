@@ -6,11 +6,17 @@ const TIPE_VALUES = ['utama', 'digital', 'referensi', 'arsip']
 const DEFAULT_JAM_OPERASIONAL = 'Senin - Jumat: 08.00 - 18.00\nSabtu: 09.00 - 15.00'
 const DEFAULT_KEPALA_UNIT = 'Belum ditentukan'
 
-function validate({ nama, lokasi, status, tipe }) {
+function validate({ nama, lokasi, status, tipe, maks_pinjam_per_orang }) {
   if (!nama || !nama.trim()) throw new Error('Nama perpustakaan wajib diisi')
   if (!lokasi || !lokasi.trim()) throw new Error('Lokasi wajib diisi')
   if (status && !STATUS_VALUES.includes(status)) throw new Error('Status tidak valid')
   if (tipe && !TIPE_VALUES.includes(tipe)) throw new Error('Tipe tidak valid')
+  if (
+    maks_pinjam_per_orang !== undefined &&
+    (!Number.isInteger(Number(maks_pinjam_per_orang)) || Number(maks_pinjam_per_orang) < 1)
+  ) {
+    throw new Error('Maksimal buku dipinjam per orang harus berupa bilangan bulat minimal 1')
+  }
 }
 
 export const list = () => librariesRepo.listLibraries()
@@ -53,11 +59,15 @@ export const update = async (id, payload, actor) => {
     ...(payload.peminjaman_mandiri_aktif !== undefined
       ? { peminjaman_mandiri_aktif: !!payload.peminjaman_mandiri_aktif }
       : {}),
+    ...(payload.maks_pinjam_per_orang !== undefined
+      ? { maks_pinjam_per_orang: Number(payload.maks_pinjam_per_orang) }
+      : {}),
   })
 
   const toggledKeys = Object.keys(payload)
   const isPeminjamanToggleOnly = toggledKeys.length === 1 && toggledKeys[0] === 'peminjaman_aktif'
   const isMandiriToggleOnly = toggledKeys.length === 1 && toggledKeys[0] === 'peminjaman_mandiri_aktif'
+  const isMaksPinjamOnly = toggledKeys.length === 1 && toggledKeys[0] === 'maks_pinjam_per_orang'
 
   let aksi = 'Mengubah Perpustakaan'
   let detail = `${library.nama} (${library.lokasi}) diperbarui.`
@@ -67,6 +77,9 @@ export const update = async (id, payload, actor) => {
   } else if (isMandiriToggleOnly) {
     aksi = 'Mengubah Pengaturan Peminjaman Mandiri'
     detail = `Peminjaman mandiri oleh pengunjung di ${library.nama} ${library.peminjaman_mandiri_aktif ? 'diaktifkan' : 'dinonaktifkan'}.`
+  } else if (isMaksPinjamOnly) {
+    aksi = 'Mengubah Pengaturan Peminjaman'
+    detail = `Maksimal buku dipinjam per orang di ${library.nama} diubah menjadi ${library.maks_pinjam_per_orang}.`
   }
 
   await activityRepo.createActivity({

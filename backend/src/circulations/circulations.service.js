@@ -10,7 +10,7 @@ function borrowerLabel(name, nis) {
 }
 
 const DEFAULT_LOAN_DAYS = 7
-const MAX_ACTIVE_LOANS_PER_BORROWER = 2
+const DEFAULT_MAX_ACTIVE_LOANS_PER_BORROWER = 2
 
 function defaultDueDate() {
   const due = new Date()
@@ -63,15 +63,17 @@ export const borrow = async (payload, actor) => {
     )
   }
 
+  const maxActiveLoans = library.maks_pinjam_per_orang || DEFAULT_MAX_ACTIVE_LOANS_PER_BORROWER
+
   const trimmedName = borrower_name.trim()
   const trimmedNis = borrower_nis?.trim() || null
   const activeLoanCount = await circulationsRepo.countActiveLoansForBorrower(library_id, {
     borrowerName: trimmedName,
     borrowerNis: trimmedNis,
   })
-  if (activeLoanCount >= MAX_ACTIVE_LOANS_PER_BORROWER) {
+  if (activeLoanCount >= maxActiveLoans) {
     throw new Error(
-      `${borrowerLabel(trimmedName, trimmedNis)} sudah meminjam ${activeLoanCount} buku dan belum mengembalikannya. Maksimal peminjaman adalah ${MAX_ACTIVE_LOANS_PER_BORROWER} buku per orang.`,
+      `${borrowerLabel(trimmedName, trimmedNis)} sudah meminjam ${activeLoanCount} buku dan belum mengembalikannya. Maksimal peminjaman adalah ${maxActiveLoans} buku per orang.`,
     )
   }
 
@@ -149,13 +151,15 @@ export const requestBorrow = async (payload, actor) => {
     )
   }
 
+  const maxActiveLoans = library.maks_pinjam_per_orang || DEFAULT_MAX_ACTIVE_LOANS_PER_BORROWER
+
   const activeLoanCount = await circulationsRepo.countActiveLoansForBorrower(library_id, {
     borrowerName: actor.full_name,
     borrowerNis: null,
   })
-  if (activeLoanCount >= MAX_ACTIVE_LOANS_PER_BORROWER) {
+  if (activeLoanCount >= maxActiveLoans) {
     throw new Error(
-      `Anda sudah meminjam ${activeLoanCount} buku dan belum mengembalikannya. Maksimal peminjaman adalah ${MAX_ACTIVE_LOANS_PER_BORROWER} buku per orang.`,
+      `Anda sudah meminjam ${activeLoanCount} buku dan belum mengembalikannya. Maksimal peminjaman adalah ${maxActiveLoans} buku per orang.`,
     )
   }
 

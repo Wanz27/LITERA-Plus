@@ -9,7 +9,6 @@ type Mode = 'pinjam' | 'kembali'
 type Feedback = { type: 'success' | 'error'; message: string } | null
 
 const DEFAULT_LOAN_DAYS = 7
-const MAX_ACTIVE_LOANS_PER_BORROWER = 2
 
 function defaultDueDateInput() {
   const d = new Date()
@@ -49,10 +48,11 @@ function loanTimeStatus(dueDate: string | null): { label: string; className: str
 interface PeminjamanTabProps {
   libraryId: string
   books: Book[]
+  maxActiveLoansPerBorrower: number
   onChanged: () => void
 }
 
-export default function PeminjamanTab({ libraryId, books, onChanged }: PeminjamanTabProps) {
+export default function PeminjamanTab({ libraryId, books, maxActiveLoansPerBorrower, onChanged }: PeminjamanTabProps) {
   const [mode, setMode] = React.useState<Mode>('pinjam')
   const [borrowerName, setBorrowerName] = React.useState('')
   const [borrowerNis, setBorrowerNis] = React.useState('')
@@ -109,7 +109,7 @@ export default function PeminjamanTab({ libraryId, books, onChanged }: Peminjama
           : !loan.borrower_nis && loan.borrower_name.trim().toLowerCase() === trimmedBorrowerName.toLowerCase(),
       ).length
     : 0
-  const borrowerAtLimit = currentBorrowerLoanCount >= MAX_ACTIVE_LOANS_PER_BORROWER
+  const borrowerAtLimit = currentBorrowerLoanCount >= maxActiveLoansPerBorrower
 
   async function loadLoans() {
     setLoansLoading(true)
@@ -386,8 +386,8 @@ export default function PeminjamanTab({ libraryId, books, onChanged }: Peminjama
               {trimmedBorrowerName && currentBorrowerLoanCount > 0 && (
                 <p className={`mt-1.5 text-xs font-semibold ${borrowerAtLimit ? 'text-rose-600' : 'text-amber-600'}`}>
                   {borrowerAtLimit
-                    ? `${trimmedBorrowerName} sudah meminjam ${currentBorrowerLoanCount} buku dan belum mengembalikannya. Batas maksimal ${MAX_ACTIVE_LOANS_PER_BORROWER} buku tercapai.`
-                    : `Sedang meminjam ${currentBorrowerLoanCount}/${MAX_ACTIVE_LOANS_PER_BORROWER} buku.`}
+                    ? `${trimmedBorrowerName} sudah meminjam ${currentBorrowerLoanCount} buku dan belum mengembalikannya. Batas maksimal ${maxActiveLoansPerBorrower} buku tercapai.`
+                    : `Sedang meminjam ${currentBorrowerLoanCount}/${maxActiveLoansPerBorrower} buku.`}
                 </p>
               )}
             </div>

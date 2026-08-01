@@ -40,8 +40,8 @@ const statusOptions: LibraryStatus[] = ['Tersedia', 'Penuh', 'Pemeliharaan']
 const tipeOptions: { value: LibraryType; label: string }[] = [
   { value: 'utama', label: 'Perpustakaan Utama' },
   { value: 'digital', label: 'Perpustakaan Digital' },
-  { value: 'referensi', label: 'Ruang Baca Referensi' },
-  { value: 'arsip', label: 'Laboratorium Arsip' },
+  { value: 'referensi', label: 'Ruang Baca' },
+  { value: 'arsip', label: 'Dokumen Arsip' },
 ]
 
 const DAY_OPTIONS = [

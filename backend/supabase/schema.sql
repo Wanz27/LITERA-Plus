@@ -31,6 +31,7 @@ create table if not exists libraries (
   foto_url text,
   peminjaman_aktif boolean not null default true,
   peminjaman_mandiri_aktif boolean not null default false,
+  maks_pinjam_per_orang integer not null default 2 check (maks_pinjam_per_orang > 0),
   created_at timestamptz not null default now()
 );
 
@@ -40,6 +41,9 @@ alter table libraries add column if not exists kepala_unit text not null default
 alter table libraries add column if not exists foto_url text;
 alter table libraries add column if not exists peminjaman_aktif boolean not null default true;
 alter table libraries add column if not exists peminjaman_mandiri_aktif boolean not null default false;
+alter table libraries add column if not exists maks_pinjam_per_orang integer not null default 2;
+alter table libraries drop constraint if exists libraries_maks_pinjam_per_orang_check;
+alter table libraries add constraint libraries_maks_pinjam_per_orang_check check (maks_pinjam_per_orang > 0);
 
 -- Tabel buku (koleksi buku per perpustakaan)
 create table if not exists books (

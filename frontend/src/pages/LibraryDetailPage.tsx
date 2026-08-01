@@ -110,6 +110,9 @@ export default function LibraryDetailPage() {
   const [importModalOpen, setImportModalOpen] = React.useState(false)
   const [togglingPeminjaman, setTogglingPeminjaman] = React.useState(false)
   const [togglingMandiri, setTogglingMandiri] = React.useState(false)
+  const [maksPinjamInput, setMaksPinjamInput] = React.useState('2')
+  const [savingMaksPinjam, setSavingMaksPinjam] = React.useState(false)
+  const [maksPinjamError, setMaksPinjamError] = React.useState<string | null>(null)
   const [statFilter, setStatFilter] = React.useState<'dipinjam' | 'rusak' | 'hilang' | null>(null)
 
   async function load() {
@@ -169,6 +172,14 @@ export default function LibraryDetailPage() {
       setTab('dashboard')
     }
   }, [tab, library])
+
+  React.useEffect(() => {
+    if (library) {
+      setMaksPinjamInput(String(library.maks_pinjam_per_orang))
+      setMaksPinjamError(null)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [library?.id])
 
   // Setiap kali perpustakaan yang dibuka berganti (id berubah), tab selalu direset ke "Dashboard"
   // — kecuali ada query param ?tab= eksplisit (mis. dari klik notifikasi yang mengarah ke tab
@@ -281,6 +292,27 @@ export default function LibraryDetailPage() {
       setActivity(await api.getActivityLog())
     } finally {
       setTogglingMandiri(false)
+    }
+  }
+
+  async function handleSaveMaksPinjam() {
+    if (!library) return
+    const parsed = Number(maksPinjamInput)
+    if (!Number.isInteger(parsed) || parsed < 1) {
+      setMaksPinjamError('Masukkan bilangan bulat minimal 1.')
+      return
+    }
+    setMaksPinjamError(null)
+    setSavingMaksPinjam(true)
+    try {
+      const updated = await api.updateLibrary(library.id, { maks_pinjam_per_orang: parsed })
+      setLibrary(updated)
+      setMaksPinjamInput(String(updated.maks_pinjam_per_orang))
+      setActivity(await api.getActivityLog())
+    } catch (err) {
+      setMaksPinjamError(err instanceof Error ? err.message : 'Gagal menyimpan pengaturan.')
+    } finally {
+      setSavingMaksPinjam(false)
     }
   }
 
@@ -1039,7 +1071,12 @@ export default function LibraryDetailPage() {
         )}
 
         {tab === 'peminjaman' && (
-          <PeminjamanTab libraryId={library.id} books={books} onChanged={refreshAfterCirculation} />
+          <PeminjamanTab
+            libraryId={library.id}
+            books={books}
+            maxActiveLoansPerBorrower={library.maks_pinjam_per_orang}
+            onChanged={refreshAfterCirculation}
+          />
         )}
 
         {tab === 'riwayat' && (
@@ -1188,6 +1225,39 @@ export default function LibraryDetailPage() {
                     }`}
                   />
                 </button>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-sm font-semibold text-slate-800">Batas Jumlah Buku Dipinjam</p>
+                  <p className="mt-1 text-sm text-slate-500">
+                    Jumlah maksimal buku yang boleh dipinjam sekaligus oleh satu peminjam (default 2 buku) di{' '}
+                    {library.nama}.
+                  </p>
+                  {maksPinjamError && <p className="mt-1.5 text-xs font-semibold text-rose-600">{maksPinjamError}</p>}
+                </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  <input
+                    type="number"
+                    min={1}
+                    step={1}
+                    value={maksPinjamInput}
+                    onChange={(e) => setMaksPinjamInput(e.target.value)}
+                    disabled={savingMaksPinjam}
+                    aria-label="Maksimal jumlah buku dipinjam per orang"
+                    className="h-10 w-20 rounded-lg border border-slate-300 px-3 text-center text-sm font-semibold focus:border-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-700/20 disabled:opacity-60"
+                  />
+                  <button
+                    type="button"
+                    disabled={savingMaksPinjam || maksPinjamInput === String(library.maks_pinjam_per_orang)}
+                    onClick={handleSaveMaksPinjam}
+                    className="h-10 rounded-lg bg-sky-800 px-4 text-sm font-bold text-white shadow-sm hover:bg-sky-900 disabled:cursor-not-allowed disabled:bg-slate-300"
+                  >
+                    Simpan
+                  </button>
+                </div>
               </div>
             </div>
           </div>

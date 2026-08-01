@@ -32,6 +32,7 @@ export interface Library {
   foto_url?: string | null
   peminjaman_aktif: boolean
   peminjaman_mandiri_aktif: boolean
+  maks_pinjam_per_orang: number
   created_at: string
 }
 
