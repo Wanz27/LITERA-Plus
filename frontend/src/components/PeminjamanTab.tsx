@@ -403,7 +403,7 @@ export default function PeminjamanTab({ libraryId, books, maxActiveLoansPerBorro
                   required
                   autoFocus
                   placeholder="Scan barcode ISBN atau ketik nomor ISBN"
-                  className="h-14 w-full rounded-lg border border-slate-300 pl-12 pr-4 text-lg font-semibold tracking-wide focus:border-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-700/20"
+                  className="h-14 w-full rounded-lg border border-slate-300 pl-12 pr-4 text-sm font-semibold tracking-normal focus:border-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-700/20 sm:text-lg sm:tracking-wide"
                 />
               </div>
             </div>
@@ -505,7 +505,7 @@ export default function PeminjamanTab({ libraryId, books, maxActiveLoansPerBorro
                   required
                   autoFocus
                   placeholder="Scan barcode atau ketik nomor inventaris"
-                  className="h-14 w-full rounded-lg border border-slate-300 pl-12 pr-4 text-lg font-semibold uppercase tracking-wide placeholder:normal-case focus:border-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-700/20"
+                  className="h-14 w-full rounded-lg border border-slate-300 pl-12 pr-4 text-sm font-semibold uppercase tracking-normal placeholder:normal-case focus:border-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-700/20 sm:text-lg sm:tracking-wide"
                 />
               </div>
             </div>
