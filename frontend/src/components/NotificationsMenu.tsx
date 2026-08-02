@@ -166,24 +166,24 @@ export default function NotificationsMenu() {
           <div
             ref={menuRef}
             style={menuStyle}
-            className="z-50 flex w-80 max-w-[90vw] flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl"
+            className="z-50 flex w-72 max-w-[85vw] flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl sm:w-80 sm:max-w-[90vw]"
           >
-            <div className="flex items-center justify-between gap-2 border-b border-slate-100 px-4 py-3">
-              <h3 className="text-sm font-bold text-slate-900">Notifikasi</h3>
+            <div className="flex items-center justify-between gap-2 border-b border-slate-100 px-3 py-2.5 sm:px-4 sm:py-3">
+              <h3 className="text-xs font-bold text-slate-900 sm:text-sm">Notifikasi</h3>
               {unreadCount > 0 && (
                 <button
                   type="button"
                   onClick={handleMarkAllRead}
-                  className="text-xs font-semibold text-sky-700 hover:text-sky-900"
+                  className="text-[11px] font-semibold text-sky-700 hover:text-sky-900 sm:text-xs"
                 >
                   Tandai semua dibaca
                 </button>
               )}
             </div>
 
-            <div className="max-h-96 overflow-y-auto">
+            <div className="max-h-72 overflow-y-auto sm:max-h-96">
               {notifications.length === 0 && (
-                <p className="px-4 py-8 text-center text-sm text-slate-400">Belum ada notifikasi.</p>
+                <p className="px-4 py-8 text-center text-xs text-slate-400 sm:text-sm">Belum ada notifikasi.</p>
               )}
               {notifications.map((n) => {
                 const Icon = typeIcon[n.type]
@@ -192,16 +192,16 @@ export default function NotificationsMenu() {
                     key={n.id}
                     type="button"
                     onClick={() => handleItemClick(n)}
-                    className={`flex w-full items-start gap-3 border-b border-slate-100 px-4 py-3 text-left last:border-b-0 hover:bg-slate-50 ${
+                    className={`flex w-full items-start gap-2 border-b border-slate-100 px-3 py-2.5 text-left last:border-b-0 hover:bg-slate-50 sm:gap-3 sm:px-4 sm:py-3 ${
                       n.is_read ? '' : 'bg-sky-50/60'
                     }`}
                   >
-                    <Icon size={18} className={`mt-0.5 shrink-0 ${typeIconClass[n.type]}`} />
+                    <Icon size={16} className={`mt-0.5 shrink-0 ${typeIconClass[n.type]}`} />
                     <div className="min-w-0 flex-1">
-                      <p className={`text-sm ${n.is_read ? 'text-slate-600' : 'font-semibold text-slate-800'}`}>
+                      <p className={`text-xs sm:text-sm ${n.is_read ? 'text-slate-600' : 'font-semibold text-slate-800'}`}>
                         {n.message}
                       </p>
-                      <p className="mt-0.5 text-xs text-slate-400">{timeAgo(n.created_at)}</p>
+                      <p className="mt-0.5 text-[11px] text-slate-400 sm:text-xs">{timeAgo(n.created_at)}</p>
                     </div>
                     {!n.is_read && <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-sky-600" />}
                   </button>

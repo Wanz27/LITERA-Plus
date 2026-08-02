@@ -91,29 +91,29 @@ export default function UpdatesMenu() {
           <div
             ref={menuRef}
             style={menuStyle}
-            className="z-50 flex w-80 max-w-[90vw] flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl"
+            className="z-50 flex w-72 max-w-[85vw] flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl sm:w-80 sm:max-w-[90vw]"
           >
-            <div className="flex items-center justify-between gap-2 border-b border-slate-100 px-4 py-3">
-              <div className="flex items-center gap-2">
-                <Sparkles size={16} className="text-sky-700" />
-                <h3 className="text-sm font-bold text-slate-900">Pembaruan Aplikasi</h3>
+            <div className="flex items-center justify-between gap-2 border-b border-slate-100 px-3 py-2.5 sm:px-4 sm:py-3">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <Sparkles size={14} className="text-sky-700" />
+                <h3 className="text-xs font-bold text-slate-900 sm:text-sm">Pembaruan Aplikasi</h3>
               </div>
-              <span className="rounded-full bg-sky-100 px-2 py-0.5 text-xs font-semibold text-sky-800">
+              <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[11px] font-semibold text-sky-800 sm:text-xs">
                 v{APP_VERSION}
               </span>
             </div>
 
-            <div className="max-h-96 overflow-y-auto">
+            <div className="max-h-72 overflow-y-auto sm:max-h-96">
               {changelog.map((entry, i) => (
-                <div key={entry.version} className="border-b border-slate-100 px-4 py-3 last:border-b-0">
-                  <div className="mb-1.5 flex items-center gap-2">
-                    <span className="text-sm font-bold text-slate-800">v{entry.version}</span>
+                <div key={entry.version} className="border-b border-slate-100 px-3 py-2.5 last:border-b-0 sm:px-4 sm:py-3">
+                  <div className="mb-1.5 flex items-center gap-1.5 sm:gap-2">
+                    <span className="text-xs font-bold text-slate-800 sm:text-sm">v{entry.version}</span>
                     {i === 0 && (
                       <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase text-emerald-700">
                         Terbaru
                       </span>
                     )}
-                    <span className="ml-auto text-xs text-slate-400">
+                    <span className="ml-auto text-[11px] text-slate-400 sm:text-xs">
                       {new Date(entry.date).toLocaleDateString('id-ID', {
                         day: 'numeric',
                         month: 'short',
@@ -123,7 +123,7 @@ export default function UpdatesMenu() {
                   </div>
                   <ul className="space-y-1.5">
                     {entry.changes.map((change, j) => (
-                      <li key={j} className="flex items-start gap-2 text-sm text-slate-600">
+                      <li key={j} className="flex items-start gap-2 text-xs text-slate-600 sm:text-sm">
                         <span
                           className={`mt-0.5 shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold ${typeStyles[change.type]}`}
                         >
