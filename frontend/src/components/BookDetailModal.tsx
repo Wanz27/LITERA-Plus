@@ -247,7 +247,7 @@ export default function BookDetailModal({
             {onMarkLost && book.status === 'tersedia' && (
               <button
                 onClick={() => onMarkLost(book)}
-                className="flex items-center justify-center gap-2 rounded-lg border border-amber-200 px-4 py-2 text-sm font-semibold text-amber-700 hover:bg-amber-50"
+                className="flex items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-amber-200 px-2 py-2 text-xs font-semibold text-amber-700 hover:bg-amber-50 sm:gap-2 sm:px-4 sm:text-sm"
               >
                 <PackageX size={16} /> Tandai Hilang
               </button>
@@ -255,7 +255,7 @@ export default function BookDetailModal({
             {onMarkFound && book.status === 'hilang' && (
               <button
                 onClick={() => onMarkFound(book)}
-                className="flex items-center justify-center gap-2 rounded-lg border border-emerald-200 px-4 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-50"
+                className="flex items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-emerald-200 px-2 py-2 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 sm:gap-2 sm:px-4 sm:text-sm"
               >
                 <PackageCheck size={16} /> Tandai Ditemukan
               </button>
@@ -263,7 +263,7 @@ export default function BookDetailModal({
             {onEdit && (
               <button
                 onClick={() => onEdit(book)}
-                className="flex items-center justify-center gap-2 rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                className="flex items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-slate-200 px-2 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 sm:gap-2 sm:px-4 sm:text-sm"
               >
                 <Pencil size={16} /> Edit Buku
               </button>
