@@ -135,8 +135,8 @@ export default function BookDetailModal({
           </div>
         )}
 
-        <div className="flex flex-1 gap-5 overflow-y-auto p-5">
-          <div className="shrink-0">
+        <div className="flex flex-1 flex-col gap-5 overflow-y-auto p-5 sm:flex-row">
+          <div className="shrink-0 self-center sm:self-start">
             {book.cover_url ? (
               <button
                 type="button"
@@ -235,11 +235,11 @@ export default function BookDetailModal({
         )}
 
         {(onEdit || onDelete || onMarkLost || onMarkFound || onAddCopies) && (
-          <div className="flex flex-wrap items-center justify-end gap-3 border-t border-slate-100 px-5 py-4">
+          <div className="grid grid-cols-2 gap-2 border-t border-slate-100 px-5 py-4 sm:flex sm:flex-wrap sm:items-center sm:justify-end sm:gap-3">
             {onAddCopies && (
               <button
                 onClick={() => onAddCopies(book)}
-                className="flex items-center gap-2 rounded-lg border border-sky-200 px-4 py-2 text-sm font-semibold text-sky-700 hover:bg-sky-50"
+                className="col-span-2 flex items-center justify-center gap-2 rounded-lg border border-sky-200 px-4 py-2 text-sm font-semibold text-sky-700 hover:bg-sky-50 sm:col-span-1"
               >
                 <CopyPlus size={16} /> Tambah Eksemplar
               </button>
@@ -247,7 +247,7 @@ export default function BookDetailModal({
             {onMarkLost && book.status === 'tersedia' && (
               <button
                 onClick={() => onMarkLost(book)}
-                className="flex items-center gap-2 rounded-lg border border-amber-200 px-4 py-2 text-sm font-semibold text-amber-700 hover:bg-amber-50"
+                className="flex items-center justify-center gap-2 rounded-lg border border-amber-200 px-4 py-2 text-sm font-semibold text-amber-700 hover:bg-amber-50"
               >
                 <PackageX size={16} /> Tandai Hilang
               </button>
@@ -255,7 +255,7 @@ export default function BookDetailModal({
             {onMarkFound && book.status === 'hilang' && (
               <button
                 onClick={() => onMarkFound(book)}
-                className="flex items-center gap-2 rounded-lg border border-emerald-200 px-4 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-50"
+                className="flex items-center justify-center gap-2 rounded-lg border border-emerald-200 px-4 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-50"
               >
                 <PackageCheck size={16} /> Tandai Ditemukan
               </button>
@@ -263,7 +263,7 @@ export default function BookDetailModal({
             {onEdit && (
               <button
                 onClick={() => onEdit(book)}
-                className="flex items-center gap-2 rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                className="flex items-center justify-center gap-2 rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
               >
                 <Pencil size={16} /> Edit Buku
               </button>
@@ -271,7 +271,7 @@ export default function BookDetailModal({
             {onDelete && (
               <button
                 onClick={() => onDelete(book)}
-                className="flex items-center gap-2 rounded-lg border border-rose-200 px-4 py-2 text-sm font-semibold text-rose-600 hover:bg-rose-50"
+                className="col-span-2 flex items-center justify-center gap-2 rounded-lg border border-rose-200 px-4 py-2 text-sm font-semibold text-rose-600 hover:bg-rose-50 sm:col-span-1"
               >
                 <Trash2 size={16} /> Hapus Buku
               </button>

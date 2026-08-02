@@ -113,8 +113,8 @@ export default function RiwayatPage() {
                 aria-label="Urutkan riwayat"
                 className="h-9 w-full rounded-lg border border-slate-200 bg-white px-2.5 text-sm text-slate-600 focus:border-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-700/20 sm:w-auto"
               >
-                <option value="terbaru">Terbaru Dahulu</option>
-                <option value="terlama">Terlama Dahulu</option>
+                <option value="terbaru">Terbaru</option>
+                <option value="terlama">Terlama</option>
               </select>
             </div>
           </div>
