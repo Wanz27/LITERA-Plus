@@ -740,17 +740,17 @@ export default function PeminjamanTab({ libraryId, books, maxActiveLoansPerBorro
           <p className="text-xs text-slate-400">Buku yang belum dikembalikan di perpustakaan ini</p>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-left">
+          <table className="min-w-full text-left">
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                <th className="px-6 py-3">Judul Buku</th>
-                <th className="px-6 py-3">No. Inventaris</th>
-                <th className="px-6 py-3">Peminjam</th>
-                <th className="px-6 py-3">NIS</th>
-                <th className="px-6 py-3">Tanggal Pinjam</th>
-                <th className="px-6 py-3">Batas Waktu</th>
-                <th className="px-6 py-3">Waktu Pinjam</th>
-                <th className="px-6 py-3 text-right">Aksi</th>
+                <th className="whitespace-nowrap px-6 py-3">Judul Buku</th>
+                <th className="whitespace-nowrap px-6 py-3">No. Inventaris</th>
+                <th className="whitespace-nowrap px-6 py-3">Peminjam</th>
+                <th className="whitespace-nowrap px-6 py-3">NIS</th>
+                <th className="whitespace-nowrap px-6 py-3">Tanggal Pinjam</th>
+                <th className="whitespace-nowrap px-6 py-3">Batas Waktu</th>
+                <th className="whitespace-nowrap px-6 py-3">Waktu Pinjam</th>
+                <th className="whitespace-nowrap px-6 py-3 text-right">Aksi</th>
               </tr>
             </thead>
             <tbody>
@@ -774,24 +774,24 @@ export default function PeminjamanTab({ libraryId, books, maxActiveLoansPerBorro
                   const status = loanTimeStatus(loan.due_date)
                   return (
                     <tr key={loan.id} className="border-b border-slate-100 last:border-b-0 hover:bg-slate-50">
-                      <td className="px-6 py-3 text-sm font-medium text-slate-800">{book?.judul ?? '-'}</td>
-                      <td className="px-6 py-3 text-sm text-slate-600">{book?.nomor_inventaris ?? '-'}</td>
-                      <td className="px-6 py-3 text-sm text-slate-600">{loan.borrower_name}</td>
-                      <td className="px-6 py-3 text-sm text-slate-600">{loan.borrower_nis || '-'}</td>
-                      <td className="px-6 py-3 text-sm text-slate-600">
+                      <td className="whitespace-nowrap px-6 py-3 text-sm font-medium text-slate-800">{book?.judul ?? '-'}</td>
+                      <td className="whitespace-nowrap px-6 py-3 text-sm text-slate-600">{book?.nomor_inventaris ?? '-'}</td>
+                      <td className="whitespace-nowrap px-6 py-3 text-sm text-slate-600">{loan.borrower_name}</td>
+                      <td className="whitespace-nowrap px-6 py-3 text-sm text-slate-600">{loan.borrower_nis || '-'}</td>
+                      <td className="whitespace-nowrap px-6 py-3 text-sm text-slate-600">
                         {new Date(loan.borrow_date).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })}
                       </td>
-                      <td className="px-6 py-3 text-sm text-slate-600">
+                      <td className="whitespace-nowrap px-6 py-3 text-sm text-slate-600">
                         {loan.due_date
                           ? new Date(loan.due_date).toLocaleDateString('id-ID', { dateStyle: 'medium' })
                           : '-'}
                       </td>
-                      <td className="px-6 py-3">
-                        <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${status.className}`}>
+                      <td className="whitespace-nowrap px-6 py-3">
+                        <span className={`inline-flex items-center whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold ${status.className}`}>
                           {status.label}
                         </span>
                       </td>
-                      <td className="px-6 py-3 text-right">
+                      <td className="whitespace-nowrap px-6 py-3 text-right">
                         <button
                           type="button"
                           disabled={submitting || !book}

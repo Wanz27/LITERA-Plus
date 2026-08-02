@@ -867,10 +867,10 @@ export default function LibraryDetailPage() {
 
             {groupedBookRows.length > 0 && (
             <div className="h-[600px] overflow-auto">
-              <table className="w-full text-left">
+              <table className="min-w-full text-left">
                 <thead>
                   <tr className="sticky top-0 z-10 border-b border-slate-200 bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    <th className="px-6 py-3">
+                    <th className="whitespace-nowrap px-6 py-3">
                       <input
                         type="checkbox"
                         checked={allOnPageSelected}
@@ -879,20 +879,20 @@ export default function LibraryDetailPage() {
                         aria-label="Pilih semua buku di halaman ini"
                       />
                     </th>
-                    <th className="px-6 py-3">Cover</th>
-                    <th className="px-6 py-3">Judul</th>
-                    <th className="px-6 py-3">Penulis</th>
-                    <th className="px-6 py-3">Penerbit</th>
-                    <th className="px-6 py-3">Tahun</th>
-                    <th className="px-6 py-3">ISBN</th>
-                    <th className="px-6 py-3">Klasifikasi</th>
-                    <th className="px-6 py-3">Kondisi</th>
-                    <th className="px-6 py-3">Subjek</th>
-                    <th className="px-6 py-3">Bahasa</th>
-                    <th className="px-6 py-3">Jumlah</th>
-                    <th className="px-6 py-3">Stok</th>
-                    <th className="px-6 py-3">No. Inventaris</th>
-                    <th className="px-6 py-3">No. Panggil</th>
+                    <th className="whitespace-nowrap px-6 py-3">Cover</th>
+                    <th className="whitespace-nowrap px-6 py-3">Judul</th>
+                    <th className="whitespace-nowrap px-6 py-3">Penulis</th>
+                    <th className="whitespace-nowrap px-6 py-3">Penerbit</th>
+                    <th className="whitespace-nowrap px-6 py-3">Tahun</th>
+                    <th className="whitespace-nowrap px-6 py-3">ISBN</th>
+                    <th className="whitespace-nowrap px-6 py-3">Klasifikasi</th>
+                    <th className="whitespace-nowrap px-6 py-3">Kondisi</th>
+                    <th className="whitespace-nowrap px-6 py-3">Subjek</th>
+                    <th className="whitespace-nowrap px-6 py-3">Bahasa</th>
+                    <th className="whitespace-nowrap px-6 py-3">Jumlah</th>
+                    <th className="whitespace-nowrap px-6 py-3">Stok</th>
+                    <th className="whitespace-nowrap px-6 py-3">No. Inventaris</th>
+                    <th className="whitespace-nowrap px-6 py-3">No. Panggil</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -954,10 +954,10 @@ export default function LibraryDetailPage() {
                         <td className="px-6 py-3 text-sm text-slate-600">{book.tahun_terbit ?? '-'}</td>
                         <td className="px-6 py-3 text-sm text-slate-600">{book.isbn || '-'}</td>
                         <td className="px-6 py-3 text-sm text-slate-600">{book.kode_klasifikasi || '-'}</td>
-                        <td className="px-6 py-3">
+                        <td className="whitespace-nowrap px-6 py-3">
                           {kondisiKeys.length === 1 ? (
                             <span
-                              className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                              className={`whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold ${
                                 kondisiKeys[0] === 'Rusak'
                                   ? 'bg-rose-100 text-rose-700'
                                   : 'bg-emerald-100 text-emerald-700'
@@ -970,7 +970,7 @@ export default function LibraryDetailPage() {
                               {kondisiKeys.map((k) => (
                                 <span
                                   key={k}
-                                  className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+                                  className={`whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-semibold ${
                                     k === 'Rusak' ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'
                                   }`}
                                 >
@@ -1081,7 +1081,7 @@ export default function LibraryDetailPage() {
 
         {tab === 'riwayat' && (
           <div className="space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
               <div className="flex flex-wrap gap-1.5">
                 {RIWAYAT_PERIOD_FILTERS.map((period) => (
                   <button
@@ -1098,12 +1098,12 @@ export default function LibraryDetailPage() {
                   </button>
                 ))}
               </div>
-              <div className="flex items-center gap-2">
+              <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap sm:items-center">
                 <select
                   value={riwayatAksiFilter}
                   onChange={(e) => setRiwayatAksiFilter(e.target.value)}
                   aria-label="Filter jenis aktivitas"
-                  className="h-9 rounded-lg border border-slate-200 bg-white px-2.5 text-sm text-slate-600 focus:border-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-700/20"
+                  className="h-9 w-full rounded-lg border border-slate-200 bg-white px-2.5 text-sm text-slate-600 focus:border-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-700/20 sm:w-auto"
                 >
                   <option value="Semua">Semua Aktivitas</option>
                   {riwayatAksiChoices.map((aksi) => (
@@ -1116,7 +1116,7 @@ export default function LibraryDetailPage() {
                   value={riwayatSort}
                   onChange={(e) => setRiwayatSort(e.target.value as RiwayatSort)}
                   aria-label="Urutkan riwayat"
-                  className="h-9 rounded-lg border border-slate-200 bg-white px-2.5 text-sm text-slate-600 focus:border-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-700/20"
+                  className="h-9 w-full rounded-lg border border-slate-200 bg-white px-2.5 text-sm text-slate-600 focus:border-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-700/20 sm:w-auto"
                 >
                   <option value="terbaru">Terbaru Dahulu</option>
                   <option value="terlama">Terlama Dahulu</option>
