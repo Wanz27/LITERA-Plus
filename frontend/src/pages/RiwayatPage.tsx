@@ -60,7 +60,7 @@ export default function RiwayatPage() {
         </div>
 
         <div className="space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
             <div className="flex flex-wrap gap-1.5">
               {RIWAYAT_PERIOD_FILTERS.map((period) => (
                 <button
@@ -77,7 +77,7 @@ export default function RiwayatPage() {
                 </button>
               ))}
             </div>
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap sm:items-center">
               <select
                 value={riwayatLibraryFilter}
                 onChange={(e) => {
@@ -85,7 +85,7 @@ export default function RiwayatPage() {
                   setRiwayatAksiFilter('Semua')
                 }}
                 aria-label="Filter perpustakaan"
-                className="h-9 rounded-lg border border-slate-200 bg-white px-2.5 text-sm text-slate-600 focus:border-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-700/20"
+                className="h-9 w-full rounded-lg border border-slate-200 bg-white px-2.5 text-sm text-slate-600 focus:border-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-700/20 sm:w-auto"
               >
                 <option value="Semua">Semua Perpustakaan</option>
                 {libraries.map((lib) => (
@@ -98,7 +98,7 @@ export default function RiwayatPage() {
                 value={riwayatAksiFilter}
                 onChange={(e) => setRiwayatAksiFilter(e.target.value)}
                 aria-label="Filter jenis aktivitas"
-                className="h-9 rounded-lg border border-slate-200 bg-white px-2.5 text-sm text-slate-600 focus:border-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-700/20"
+                className="h-9 w-full rounded-lg border border-slate-200 bg-white px-2.5 text-sm text-slate-600 focus:border-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-700/20 sm:w-auto"
               >
                 <option value="Semua">Semua Aktivitas</option>
                 {riwayatAksiChoices.map((aksi) => (
@@ -111,7 +111,7 @@ export default function RiwayatPage() {
                 value={riwayatSort}
                 onChange={(e) => setRiwayatSort(e.target.value as RiwayatSort)}
                 aria-label="Urutkan riwayat"
-                className="h-9 rounded-lg border border-slate-200 bg-white px-2.5 text-sm text-slate-600 focus:border-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-700/20"
+                className="h-9 w-full rounded-lg border border-slate-200 bg-white px-2.5 text-sm text-slate-600 focus:border-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-700/20 sm:w-auto"
               >
                 <option value="terbaru">Terbaru Dahulu</option>
                 <option value="terlama">Terlama Dahulu</option>
